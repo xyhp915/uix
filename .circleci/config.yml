@@ -11,6 +11,10 @@ jobs:
     steps:
       - checkout
 
+      - add_ssh_keys:
+          fingerprints:
+            - "16:a0:ee:05:9d:98:4a:b2:12:37:5a:8f:c1:91:d5:f4"
+
       - run:
           name: Install Headless Chrome dependencies
           command: |
