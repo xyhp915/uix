@@ -38,6 +38,8 @@ jobs:
 
       - run: cd core && yarn install --frozen-lockfile
 
+      - run: mv ~/.ssh/id_rsa_16a0ee059d984ab212375a8fc191d5f4 ~/.ssh/id_rsa
+
       - run: cd core && scripts/test-ci
 
       - save_cache:
