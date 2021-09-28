@@ -2,6 +2,8 @@
   (:require [clojure.string :as str]
             [uix.compiler.js :as js]))
 
+(declare join-classes)
+
 (defn join-classes-js
   "Emits runtime class string concatenation expression"
   [xs]
@@ -9,16 +11,35 @@
                   (interpose ",")
                   (apply str))]
     (->> xs
-         (map js/to-js)
+         (map (fn [v]
+                (if-not (or (string? v)
+                            (keyword? v))
+                  (join-classes v)
+                  v)))
          (list* 'js* (str "[" strs "].join(' ')")))))
 
-(defn join-classes
+(defn join-classes-static
   "Joins class names into a single string"
   [classes]
   (->> (map #(if (string? %) % (seq %)) classes)
        flatten
        (remove nil?)
        (str/join " ")))
+
+(defn join-classes [classes]
+  (cond
+    (and (vector? classes)
+         (every? string? classes))
+    (join-classes-static classes)
+
+    (vector? classes)
+    (join-classes-js classes)
+
+    :else
+    `(let [classes# ~classes]
+       (if (sequential? classes#)
+         (clojure.string/join classes# " ")
+         classes#))))
 
 (def re-tag
   "Hiccup tag pattern :div :.class#id etc."
@@ -32,18 +53,27 @@
                      (str/replace class-name #"\." " "))]
     (list tag id class-name (some? (re-find #"-" tag)))))
 
+(defn merge-classes [props-class static-class]
+  (cond
+    (vector? props-class)
+    (into [static-class] props-class)
+
+    :else
+    [static-class props-class]))
+
 (defn set-id-class
   "Takes attributes map and parsed tag, and returns attributes merged with class names and id"
-  [props [_ id class]]
+  [props [_ static-id static-class]]
   (if (or (map? props) (nil? props))
-    (cond-> props
-            ;; Only use ID from tag keyword if no :id in props already
-            (and (some? id) (nil? (get props :id)))
-            (assoc :id id)
+    (let [props-class (:class props)]
+      (cond-> props
+              ;; Only use ID from tag keyword if no :id in props already
+              (and static-id (nil? (get props :id)))
+              (assoc :id static-id)
 
-            ;; Merge classes
-            class
-            (assoc :class (join-classes [class (get props :class)])))
+              ;; Merge classes
+              static-class
+              (assoc :class (merge-classes props-class static-class))))
     props))
 
 (defn camel-case
@@ -70,30 +100,8 @@
 
 (defmulti compile-config-kv (fn [name value] name))
 
-(defn join-classes-map [m]
-  (->> m
-       (reduce-kv
-         (fn [ret k v]
-           (cond
-             (true? v) (conj ret k)
-             (false? v) ret
-             :else (conj ret `(when ~v ~(js/to-js k)))))
-         [])
-       join-classes-js))
-
 (defmethod compile-config-kv :class [name value]
-  (cond
-    (map? value)
-    (join-classes-map value)
-
-    (and (or (sequential? value) (set? value))
-         (every? string? value))
-    (join-classes value)
-
-    (vector? value)
-    (join-classes-js value)
-
-    :else value))
+  (join-classes value))
 
 (defmethod compile-config-kv :style [name value]
   (camel-case-keys value))
