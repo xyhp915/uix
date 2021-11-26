@@ -1,7 +1,6 @@
 (ns uix.compiler.aot
   "Hiccup compiler that translates Hiccup into React.js at compile-time."
-  (:require [clojure.string :as str]
-            [uix.compiler.js :as js]
+  (:require [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]))
 
 (defmulti compile-attrs (fn [tag attrs opts] tag))
@@ -31,14 +30,6 @@
     `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
 
-(defmethod compile-attrs :interop [_ props _]
-  (if (map? props)
-    `(cljs.core/array
-       ~(cond-> props
-                :always (attrs/compile-attrs {:custom-element? true})
-                :always (js/to-js-map true)))
-    `(uix.compiler.attributes/interpret-attrs ~props (cljs.core/array) true)))
-
 ;; Compiles Hiccup into React.createElement
 (defmulti compile-element
   (fn [[tag]]
@@ -46,7 +37,6 @@
       (= :<> tag) :fragment
       (= :# tag) :suspense
       (= :-> tag) :portal
-      (= :> tag) :interop
       (keyword? tag) :element
       :else :component)))
 
@@ -80,11 +70,6 @@
     (println "WARNING: React portal Hiccup syntax :-> is deprecated, use uix.dom.alpha/create-portal instead"))
   (let [[_ child node] v]
     `(~'js/ReactDOM.createPortal ~child ~node)))
-
-(defmethod compile-element :interop [v]
-  (let [[_ tag props & children] v
-        props (compile-attrs :interop props nil)]
-    `(>el ~tag ~props (cljs.core/array ~@children))))
 
 (defn compile-html
   "Compiles Hiccup expr into React.js calls"

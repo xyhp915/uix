@@ -21,7 +21,7 @@
 (deftest test-compile-html
   (is (= (aot/compile-html [:h1])
          '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
-  (is (= (aot/compile-html '[:> x {} 1 2])
-         '(uix.compiler.aot/>el x (cljs.core/array (cljs.core/js-obj)) (cljs.core/array 1 2))))
-  (is (= (aot/compile-html '[:> x {:x 1 :ref 2} 1 2])
-         '(uix.compiler.aot/>el x (cljs.core/array (js* "{'x':~{},'ref':~{}}" 1 2)) (cljs.core/array 1 2)))))
+  (is (= (aot/compile-html '[x {} 1 2])
+         '(uix.compiler.alpha/component-element x (uix.compiler.attributes/interpret-props {}) (cljs.core/array 1 2))))
+  (is (= (aot/compile-html '[x {:x 1 :ref 2} 1 2])
+         '(uix.compiler.alpha/component-element x (uix.compiler.attributes/interpret-props {:x 1, :ref 2}) (cljs.core/array 1 2)))))

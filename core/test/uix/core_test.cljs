@@ -86,5 +86,21 @@
       (async done
         (t/render #el [err-b {:done done :x 1 :child child}]))))
 
+(deftest test-implicit-interop
+  (testing "UIx component should have uix-component? attribute"
+    (defn react-cmp [props]
+      "react component")
+    (defui uix-cmp [props]
+      "uix component")
+    (is (.-uix-component? uix-cmp))
+    (is (not (.-uix-component? react-cmp))))
+  (testing "non-UIx component instance gets shallowly converted props"
+    (let [react-el #el [react-cmp {:on-click inc :x {:y 1}}]]
+      (is (= (.. react-el -props -onClick) inc))
+      (is (= (.. react-el -props -x) {:y 1}))))
+  (testing "UIx component instance gets non-converted props passed in under -argv prop"
+    (let [uix-el #el [uix-cmp {:on-click inc :x {:y 1}}]]
+      (is (= (.. uix-el -props -argv) {:on-click inc :x {:y 1}})))))
+
 (defn -main []
   (run-tests))

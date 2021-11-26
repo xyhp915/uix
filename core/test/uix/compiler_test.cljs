@@ -175,10 +175,10 @@
 
 (deftest test-interop
   (testing "Interop element type"
-    (is (.-type #el [:> inc])
+    (is (.-type #el [inc])
         inc))
   (testing "Shallowly converted props"
-    (let [el #el [:> inc {:a 1 :b {:c 2}} :child]
+    (let [el #el [inc {:a 1 :b {:c 2}} :child]
           props (.-props el)]
       (is (.-a props) 1)
       (is (.-b props) {:c 2})
