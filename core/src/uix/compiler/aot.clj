@@ -1,5 +1,5 @@
 (ns uix.compiler.aot
-  "Hiccup compiler that translates Hiccup into React.js at compile-time."
+  "UTL compiler that translates UTL into React.js calls at compile-time."
   (:require [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]))
 
@@ -30,7 +30,7 @@
     `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
 
-;; Compiles Hiccup into React.createElement
+;; Compiles UTL into React.createElement
 (defmulti compile-element
   (fn [[tag]]
     (cond
@@ -67,12 +67,12 @@
 
 (defmethod compile-element :portal [v]
   (binding [*out* *err*]
-    (println "WARNING: React portal Hiccup syntax :-> is deprecated, use uix.dom.alpha/create-portal instead"))
+    (println "WARNING: React portal syntax :-> is deprecated, use uix.dom.alpha/create-portal instead"))
   (let [[_ child node] v]
     `(~'js/ReactDOM.createPortal ~child ~node)))
 
 (defn compile-html
-  "Compiles Hiccup expr into React.js calls"
+  "Compiles UTL into React.js calls"
   [expr]
   (if (vector? expr)
     (compile-element expr)
