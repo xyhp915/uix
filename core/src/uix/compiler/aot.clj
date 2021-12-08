@@ -25,11 +25,6 @@
     `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
 
-(defmethod compile-attrs :suspense [_ attrs _]
-  (if (map? attrs)
-    `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
-    `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
-
 (defmethod compile-attrs :interop [_ props _]
   (if (map? props)
     `(cljs.core/array
@@ -43,8 +38,6 @@
   (fn [[tag]]
     (cond
       (= :<> tag) :fragment
-      (= :# tag) :suspense
-      (= :-> tag) :portal
       (= :> tag) :interop
       (keyword? tag) :element
       :else :component)))
@@ -67,18 +60,6 @@
         attrs (compile-attrs :fragment attrs nil)
         ret `(>el fragment ~attrs (cljs.core/array ~@children))]
     ret))
-
-(defmethod compile-element :suspense [v]
-  (let [[_ attrs & children] v
-        attrs (compile-attrs :suspense attrs nil)
-        ret `(>el suspense ~attrs (cljs.core/array ~@children))]
-    ret))
-
-(defmethod compile-element :portal [v]
-  (binding [*out* *err*]
-    (println "WARNING: React portal syntax :-> is deprecated, use uix.dom.alpha/create-portal instead"))
-  (let [[_ child node] v]
-    `(~'js/ReactDOM.createPortal ~child ~node)))
 
 (defmethod compile-element :interop [v]
   (let [[_ tag props & children] v
