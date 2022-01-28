@@ -2,7 +2,9 @@
   "Public API"
   (:require [uix.compiler.aot]
             [uix.source]
-            [cljs.core]))
+            [cljs.core]
+            [clojure.string :as str]
+            [uix.compiler.analyzer :as ana]))
 
 (defn- no-args-component [sym body]
   `(defn ~sym []
@@ -42,15 +44,26 @@
   defui
   "Compiles UIx component into React component at compile-time."
   [sym & fdecl]
-
-  (let [[fname args fdecl] (parse-sig sym fdecl)]
+  (let [[fname args fdecl] (parse-sig sym fdecl)
+        ns-name (-> &env :ns :name str)
+        sig-sym (gensym "sig")
+        dev-check (with-meta 'goog.DEBUG {:tag 'boolean})
+        body (cons `(when ~dev-check
+                      (when ~sig-sym (~sig-sym)))
+                   fdecl)]
     (uix.source/register-symbol! sym)
     `(do
+       (when ~dev-check
+         (def ~sig-sym (uix.dev/signature!)))
        ~(if (empty? args)
-          (no-args-component fname fdecl)
-          (with-args-component fname args fdecl))
+          (no-args-component fname body)
+          (with-args-component fname args body))
+       (when ~dev-check
+         (when ~sig-sym
+           (~sig-sym ~sym ~(str/join (ana/find-hooks body)) nil nil)
+           (uix.dev/register! ~sym ~(str ns-name "/" sym))))
        (set! (.-uix-component? ~(with-meta sym {:tag 'js})) true)
-       (with-name ~sym ~(-> &env :ns :name str) ~(str sym)))))
+       (with-name ~sym ~ns-name ~(str sym)))))
 
 (defmacro source
   "Returns source string of UIx component"

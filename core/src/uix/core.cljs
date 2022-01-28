@@ -6,7 +6,8 @@
             [uix.hooks.alpha :as hooks]
             [uix.compiler.alpha :as compiler]
             [uix.compiler.aot]
-            [uix.lib :refer [doseq-loop]]))
+            [uix.lib :refer [doseq-loop]]
+            [uix.dev]))
 
 ;; React's top-level API
 
