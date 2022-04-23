@@ -31,15 +31,15 @@
     (let [props-class (get props :class)]
       (cond-> props
               ;; Only use ID from tag keyword if no :id in props already
-        (and (some? id) (nil? (get props :id)))
-        (assoc :id id)
+              (and (some? id) (nil? (get props :id)))
+              (assoc :id id)
 
               ;; Merge classes
-        (or class props-class)
-        (assoc :class (cond
-                        (vector? props-class) `(class-names ~class ~@props-class)
-                        props-class `(class-names ~class ~props-class)
-                        :else class))))
+              (or class props-class)
+              (assoc :class (cond
+                              (vector? props-class) `(class-names ~class ~@props-class)
+                              props-class `(class-names ~class ~props-class)
+                              :else class))))
     props))
 
 (defn camel-case
