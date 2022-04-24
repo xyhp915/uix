@@ -42,6 +42,17 @@
         (if (fn? ret) ret js/undefined))
      deps)))
 
+(defn use-insertion-effect
+  ([f]
+   (r/useInsertionEffect
+     #(let [ret (f)]
+        (if (fn? ret) ret js/undefined))))
+  ([f deps]
+   (r/useInsertionEffect
+     #(let [ret (f)]
+        (if (fn? ret) ret js/undefined))
+     deps)))
+
 ;; == Callback hook ==
 (defn use-callback
   ([f]
@@ -73,3 +84,18 @@
    (use-debug v nil))
   ([v fmt]
    (r/useDebugValue v fmt)))
+
+(defn use-deferred-value [v]
+  (r/useDeferredValue v))
+
+(defn use-transition []
+  (r/useTransition))
+
+(defn use-id []
+  (r/useId))
+
+(defn use-sync-external-store
+  ([subscribe get-snapshot]
+   (r/useSyncExternalStore subscribe get-snapshot))
+  ([subscribe get-snapshot get-server-snapshot]
+   (r/useSyncExternalStore subscribe get-snapshot get-server-snapshot)))

@@ -148,6 +148,43 @@
   [context]
   (hooks/use-context context))
 
+(defn use-deferred-value
+  "Accepts a value and returns a new copy of the value that will defer to more urgent updates.
+  If the current render is the result of an urgent update, like user input,
+  React will return the previous value and then render the new value after the urgent render has completed.
+
+  See: https://reactjs.org/docs/hooks-reference.html#usedeferredvalue"
+  [v]
+  (hooks/use-deferred-value v))
+
+(defn use-transition
+  "Returns a stateful value for the pending state of the transition, and a function to start it.
+
+  See: https://reactjs.org/docs/hooks-reference.html#usetransition"
+  []
+  (hooks/use-transition))
+
+(defn use-id
+  "Returns unique ID that is stable across the server and client, while avoiding hydration mismatches.
+
+  See: https://reactjs.org/docs/hooks-reference.html#useid"
+  []
+  (hooks/use-id))
+
+(defn use-sync-external-store
+  "For reading and subscribing from external data sources in a way that’s compatible
+  with concurrent rendering features like selective hydration and time slicing.
+
+  subscribe: function to register a callback that is called whenever the store changes
+  get-snapshot: function that returns the current value of the store
+  get-server-snapshot: function that returns the snapshot used during server rendering
+
+  See: https://reactjs.org/docs/hooks-reference.html#usesyncexternalstore"
+  ([subscribe get-snapshot]
+   (hooks/use-sync-external-store subscribe get-snapshot))
+  ([subscribe get-snapshot get-server-snapshot]
+   (hooks/use-sync-external-store subscribe get-snapshot get-server-snapshot)))
+
 (def with-name debug/with-name)
 
 (defn as-react

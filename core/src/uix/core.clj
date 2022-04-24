@@ -108,6 +108,17 @@
   ([f deps]
    (make-hook-with-deps 'uix.hooks.alpha/use-layout-effect &env &form f deps)))
 
+(defmacro use-insertion-effect
+  "Takes a function to be executed synchronously before all DOM mutations
+  and optional vector of dependencies. Use this to inject styles into the DOM
+  before reading layout in `useLayoutEffect`.
+
+  See: https://reactjs.org/docs/hooks-reference.html#useinsertioneffect"
+  ([f]
+   (make-hook-with-deps 'uix.hooks.alpha/use-insertion-effect &env &form f nil))
+  ([f deps]
+   (make-hook-with-deps 'uix.hooks.alpha/use-insertion-effect &env &form f deps)))
+
 (defmacro use-memo
   "Takes function f and optional vector of dependencies, and returns memoized result of f.
 
