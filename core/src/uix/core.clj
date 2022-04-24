@@ -78,16 +78,10 @@
 
 ;; === Hooks ===
 
-(defn vector->js-array [coll]
-  (cond
-    (vector? coll) `(cljs.core/array ~@coll)
-    (some? coll) `(cljs.core/into-array ~coll)
-    :else coll))
-
 (defn- make-hook-with-deps [sym env form f deps]
   (hooks.linter/lint-exhaustive-deps! env form f deps)
   (if deps
-    `(~sym ~f ~(vector->js-array deps))
+    `(~sym ~f ~deps)
     `(~sym ~f)))
 
 (defmacro use-effect
@@ -135,4 +129,4 @@
    `(uix.hooks.alpha/use-imperative-handle ~ref ~f))
   ([ref f deps]
    (hooks.linter/lint-exhaustive-deps! &env &form f deps)
-   `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(vector->js-array deps))))
+   `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~deps)))

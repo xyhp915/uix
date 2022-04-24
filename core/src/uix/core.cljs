@@ -1,8 +1,7 @@
 (ns uix.core
   "Public API"
   (:require-macros [uix.core])
-  (:require [goog.object :as gobj]
-            [react :as r]
+  (:require [react :as r]
             [uix.compiler.debug :as debug]
             [uix.hooks.alpha :as hooks]
             [uix.compiler.alpha :as compiler]
@@ -110,18 +109,7 @@
   ([]
    (use-ref nil))
   ([value]
-   (let [ref (hooks/use-ref nil)]
-     (when (nil? (.-current ref))
-       (set! (.-current ref)
-             (specify! #js {:current value}
-               IDeref
-               (-deref [this]
-                 (.-current this))
-
-               IReset
-               (-reset! [this v]
-                 (gobj/set this "current" v)))))
-     (.-current ref))))
+   (hooks/use-ref value)))
 
 (defn create-context
   "Creates React Context with an optional default value"
@@ -134,6 +122,13 @@
   "Takes React context and returns its current value"
   [context]
   (hooks/use-context context))
+
+(defn use-debug-value
+  "Display a label for custom hooks in React DevTools"
+  ([v]
+   (hooks/use-debug-value v))
+  ([v fmt]
+   (hooks/use-debug-value v fmt)))
 
 (def with-name debug/with-name)
 
