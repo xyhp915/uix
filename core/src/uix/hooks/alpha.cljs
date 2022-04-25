@@ -18,39 +18,36 @@
 (defn use-ref [value]
   (r/useRef value))
 
+(defn with-return-value-check [f]
+  #(let [ret (f)]
+     (if (fn? ret) ret js/undefined)))
+
 ;; == Effect hook ==
 (defn use-effect
   ([setup-fn]
-   (r/useEffect
-     #(let [ret (setup-fn)]
-        (if (fn? ret) ret js/undefined))))
+   (r/useEffect (with-return-value-check setup-fn)))
   ([setup-fn deps]
    (r/useEffect
-     #(let [ret (setup-fn)]
-        (if (fn? ret) ret js/undefined))
+     (with-return-value-check setup-fn)
      deps)))
 
 ;; == Layout effect hook ==
 (defn use-layout-effect
   ([setup-fn]
    (r/useLayoutEffect
-     #(let [ret (setup-fn)]
-        (if (fn? ret) ret js/undefined))))
+     (with-return-value-check setup-fn)))
   ([setup-fn deps]
    (r/useLayoutEffect
-     #(let [ret (setup-fn)]
-        (if (fn? ret) ret js/undefined))
+     (with-return-value-check setup-fn)
      deps)))
 
 (defn use-insertion-effect
   ([f]
    (r/useInsertionEffect
-     #(let [ret (f)]
-        (if (fn? ret) ret js/undefined))))
+     (with-return-value-check f)))
   ([f deps]
    (r/useInsertionEffect
-     #(let [ret (f)]
-        (if (fn? ret) ret js/undefined))
+     (with-return-value-check f)
      deps)))
 
 ;; == Callback hook ==
