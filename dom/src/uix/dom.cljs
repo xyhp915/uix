@@ -1,6 +1,6 @@
 (ns uix.dom
   "Public API"
-  (:require [react-dom :as rdom]))
+  (:require ["react-dom/client" :as rdom]))
 
 ;; react-dom top-level API
 
