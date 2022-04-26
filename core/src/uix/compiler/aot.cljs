@@ -40,3 +40,15 @@
 
 (def suspense react/Suspense)
 (def fragment react/Fragment)
+
+(def ^:dynamic *memo-cache*)
+
+(defn use-memo-cache [f id deps]
+  ;; every UIx component gets assigned a use-ref to *memo-cache*
+  ;; every element in the component gets a unique ID
+  (if *memo-cache*
+    (or (get-in @*memo-cache* [id deps])
+        (let [el (f)]
+          (reset! *memo-cache* (assoc @*memo-cache* id {deps el}))
+          el))
+    (f)))

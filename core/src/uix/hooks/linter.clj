@@ -17,6 +17,9 @@
   (and (symbol? sym)
        (some? (re-find #"^use-|use[A-Z]" (name sym)))))
 
+(defn hook-call? [form]
+  (and (list? form) (hook? (first form))))
+
 (declare lint-hooks!*)
 
 (def forms
@@ -119,7 +122,7 @@
     (clojure.walk/prewalk
       (fn [form]
         (cond
-          (and (list? form) (hook? (first form)))
+          (hook-call? form)
           (do (when *in-branch?* (add-error! form ::hook-in-branch))
               (when *in-loop?* (add-error! form ::hook-in-loop))
               nil)

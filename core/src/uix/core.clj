@@ -9,7 +9,8 @@
 
 (defn- no-args-component [sym body]
   `(defn ~sym []
-     (let [f# (fn [] ~@body)]
+     (let [f# #(binding [uix.compiler.aot/*memo-cache* (use-ref {})]
+                 ~@body)]
        (if ~goog-debug
          (binding [*current-component* ~sym] (f#))
          (f#)))))
@@ -17,7 +18,8 @@
 (defn- with-args-component [sym args body]
   `(defn ~sym [props#]
      (let [~args (cljs.core/array (glue-args props#))
-           f# (fn [] ~@body)]
+           f# #(binding [uix.compiler.aot/*memo-cache* (use-ref {})]
+                 ~@body)]
        (if ~goog-debug
          (binding [*current-component* ~sym] (f#))
          (f#)))))
@@ -72,9 +74,9 @@
   DOM element: ($ :button#id.class {:on-click handle-click} \"click me\")
   React component: ($ title-bar {:title \"Title\"})"
   ([tag]
-   (uix.compiler.aot/compile-element [tag]))
+   (uix.compiler.aot/compile-element [tag] {:env &env :form &form}))
   ([tag props & children]
-   (uix.compiler.aot/compile-element (into [tag props] children))))
+   (uix.compiler.aot/compile-element (into [tag props] children) {:env &env :form &form})))
 
 ;; === Hooks ===
 
