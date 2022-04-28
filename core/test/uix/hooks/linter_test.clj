@@ -233,3 +233,36 @@
            (hooks.linter/lint-exhaustive-deps {} '(use-effect (fn []) [nil]) '(fn []) [nil])))
     (is (= '([:uix.hooks.linter/literal-value-in-deps {:source (use-effect (fn []) [true]), :literals (true)}])
            (hooks.linter/lint-exhaustive-deps {} '(use-effect (fn []) [true]) '(fn []) [true])))))
+
+;; === PropTypes ===
+
+(defn test-props-spec [props children & keys-spec]
+  (hooks.linter/assert-props-spec*
+   {} `(cljs.spec.alpha/keys ~@keys-spec) 'my/component
+   props children))
+
+(deftest test-assert-props-spec*
+  (testing "props"
+    (testing "should not error when there's no missing or unexpected keys in props map"
+      (is (= [] (test-props-spec '{:selected x} [] :req-un [:props/selected]))))
+    (testing "should error when there's a missing key in props map"
+      (is (= [[:uix.hooks.linter/missing-props {} {:component 'my/component, :missing-keys #{:selected}, :required-keys #{:selected}, :provided-keys #{}, :children []}]]
+             (test-props-spec {} [] :req-un [:props/selected]))))
+    (testing "should error when there's an unexpected key in props map"
+      (is (= [[:uix.hooks.linter/unexpected-props {} {:component 'my/component, :unexpected-keys #{:x}, :required-keys #{:selected}, :optional-keys #{}, :children []}]]
+             (test-props-spec '{:selected x :x 1} [] :req-un [:props/selected]))))
+    (testing "should error when a props map is expected, but got a child element instead"
+      (is (= [[:uix.hooks.linter/props-map {} {:component 'my/component, :value 'x, :required-keys #{:selected}, :optional-keys #{}}]]
+             (test-props-spec 'x [] :req-un [:props/selected])))))
+
+  (testing "children"
+    (testing "should error when children are not required but provided"
+      (is (= [[:uix.hooks.linter/unexpected-props {} {:component 'my/component, :unexpected-keys #{:children}, :required-keys #{}, :optional-keys #{}, :children [1 2]}]]
+             (test-props-spec '{} [1 2] :req-un []))))
+    (testing "should not error when children are required and provided"
+      (is (= [] (test-props-spec '{} [1 2] :req-un [:props/children]))))
+    (testing "should error when children are required but not provided"
+      (is (= [[:uix.hooks.linter/missing-props {} {:component 'my/component, :missing-keys #{:children}, :required-keys #{:children}, :provided-keys #{}, :children []}]]
+             (test-props-spec '{} [] :req-un [:props/children]))))
+    (testing "should not error when only children are expected and provided, without props map literal"
+      (is (= [] (test-props-spec 'x [] :req-un [:props/children]))))))

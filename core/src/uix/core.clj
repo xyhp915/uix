@@ -14,13 +14,17 @@
          (binding [*current-component* ~sym] (f#))
          (f#)))))
 
-(defn- with-args-component [sym args body]
-  `(defn ~sym [props#]
-     (let [~args (cljs.core/array (glue-args props#))
-           f# (fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~sym] (f#))
-         (f#)))))
+(defn- with-args-component [sym args body props-spec]
+  (let [uix-props-sym (gensym "uix-props")]
+    `(defn ~sym [props#]
+       (let [~uix-props-sym (glue-args props#)
+             ~args (cljs.core/array ~uix-props-sym)
+             f# (fn []
+                  ~(when props-spec `(when ~goog-debug (assert-props ~props-spec ~uix-props-sym)))
+                  ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~sym] (f#))
+           (f#))))))
 
 (defn parse-sig [name fdecl]
   (let [[fdecl m] (if (string? (first fdecl))
@@ -51,15 +55,17 @@
   "Compiles UIx component into React component at compile-time."
   [sym & fdecl]
 
-  (let [[fname args fdecl] (parse-sig sym fdecl)]
+  (let [[fname args fdecl] (parse-sig sym fdecl)
+        [fdecl props-spec] (hooks.linter/make-props-check &env sym fdecl)]
     (uix.source/register-symbol! sym)
     (hooks.linter/lint! sym fdecl &env)
-    `(do
-       ~(if (empty? args)
-          (no-args-component fname fdecl)
-          (with-args-component fname args fdecl))
-       (set! (.-uix-component? ~(with-meta sym {:tag 'js})) true)
-       (with-name ~sym ~(-> &env :ns :name str) ~(str sym)))))
+    (let []
+      `(do
+         ~(if (empty? args)
+            (no-args-component fname fdecl)
+            (with-args-component fname args fdecl props-spec))
+         (set! (.-uix-component? ~(with-meta sym {:tag 'js})) true)
+         (with-name ~sym ~(-> &env :ns :name str) ~(str sym))))))
 
 (defmacro source
   "Returns source string of UIx component"
@@ -72,8 +78,10 @@
   DOM element: ($ :button#id.class {:on-click handle-click} \"click me\")
   React component: ($ title-bar {:title \"Title\"})"
   ([tag]
+   (hooks.linter/assert-props-spec &env tag {} [])
    (uix.compiler.aot/compile-element [tag]))
   ([tag props & children]
+   (hooks.linter/assert-props-spec &env tag props children)
    (uix.compiler.aot/compile-element (into [tag props] children))))
 
 ;; === Hooks ===

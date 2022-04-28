@@ -1,6 +1,5 @@
 (ns uix.compiler.alpha
   (:require [react :as react]
-            [uix.hooks.alpha :as hooks]
             [cljs-bean.core :as bean]
             [uix.compiler.debug :as debug]))
 

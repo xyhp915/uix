@@ -2,6 +2,7 @@
   "Public API"
   (:require-macros [uix.core])
   (:require [react :as r]
+            [cljs.spec.alpha :as s]
             [uix.compiler.debug :as debug]
             [uix.hooks.alpha :as hooks]
             [uix.compiler.alpha :as compiler]
@@ -165,7 +166,8 @@
   [f]
   (compiler/as-react f))
 
-(defn stringify-clojure-primitives [v]
+;; deps helpers
+(defn- stringify-clojure-primitives [v]
   (cond
     ;; fast direct lookup for a string value
     ;; already stored on the instance of the known type
@@ -183,3 +185,17 @@
             #js []
             coll)
     coll))
+
+;; PropTypes helpers
+(defn- normalize-children [children]
+  (seq (cond
+         (js/Array.isArray children) children
+         (some? children) (cljs.core/array children)
+         :else children)))
+
+(defn assert-props [spec props]
+  (let [props# (if (contains? props :children)
+                 (update props :children normalize-children)
+                 props)]
+    (when-not (s/valid? spec props#)
+      (js/console.warn (s/explain-str spec props#)))))
