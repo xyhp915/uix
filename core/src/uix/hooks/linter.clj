@@ -401,8 +401,8 @@
 (def ^:private props-specs-registry (atom {}))
 
 (defn register-props-spec!
-  "Associates :props spec to a component name
-  The spec is used check provided props at component usage place ($ ...)"
+  "Associates component name with provided :props spec
+  The spec is used to check provided props at component usage place ($ ...)"
   [env component-sym props-spec]
   (let [sym (uix.lib/ns-qualify env component-sym)]
     (swap! props-specs-registry assoc sym props-spec)))
