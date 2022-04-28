@@ -59,13 +59,12 @@
         [fdecl props-spec] (hooks.linter/make-props-check &env sym fdecl)]
     (uix.source/register-symbol! sym)
     (hooks.linter/lint! sym fdecl &env)
-    (let []
-      `(do
-         ~(if (empty? args)
-            (no-args-component fname fdecl)
-            (with-args-component fname args fdecl props-spec))
-         (set! (.-uix-component? ~(with-meta sym {:tag 'js})) true)
-         (with-name ~sym ~(-> &env :ns :name str) ~(str sym))))))
+    `(do
+       ~(if (empty? args)
+          (no-args-component fname fdecl)
+          (with-args-component fname args fdecl props-spec))
+       (set! (.-uix-component? ~(with-meta sym {:tag 'js})) true)
+       (with-name ~sym ~(-> &env :ns :name str) ~(str sym)))))
 
 (defmacro source
   "Returns source string of UIx component"
