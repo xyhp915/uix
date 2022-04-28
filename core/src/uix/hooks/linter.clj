@@ -413,17 +413,20 @@
        (concat (get spec q-key))
        set))
 
+(defn- parse-keys-spec-form [spec-form]
+  (->> (rest spec-form)
+       (partition 2)
+       (reduce (fn [ret [k v]]
+                 (assoc ret k v))
+               {})))
+
 (defn assert-props-spec*
   "Asserts provided `props` and `children` against `spec-form` registered for a given `component-name`"
   [env spec-form component-name props children]
   (when (= 'cljs.spec.alpha/keys (first spec-form))
-    (let [spec (->> (rest spec-form)
-                    (partition 2)
-                    (reduce (fn [ret [k v]]
-                              (assoc ret k v))
-                            {}))
-          req-ks (get-spec-keys :req-un :req spec)
-          opt-ks (get-spec-keys :opt-un :opt spec)
+    (let [spec-map (parse-keys-spec-form spec-form)
+          req-ks (get-spec-keys :req-un :req spec-map)
+          opt-ks (get-spec-keys :opt-un :opt spec-map)
           spec-ks (into req-ks opt-ks)]
       (if (and (not (map? props)) (not= #{:children} req-ks))
         ;; expected some props, but got a non map literal value instead
