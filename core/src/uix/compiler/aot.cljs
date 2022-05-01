@@ -48,6 +48,6 @@
   (if *memo-cache*
     (or (get-in @*memo-cache* [id deps])
         (let [el (f)]
-          (reset! *memo-cache* (assoc @*memo-cache* id {deps el}))
+          (swap! *memo-cache* assoc id {deps el})
           el))
     (f)))

@@ -169,8 +169,11 @@
 
 ;; === Exhaustive Deps ===
 
-(defn find-local-variables [env f]
+(defn find-local-variables
+  "Finds all references in `form` to local vars in `env`"
+  [env form]
   (let [syms (atom #{})]
+    ;; find all symbols in `form`
     (clojure.walk/postwalk
      #(cond
         (symbol? %)
@@ -181,7 +184,8 @@
         (.-val %)
 
         :else %)
-     f)
+     form)
+    ;; return only those that are local in `env`
     (filter #(get-in env [:locals % :name]) @syms)))
 
 (defn find-free-variables [env f deps]
