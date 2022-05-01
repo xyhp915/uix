@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [clojure.pprint :as pp]
             [cljs.analyzer.api :as ana-api])
-  (:import (cljs.tagged_literals JSValue)))
+  (:import (cljs.tagged_literals JSValue)
+           (java.io Writer)))
 
 ;; === Rules of Hooks ===
 
@@ -19,6 +20,9 @@
 
 (defn hook-call? [form]
   (and (list? form) (hook? (first form))))
+
+(defn effect-hook? [form]
+  (contains? #{"use-effect" "use-layout-effect"} (name (first form))))
 
 (declare lint-hooks!*)
 
@@ -38,14 +42,14 @@
                sort-by some}})
 
 (defmulti maybe-lint
-          (fn [[sym :as form]]
-            (reduce-kv
-              (fn [ret kw forms]
-                (if (forms sym)
-                  (reduced kw)
-                  ret))
-              form
-              forms)))
+  (fn [[sym :as form]]
+    (reduce-kv
+     (fn [ret kw forms]
+       (if (forms sym)
+         (reduced kw)
+         ret))
+     form
+     forms)))
 
 (defmethod maybe-lint :default [form]
   form)
@@ -120,19 +124,19 @@
   (binding [*in-branch?* in-branch?
             *in-loop?* in-loop?]
     (clojure.walk/prewalk
-      (fn [form]
-        (cond
-          (hook-call? form)
-          (do (when *in-branch?* (add-error! form ::hook-in-branch))
-              (when *in-loop?* (add-error! form ::hook-in-loop))
-              nil)
+     (fn [form]
+       (cond
+         (hook-call? form)
+         (do (when *in-branch?* (add-error! form ::hook-in-branch))
+             (when *in-loop?* (add-error! form ::hook-in-loop))
+             nil)
 
-          (and (list? form) (or (not *in-branch?*) (not *in-loop?*)))
-          (binding [*source-context* form]
-            (maybe-lint form))
+         (and (list? form) (or (not *in-branch?*) (not *in-loop?*)))
+         (binding [*source-context* form]
+           (maybe-lint form))
 
-          :else form))
-      expr)
+         :else form))
+     expr)
     nil))
 
 (defn lint-hooks! [exprs]
@@ -168,16 +172,16 @@
 (defn find-local-variables [env f]
   (let [syms (atom #{})]
     (clojure.walk/postwalk
-      #(cond
-         (symbol? %)
-         (do (swap! syms conj %)
-             %)
+     #(cond
+        (symbol? %)
+        (do (swap! syms conj %)
+            %)
 
-         (= (type %) JSValue)
-         (.-val %)
+        (= (type %) JSValue)
+        (.-val %)
 
-         :else %)
-      f)
+        :else %)
+     f)
     (filter #(get-in env [:locals % :name]) @syms)))
 
 (defn find-free-variables [env f deps]
@@ -185,9 +189,14 @@
         deps (set deps)]
     (filter #(nil? (deps %)) all-local-variables)))
 
+(defmethod pp/code-dispatch JSValue [alis]
+  (.write ^Writer *out* "#js ")
+  (pp/code-dispatch (.-val alis)))
+
 (defn ppr [s]
-  (let [source (->> (with-out-str (pp/pprint s))
-                    str/split-lines
+  (let [s (pp/with-pprint-dispatch pp/code-dispatch
+            (with-out-str (pp/pprint s)))
+        source (->> (str/split-lines s)
                     (take 8)
                     (str/join "\n"))]
     (str "```\n" source "\n```")))
@@ -255,8 +264,7 @@
       (and (= (type deps) JSValue) (vector? (.-val deps))) [::deps-array-literal {:source form}]
 
       ;; when deps are neither JS Array nor Clojure's vector, should be a vector instead
-      #_#_
-      (not (vector? deps)) [::deps-coll-literal {:source form}]
+      #_#_(not (vector? deps)) [::deps-coll-literal {:source form}]
 
       ;; when deps vector has a primitive literal, it can be safely removed
       (and (vector? deps) (seq (deps->literals deps)))
@@ -273,16 +281,22 @@
           (hook? (first form))
           (name (first form)))))))
 
+(def stable-hooks
+  #{"use-state" "use-reducer" "use-ref"})
+
 (defn find-unnecessary-deps [env deps]
   (keep (fn [sym]
           (when-let [hook (find-hook-for-symbol env sym)]
-            (when (#{"use-state" "use-reducer" "use-ref"} hook)
+            (when (contains? stable-hooks hook)
               (with-meta sym {:hook hook}))))
         deps))
 
+(def state-hooks
+  #{"use-state" "use-reducer" "useState" "useReducer"})
+
 (defn find-unsafe-set-state-calls [env f]
   (let [set-state-calls (->> (find-local-variables env f)
-                             (filter #(#{"use-state" "use-reducer"} (find-hook-for-symbol env %)))
+                             (filter #(contains? state-hooks (find-hook-for-symbol env %)))
                              set)
         ast (ana-api/no-warn (ana-api/analyze env f))]
     (loop [[{:keys [children] :as node} & nodes] (:methods ast)
@@ -325,7 +339,7 @@
                          :suggested-deps suggested-deps
                          :source form}]))
 
-    (nil? deps)
+    (and (effect-hook? form) (nil? deps))
     (when-let [unsafe-calls (find-unsafe-set-state-calls env f)]
       ;; when set-state is called directly in a hook without deps, causing infinite loop
       [::unsafe-set-state {:unsafe-calls unsafe-calls
