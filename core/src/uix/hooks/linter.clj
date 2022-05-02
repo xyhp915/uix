@@ -253,7 +253,7 @@
        (ppr source)))
 
 (defn- fn-literal? [form]
-  (and (list? form) ('#{fn fn*} (first form))))
+  (and (seq? form) ('#{fn fn*} (first form))))
 
 (def literal?
   (some-fn keyword? number? string? nil? boolean?))

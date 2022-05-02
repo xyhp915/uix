@@ -1,4 +1,5 @@
 (ns uix.compiler.memo
+  (:require [uix.hooks.linter :as hooks.linter])
   (:import (cljs.tagged_literals JSValue)))
 
 (def dynamic-val?
@@ -31,7 +32,16 @@
         child-deps (map first children-bindings)]
     [children-bindings child-deps]))
 
-(defn memoize-element* [props children create-el]
+(defn memoize-fn-bindings
+  "Wraps anonymous functions in `uix.core/use-callback`
+  with an inferred vector of deps"
+  [env bindings]
+  (for [[sym form] bindings]
+    (if (hooks.linter/fn-literal? form)
+      [sym `(uix.core/use-callback ~form ~(vec (hooks.linter/find-local-variables env form)))]
+      [sym form])))
+
+(defn memoize-element* [env props children create-el]
   ;; React element can be memoized on two types of values present at element declaration place:
   ;; 1. "dynamic" expressions: symbols and function calls `(...)`
   ;; 3. Child elements
@@ -41,6 +51,7 @@
   ;; 3. Every UIx component has a single local cache for memoized elements in a form of `use-ref` (see *memo-cache*)
   ;; 4. When a component is rendered, every element is created and cached on its deps with a unique ID
   (let [[props-bindings props-deps props] (props->props+deps props)
+        props-bindings (memoize-fn-bindings env props-bindings)
         [children-bindings child-deps] (children->children+deps children)
         bindings (concat props-bindings children-bindings)
         deps (vec (concat props-deps child-deps))
@@ -48,8 +59,8 @@
     `(let [~@(mapcat identity bindings)]
        (uix.compiler.aot/use-memo-cache (fn [] ~(create-el props child-deps)) ~id ~deps))))
 
-(defn memoize-element [attrs children create-el]
+(defn memoize-element [env attrs children create-el]
   (if (map? attrs)
     ;; memoizing an element only when it's known to have a map of props
-    (memoize-element* attrs children create-el)
+    (memoize-element* env attrs children create-el)
     (create-el attrs children)))

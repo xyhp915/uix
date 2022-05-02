@@ -92,7 +92,7 @@
                       (if (input-component? tag-str)
                         `(create-uix-input ~tag-str ~attrs-children (cljs.core/array ~@children))
                         `(>el ~tag-str ~attrs-children (cljs.core/array ~@children)))))]
-    (memo/memoize-element attrs children create-el)))
+    (memo/memoize-element env attrs children create-el)))
 
 (defmethod compile-element :component [v {:keys [env]}]
   (let [[tag props & children] (normalize-element env v)
@@ -100,7 +100,7 @@
         create-el (fn [props children]
                     (let [props-children (compile-attrs :component props nil)]
                       `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))]
-    (memo/memoize-element props children create-el)))
+    (memo/memoize-element env props children create-el)))
 
 (defmethod compile-element :fragment [v _]
   (let [[_ attrs & children] v
