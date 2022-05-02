@@ -42,16 +42,6 @@
          :always (js/to-js-map true)))
     `(uix.compiler.attributes/interpret-attrs ~props (cljs.core/array) true)))
 
-;; Compiles HyperScript into React.createElement
-(defmulti compile-element
-  (fn [[tag] opts]
-    (cond
-      (= :<> tag) :fragment
-      (= :# tag) :suspense
-      (= :> tag) :interop
-      (keyword? tag) :element
-      :else :component)))
-
 (defn- input-component? [x]
   (contains? #{"input" "textarea"} x))
 
@@ -65,7 +55,7 @@
 (def elements-list-fns
   '#{for map mapv filter filterv remove keep keep-indexed})
 
-(defn elements-list?
+(defn- elements-list?
   "Returns true when `v` is a seq form normally used to render a list of elements
   `(map ...)`, `(for ...)`, etc"
   [v]
@@ -82,6 +72,16 @@
           (elements-list? (second v)))
     (into [(first v) {}] (rest v))
     v))
+
+;; Compiles HyperScript into React.createElement
+(defmulti compile-element
+  (fn [[tag] opts]
+    (cond
+      (= :<> tag) :fragment
+      (= :# tag) :suspense
+      (= :> tag) :interop
+      (keyword? tag) :element
+      :else :component)))
 
 (defmethod compile-element :element [v {:keys [env]}]
   (let [[tag attrs & children] (normalize-element env v)
@@ -102,19 +102,19 @@
                       `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))]
     (memo/memoize-element props children create-el)))
 
-(defmethod compile-element :fragment [v opts]
+(defmethod compile-element :fragment [v _]
   (let [[_ attrs & children] v
         attrs (compile-attrs :fragment attrs nil)
         ret `(>el fragment ~attrs (cljs.core/array ~@children))]
     ret))
 
-(defmethod compile-element :suspense [v opts]
+(defmethod compile-element :suspense [v _]
   (let [[_ attrs & children] v
         attrs (compile-attrs :suspense attrs nil)
         ret `(>el suspense ~attrs (cljs.core/array ~@children))]
     ret))
 
-(defmethod compile-element :interop [v opts]
+(defmethod compile-element :interop [v _]
   (let [[_ tag props & children] v
         props (compile-attrs :interop props nil)]
     `(>el ~tag ~props (cljs.core/array ~@children))))
