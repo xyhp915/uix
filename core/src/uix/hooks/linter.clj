@@ -20,6 +20,9 @@
   (and (symbol? sym)
        (some? (re-find #"^use-|use[A-Z]" (name sym)))))
 
+(defn hook-call? [form]
+  (and (list? form) (hook? (first form))))
+
 (defn effect-hook? [form]
   (contains? #{"use-effect" "use-layout-effect"} (name (first form))))
 
@@ -125,7 +128,7 @@
     (clojure.walk/prewalk
      (fn [form]
        (cond
-         (and (list? form) (hook? (first form)))
+         (hook-call? form)
          (do (when *in-branch?* (add-error! form ::hook-in-branch))
              (when *in-loop?* (add-error! form ::hook-in-loop))
              nil)
@@ -168,7 +171,9 @@
 
 ;; === Exhaustive Deps ===
 
-(defn find-local-variables [env f]
+(defn find-local-variables
+  "Finds all references in `form` to local vars in `env`"
+  [env form]
   (let [syms (atom #{})]
     (clojure.walk/postwalk
      #(cond
@@ -180,7 +185,8 @@
         (.-val %)
 
         :else %)
-     f)
+     form)
+    ;; return only those that are local in `env`
     (filter #(get-in env [:locals % :name]) @syms)))
 
 (defn find-free-variables [env f deps]

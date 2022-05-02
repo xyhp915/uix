@@ -54,10 +54,9 @@
   defui
   "Compiles UIx component into React component at compile-time."
   [sym & fdecl]
-
   (let [[fname args fdecl] (parse-sig sym fdecl)
         [fdecl props-spec] (hooks.linter/make-props-check &env sym fdecl)]
-    (uix.source/register-symbol! sym)
+    (uix.source/register-symbol! &env sym)
     (hooks.linter/lint! sym fdecl &env)
     `(do
        ~(if (empty? args)
@@ -69,7 +68,7 @@
 (defmacro source
   "Returns source string of UIx component"
   [sym]
-  (uix.source/source sym))
+  (uix.source/source &env sym))
 
 (defmacro $
   "Creates React element
@@ -78,10 +77,10 @@
   React component: ($ title-bar {:title \"Title\"})"
   ([tag]
    (hooks.linter/assert-props-spec &env tag {} [])
-   (uix.compiler.aot/compile-element [tag]))
+   (uix.compiler.aot/compile-element [tag] {:env &env}))
   ([tag props & children]
    (hooks.linter/assert-props-spec &env tag props children)
-   (uix.compiler.aot/compile-element (into [tag props] children))))
+   (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
 ;; === Hooks ===
 
