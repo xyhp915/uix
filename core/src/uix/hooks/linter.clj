@@ -252,7 +252,7 @@
        "To fix this, pass the state value into a vector of dependencies of the hook.\n"
        (ppr source)))
 
-(defn- fn-literal? [form]
+(defn fn-literal? [form]
   (and (seq? form) ('#{fn fn*} (first form))))
 
 (def literal?
