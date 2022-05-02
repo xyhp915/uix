@@ -2,20 +2,15 @@
 
 _Idiomatic ClojureScript interface to modern React.js_
 
-[Docs and Guides](https://roman01la.gitbook.io/pitch-uix/)
-
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 
 ```clj
 {:deps {uix.core/uix.core {:git/url "https://github.com/pitch-io/uix.git"
                            :deps/root "core"
-                           :sha "b0cbf0bd47f83dfa2b0d6c7953bbaab008a927b2"}
+                           :sha "0780168c0d82be211ef21a503d49ee7b9d6c1c69"}
         uix.dom/uix.dom {:git/url "https://github.com/pitch-io/uix.git"
                          :deps/root "dom"
-                         :sha "b0cbf0bd47f83dfa2b0d6c7953bbaab008a927b2"}
-        uix.rn/uix.rn {:git/url "https://github.com/pitch-io/uix.git"
-                       :deps/root "rn"
-                       :sha "b0cbf0bd47f83dfa2b0d6c7953bbaab008a927b2"}}}
+                         :sha "0780168c0d82be211ef21a503d49ee7b9d6c1c69"}}}
 ```
 
 ```clj
@@ -36,6 +31,17 @@ _Idiomatic ClojureScript interface to modern React.js_
 
 (uix.dom/render ($ app) (js/document.getElementById "root"))
 ```
+
+## Docs
+
+- [What is UIx?](/docs/what-is-uix.md)
+- [Components](/docs/components.md)
+- [Elements](/docs/elements.md)
+- [State](/docs/state.md)
+- [Effects](/docs/effects.md)
+- [Interop with React](/docs/interop-with-react.md)
+- [Interop with Reagent](/docs/interop-with-reagent.md)
+- [Code-splitting and React.lazy](/docs/code-splitting.md)
 
 ## Testing
 

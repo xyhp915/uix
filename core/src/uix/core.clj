@@ -46,13 +46,12 @@
 
 (defmacro
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
-                [name doc-string? attr-map? ([params*] prepost-map? body)+ attr-map?])}
+                [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])}
   defui
   "Compiles UIx component into React component at compile-time."
   [sym & fdecl]
-
   (let [[fname args fdecl] (parse-sig sym fdecl)]
-    (uix.source/register-symbol! sym)
+    (uix.source/register-symbol! &env sym)
     (hooks.linter/lint! sym fdecl &env)
     `(do
        ~(if (empty? args)
@@ -64,7 +63,7 @@
 (defmacro source
   "Returns source string of UIx component"
   [sym]
-  (uix.source/source sym))
+  (uix.source/source &env sym))
 
 (defmacro $
   "Creates React element
@@ -72,16 +71,16 @@
   DOM element: ($ :button#id.class {:on-click handle-click} \"click me\")
   React component: ($ title-bar {:title \"Title\"})"
   ([tag]
-   (uix.compiler.aot/compile-element [tag]))
+   (uix.compiler.aot/compile-element [tag] {:env &env}))
   ([tag props & children]
-   (uix.compiler.aot/compile-element (into [tag props] children))))
+   (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
 ;; === Hooks ===
 
 (defn vector->js-array [coll]
   (cond
-    (vector? coll) `(cljs.core/array ~@coll)
-    (some? coll) `(cljs.core/into-array ~coll)
+    (vector? coll) `(jsfy-deps (cljs.core/array ~@coll))
+    (some? coll) `(jsfy-deps ~coll)
     :else coll))
 
 (defn- make-hook-with-deps [sym env form f deps]

@@ -3,7 +3,7 @@
 
 (def re-tag
   "HyperScript tag pattern :div :div#id.class etc."
-  #"([^\s\.#]+)(?:#([^\s\.#]+))?(?:\.([^\s#]+))?")
+  #"([^\.#]*)(?:#([^\.#]+))?(?:\.([^#]+))?")
 
 (defn parse-tag
   "Takes HyperScript tag (:div#id.class) and returns parsed tag, id and class fields"
@@ -14,6 +14,7 @@
       ;; Throwing NPE here because shadow catches those to bring up error view in a browser
       (throw (NullPointerException. (str "Invalid tag name (found: " tag-str "). Make sure that the name matches the format and ordering is correct `:tag#id.class`"))))
     (let [[tag id class-name] (next (re-matches re-tag tag-str))
+          tag (if (= "" tag) "div" tag)
           class-name (when-not (nil? class-name)
                        (str/replace class-name #"\." " "))]
       (list tag id class-name (some? (re-find #"-" tag))))))
@@ -25,15 +26,15 @@
     (let [props-class (get props :class)]
       (cond-> props
               ;; Only use ID from tag keyword if no :id in props already
-              (and (some? id) (nil? (get props :id)))
-              (assoc :id id)
+        (and (some? id) (nil? (get props :id)))
+        (assoc :id id)
 
               ;; Merge classes
-              (or class props-class)
-              (assoc :class (cond
-                              (vector? props-class) `(class-names ~class ~@props-class)
-                              props-class `(class-names ~class ~props-class)
-                              :else class))))
+        (or class props-class)
+        (assoc :class (cond
+                        (vector? props-class) `(class-names ~class ~@props-class)
+                        props-class `(class-names ~class ~props-class)
+                        :else class))))
     props))
 
 (defn camel-case
@@ -58,10 +59,17 @@
     (reduce-kv #(assoc %1 (camel-case %2) %3) {} m)
     m))
 
-(defn convert-value [v]
-  (if (symbol? v)
-    `(keyword->string ~v)
-    v))
+(defn convert-value
+  ([v]
+   (if (symbol? v)
+     `(keyword->string ~v)
+     v))
+  ([k v]
+   (cond
+     (= :children v) v
+     (str/starts-with? (name k) "on-") v
+     (symbol? v) `(keyword->string ~v)
+     :else v)))
 
 (defn convert-values [m]
   (if (map? m)
@@ -74,7 +82,7 @@
   (convert-values (camel-case-keys value)))
 
 (defmethod compile-config-kv :default [name value]
-  (convert-value value))
+  (convert-value name value))
 
 (defn compile-attrs
   "Takes map of attributes and returns same map with keys translated from Clojure to React naming conventions"
@@ -83,14 +91,14 @@
   ([attrs {:keys [custom-element?]}]
    (if (map? attrs)
      (reduce-kv
-       #(assoc %1
-           (if custom-element?
-             (camel-case %2)
-             (case %2
-               :class :className
-               :for :htmlFor
-               (camel-case %2)))
-           (compile-config-kv %2 %3))
-       {}
-       attrs)
+      #(assoc %1
+              (if custom-element?
+                (camel-case %2)
+                (case %2
+                  :class :className
+                  :for :htmlFor
+                  (camel-case %2)))
+              (compile-config-kv %2 %3))
+      {}
+      attrs)
      attrs)))
