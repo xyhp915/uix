@@ -28,27 +28,27 @@
    (r/useEffect (with-return-value-check setup-fn)))
   ([setup-fn deps]
    (r/useEffect
-     (with-return-value-check setup-fn)
-     deps)))
+    (with-return-value-check setup-fn)
+    deps)))
 
 ;; == Layout effect hook ==
 (defn use-layout-effect
   ([setup-fn]
    (r/useLayoutEffect
-     (with-return-value-check setup-fn)))
+    (with-return-value-check setup-fn)))
   ([setup-fn deps]
    (r/useLayoutEffect
-     (with-return-value-check setup-fn)
-     deps)))
+    (with-return-value-check setup-fn)
+    deps)))
 
 (defn use-insertion-effect
   ([f]
    (r/useInsertionEffect
-     (with-return-value-check f)))
+    (with-return-value-check f)))
   ([f deps]
    (r/useInsertionEffect
-     (with-return-value-check f)
-     deps)))
+    (with-return-value-check f)
+    deps)))
 
 ;; == Callback hook ==
 (defn use-callback
