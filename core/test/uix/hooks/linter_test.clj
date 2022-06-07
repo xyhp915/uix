@@ -6,10 +6,10 @@
 ;; === Rules of Hooks ===
 
 (defn lint-syms [syms expr-fn]
-  (binding [hooks.linter/*component-context* (atom {:errors []})]
+  (binding [hooks.linter/*context* (atom {:errors []})]
     (let [exprs (map expr-fn syms)
           _ (hooks.linter/lint-hooks! exprs)
-          errors (:errors @hooks.linter/*component-context*)]
+          errors (:errors @hooks.linter/*context*)]
       [exprs (map :source-context errors)])))
 
 (deftest test-lint-when

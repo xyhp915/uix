@@ -9,7 +9,7 @@
 
 ;; === Rules of Hooks ===
 
-(def ^:dynamic *component-context* nil)
+(def ^:dynamic *context* nil)
 (def ^:dynamic *source-context* false)
 (def ^:dynamic *in-branch?* false)
 (def ^:dynamic *in-loop?* false)
@@ -117,9 +117,9 @@
       (run! #(lint-hooks!* % :in-loop? true) body))))
 
 (defn add-error! [form type]
-  (swap! *component-context* update :errors conj {:source form
-                                                  :source-context *source-context*
-                                                  :type type}))
+  (swap! *context* update :errors conj {:source form
+                                        :source-context *source-context*
+                                        :type type}))
 
 (defn lint-hooks!*
   [expr & {:keys [in-branch? in-loop?]
@@ -161,9 +161,9 @@
        "Found in " name ", at " line ":" column))
 
 (defn lint! [sym form env]
-  (binding [*component-context* (atom {:errors []})]
+  (binding [*context* (atom {:errors []})]
     (lint-hooks! form)
-    (let [{:keys [errors]} @*component-context*
+    (let [{:keys [errors]} @*context*
           {:keys [column line]} env]
       (run! #(ana/warning (:type %) env (into {:name (str (-> env :ns :name) "/" sym)
                                                :column column
