@@ -2,7 +2,6 @@
   "Public API"
   (:require [uix.compiler.aot]
             [uix.source]
-            [cljs.core]
             [uix.hooks.linter :as hooks.linter]
             [uix.dev]
             [uix.lib]
@@ -25,25 +24,8 @@
          (binding [*current-component* ~sym] (f#))
          (f#)))))
 
-(defn parse-sig [name fdecl]
-  (let [[fdecl m] (if (string? (first fdecl))
-                    [(next fdecl) {:doc (first fdecl)}]
-                    [fdecl {}])
-        [fdecl m] (if (map? (first fdecl))
-                    [(next fdecl) (conj m (first fdecl))]
-                    [fdecl m])
-        fdecl (if (vector? (first fdecl))
-                (list fdecl)
-                fdecl)
-        [fdecl m] (if (map? (last fdecl))
-                    [(butlast fdecl) (conj m (last fdecl))]
-                    [fdecl m])
-        m (conj {:arglists (list 'quote (#'cljs.core/sigs fdecl))} m)
-        m (conj (if (meta name) (meta name) {}) m)]
-    [(with-meta name m) fdecl]))
-
 (defn parse-defui-sig [sym fdecl]
-  (let [[fname methods] (parse-sig sym fdecl)
+  (let [[fname methods] (uix.lib/parse-sig sym fdecl)
         _ (uix.lib/assert!
            (= 1 (count methods))
            (str "uix.core/defui doesn't support multi-arity.\n"
@@ -91,7 +73,7 @@
    (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
 (defn parse-defhook-sig [sym fdecl]
-  (let [[fname methods] (parse-sig sym fdecl)]
+  (let [[fname methods] (uix.lib/parse-sig sym fdecl)]
     (uix.lib/assert! (str/starts-with? (name fname) "use-")
                      (str "React Hook name should start with `use-`, found `" (name fname) "` instead."))
     [fname methods]))

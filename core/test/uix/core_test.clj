@@ -2,11 +2,12 @@
   (:require [clojure.test :refer :all]
             [uix.core]
             [cljs.analyzer :as ana]
-            [uix.hooks.linter :as linter])
+            [uix.hooks.linter :as linter]
+            [uix.lib])
   (:import (cljs.tagged_literals JSValue)))
 
 (deftest test-parse-sig
-  (let [[sym methods] (uix.core/parse-sig 'test '("docstring" ([x y] x) ([x] x)))]
+  (let [[sym methods] (uix.lib/parse-sig 'test '("docstring" ([x y] x) ([x] x)))]
     (is (= 'test sym))
     (is (= "docstring" (:doc (meta sym))))
     (is (= '(([x y] x) ([x] x)) methods))))

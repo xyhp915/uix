@@ -3,7 +3,8 @@
             [cljs.analyzer :as ana]
             [clojure.string :as str]
             [clojure.pprint :as pp]
-            [cljs.analyzer.api :as ana-api])
+            [cljs.analyzer.api :as ana-api]
+            [uix.lib])
   (:import (cljs.tagged_literals JSValue)
            (java.io Writer)))
 
@@ -13,6 +14,7 @@
 (def ^:dynamic *source-context* false)
 (def ^:dynamic *in-branch?* false)
 (def ^:dynamic *in-loop?* false)
+(def ^:dynamic *in-callback?* false)
 
 (defn hook? [sym]
   (and (symbol? sym)
@@ -43,7 +45,8 @@
     :for  #{for doseq}
     :iter-fn #{map mapv map-indexed filter filterv reduce reduce-kv keep keep-indexed
                remove mapcat drop-while take-while group-by partition-by split-with
-               sort-by some}})
+               sort-by some}
+    :callback #{fn fn*}})
 
 (defmulti maybe-lint
   (fn [[sym :as form]]
@@ -116,26 +119,37 @@
     (let [[_ _ & body] f]
       (run! #(lint-hooks!* % :in-loop? true) body))))
 
+(defmethod maybe-lint :callback [[_ & fdecl]]
+  (let [[_ methods] (if (symbol? (first fdecl))
+                      (uix.lib/parse-sig (first fdecl) (rest fdecl))
+                      (uix.lib/parse-sig 'noop fdecl))]
+    (->> methods
+         (mapcat rest)
+         (run! #(lint-hooks!* % :in-callback? true)))))
+
 (defn add-error! [form type]
   (swap! *context* update :errors conj {:source form
                                         :source-context *source-context*
                                         :type type}))
 
 (defn lint-hooks!*
-  [expr & {:keys [in-branch? in-loop?]
+  [expr & {:keys [in-branch? in-loop? in-callback?]
            :or {in-branch? *in-branch?*
-                in-loop? *in-loop?*}}]
+                in-loop? *in-loop?*
+                in-callback? *in-callback?*}}]
   (binding [*in-branch?* in-branch?
-            *in-loop?* in-loop?]
+            *in-loop?* in-loop?
+            *in-callback?* in-callback?]
     (clojure.walk/prewalk
      (fn [form]
        (cond
          (hook-call? form)
          (do (when *in-branch?* (add-error! form ::hook-in-branch))
              (when *in-loop?* (add-error! form ::hook-in-loop))
+             (when *in-callback?* (add-error! form ::hook-in-callback))
              nil)
 
-         (and (list? form) (or (not *in-branch?*) (not *in-loop?*)))
+         (and (list? form) (or (not *in-branch?*) (not *in-loop?*) (not *in-callback?*)))
          (binding [*source-context* form]
            (maybe-lint form))
 
@@ -158,6 +172,16 @@
        "Possibly because it is called in a loop. "
        "React Hooks must be called in the exact same order in "
        "every component render.\n"
+       "Found in " name ", at " line ":" column))
+
+(defmethod ana/error-message ::hook-in-callback [_ {:keys [name column line source]}]
+  ;; https://github.com/facebook/react/blob/bcbeb52bf36c6f5ecdad46a48e87cf4354c5a64f/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L503
+  (str "React Hook " source " cannot be called inside a callback.\n"
+       "React Hooks must be called in a component or a custom hook declared via `uix.core/defhook`.\n"
+       "Found in " name ", at " line ":" column))
+
+(defmethod ana/error-message ::non-defhook-hook [_ {:keys [name column line source]}]
+  (str "React Hook " source " should be declared via `uix.core/defhook`.\n"
        "Found in " name ", at " line ":" column))
 
 (defn lint! [sym form env]
