@@ -88,7 +88,8 @@
   (defhook use-in-viewport []
     ...)"
   [sym & fdecl]
-  (let [[fname methods] (parse-defhook-sig sym fdecl)]
+  (let [[fname methods] (parse-defhook-sig sym fdecl)
+        fname (vary-meta fname assoc :defhook true)]
     (doseq [[_ & body] methods]
       (hooks.linter/lint! sym body &env))
     `(defn ~fname ~@methods)))
