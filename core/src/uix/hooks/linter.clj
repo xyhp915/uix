@@ -132,11 +132,6 @@
                                         :source-context *source-context*
                                         :type type}))
 
-(defn defhook? [form]
-  (let [var (ana/resolve-var (:env @*context*) (first form))]
-    (or (= 'uix.core (:ns var))
-        (some-> var :meta :defhook))))
-
 (defn lint-hooks!*
   [expr & {:keys [in-branch? in-loop? in-callback?]
            :or {in-branch? *in-branch?*
@@ -152,7 +147,6 @@
          (do (when *in-branch?* (add-error! form ::hook-in-branch))
              (when *in-loop?* (add-error! form ::hook-in-loop))
              (when *in-callback?* (add-error! form ::hook-in-callback))
-             (when-not (defhook? form) (add-error! form ::non-defhook-hook))
              nil)
 
          (and (list? form) (or (not *in-branch?*) (not *in-loop?*) (not *in-callback?*)))
@@ -184,10 +178,6 @@
   ;; https://github.com/facebook/react/blob/bcbeb52bf36c6f5ecdad46a48e87cf4354c5a64f/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L503
   (str "React Hook " source " cannot be called inside a callback.\n"
        "React Hooks must be called in a component or a custom hook declared via `uix.core/defhook`.\n"
-       "Found in " name ", at " line ":" column))
-
-(defmethod ana/error-message ::non-defhook-hook [_ {:keys [name column line source]}]
-  (str "React Hook `" (first source) "` should be declared via `uix.core/defhook`.\n"
        "Found in " name ", at " line ":" column))
 
 (defn lint! [sym form env]
