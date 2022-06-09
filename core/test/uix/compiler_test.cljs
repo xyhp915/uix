@@ -22,26 +22,7 @@
            "uix.test-utils/js-equal?"))
     (let [f-hello (fn [])]
       (is (= (debug/default-format-display-name (.-name f-hello))
-             "f-hello"))))
-
-  (deftest test-with-name
-    (testing "should have formatted display and function names"
-      (let [f (fn <some-component> [])]
-        (debug/with-name f)
-        (is (= (.-displayName f) "uix.compiler-test/<some-component>"))
-        (is (= (.-name f) "uix.compiler-test/<some-component>"))))
-    (testing "should throw when *format-display-name* is unbound"
-      (let [f (fn <some-component> [])]
-        (set! debug/*format-display-name* nil)
-        (is (thrown-with-msg? js/Error #"\*format-display-name\* is not bound"
-                              (debug/with-name f)))))
-    (testing "should have formatted function name in a stack trace"
-      (uix.core/defui some-component [] (throw (js/Error. "x")))
-      (let [stack (try
-                    (some-component)
-                    (catch js/Error e
-                      (.-stack e)))]
-        (is (str/includes? stack "uix.compiler-test/some-component"))))))
+             "f-hello")))))
 
 (uix.core/defui to-string-test-comp [props]
   ($ :div {} (str "i am " (:foo props))))
@@ -172,16 +153,13 @@
     (is (= "<div><div>hello</div><div>world</div><div>foo</div><div>1</div><div>2</div></div>"
            (as-string ($ comp3))))))
 
-(deftest test-suspense
-  (is (.-type ($ :# {:fallback 1} 2))
-      (symbol-for "react.suspense")))
-
 (deftest test-interop
+  (defn testc-interop [])
   (testing "Interop element type"
-    (is (.-type ($ :> inc))
-        inc))
+    (is (.-type ($ testc-interop))
+        testc-interop))
   (testing "Shallowly converted props"
-    (let [el ($ :> inc {:a 1 :b {:c 2}} :child)
+    (let [el ($ testc-interop {:a 1 :b {:c 2}} :child)
           props (.-props el)]
       (is (.-a props) 1)
       (is (.-b props) {:c 2})
@@ -193,29 +171,29 @@
     (catch :default e
       (is "Target container is not a DOM element." (.-message e)))))
 
-#_(deftest test-as-react
-    (uix.core/defui test-c [props]
-      (is (map? props) true)
-      (is "TEXT" (:text props))
-      ($ :h1 (:text props)))
-    (let [h1 (uixc/as-react test-c)
-          el (h1 #js {:text "TEXT"})
-          props (.-props el)]
-      (is (.-type el) "h1")
-      (is (.-children props) "TEXT")))
+(deftest test-as-react
+  (uix.core/defui test-c [props]
+    (is (map? props))
+    (is (= "TEXT" (:text props)))
+    ($ :h1 (:text props)))
+  (let [h1 (uixc/as-react test-c)
+        el (h1 #js {:text "TEXT"})
+        props (.-props el)]
+    (is (= (.-type el) "h1"))
+    (is (= (.-children props) "TEXT"))))
 
 (deftest test-validate-component
-  (is (thrown-with-msg? js/Error #"Invalid use of a non-UIx component test in `\$` form\..*"
-                        (uixc/validate-component #js {:name "test"})))
-  (when ^boolean goog.DEBUG
-    (is (thrown-with-msg? js/Error #"Invalid use of a non-UIx component cljs\$core\$inc in `\$` form\..*"
-                          ($ inc))))
-  (let [target #js {:name "test"}]
-    (set! (.-uix-component? target) true)
-    (is (true? (uixc/validate-component target))))
-  (when ^boolean goog.DEBUG
-    (uix.core/defui test-comp [] "x")
-    (is (= test-comp (.-type ($ test-comp))))))
+  (defn testc-validate-component-1 [])
+  (defn testc-validate-component-2 [])
+  (defn testc-validate-component-3 [])
+  (aset testc-validate-component-1 "G_1" testc-validate-component-1)
+  (is (thrown-with-msg? js/Error #"Invalid use of Reagent component uix\$compiler_test\$testc_validate_component_1 in.*"
+                        (uixc/validate-component testc-validate-component-1)))
+  (is (thrown-with-msg? js/Error #"Invalid use of Reagent component uix\$compiler_test\$testc_validate_component_1 in.*"
+                        ($ testc-validate-component-1)))
+  (set! (.-uix-component? ^clj testc-validate-component-2) true)
+  (is (true? (uixc/validate-component testc-validate-component-2)))
+  (is (true? (uixc/validate-component testc-validate-component-3))))
 
 (deftest test-nil-attrs
   (defui test-nil-attrs-component [])

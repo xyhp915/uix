@@ -54,7 +54,7 @@
           (no-args-component fname body-with-fast-refresh)
           (with-args-component fname args body-with-fast-refresh))
        (set! (.-uix-component? ~sym) true)
-       (with-name ~sym ~(-> &env :ns :name str) ~(str sym))
+       (set! (.-displayName ~sym) ~(str (-> &env :ns :name) "/" sym))
        ~(uix.dev/fast-refresh-signature sym body-with-fast-refresh))))
 
 (defmacro source
