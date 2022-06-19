@@ -1,20 +1,12 @@
 (ns uix.core-test
   (:require [clojure.test :refer [deftest is async testing run-tests]]
             [uix.core :refer [defui $]]
-            ;[uix.core.lazy-loader :refer [require-lazy]]
             [uix.lib]
             [react :as r]
+            [react-dom]
             [uix.test-utils :as t]
-            [cljs-bean.core :as bean]))
-
-(deftest test-lib
-  (is (= (seq (uix.lib/re-seq* (re-pattern "foo") "foo bar foo baz foo zot"))
-         (list "foo" "foo" "foo")))
-
-  (is (= (map vec (uix.lib/re-seq* (re-pattern "f(.)o") "foo bar foo baz foo zot"))
-         (list ["foo" "o"] ["foo" "o"] ["foo" "o"])))
-
-  (is (= '("") (seq (uix.lib/re-seq* #"\s*" "")))))
+            [uix.compiler.attributes :as attrs]
+            [uix.hiccup :refer [row-compiled]]))
 
 (deftest test-use-ref
   (uix.core/defui test-use-ref-comp [_]
@@ -44,10 +36,6 @@
     (is (t/react-element-of-type? f "react.memo"))
     (is (= "<h1>1</h1>" (t/as-string ($ f {:x 1}))))))
 
-#_(deftest test-require-lazy
-    (require-lazy '[uix.core :refer [strict-mode]])
-    (is (t/react-element-of-type? strict-mode "react.lazy")))
-
 (deftest test-html
   (is (t/react-element-of-type? ($ :h1 1) "react.element")))
 
@@ -56,56 +44,6 @@
     ($ :h1 {} children))
   (is (= (t/as-string ($ h1 {} 1))) "<h1>1</h1>"))
 
-(deftest test-as-react
-  (let [ctor (fn [props]
-               (is (= @#'bean/Bean (type props)))
-               (:x props))
-        ftype (-> (uix.core/as-react ctor)
-                  ^js (r/createElement)
-                  .-type)]
-    (is (= (ftype #js {:x 1}) 1))))
-
-(deftest test-create-error-boundary-1
-  (let [error->state-called? (atom false)
-        handle-catch-called? (atom false)
-        err-b (uix.core/create-error-boundary
-               {:display-name "err-b-1"
-                :error->state #(reset! error->state-called? true)
-                :handle-catch #(reset! handle-catch-called? true)}
-               (fn [err {:keys [done x]}]
-                 (is (= nil @err))
-                 (is (= 1 x))
-                 (is (= false @error->state-called?))
-                 (is (= false @handle-catch-called?))
-                 (done)
-                 x))]
-    (async done
-           (t/render ($ err-b {:done done :x 1})))))
-
-#_(deftest test-create-error-boundary-2
-    (let [handle-catch (atom nil)
-          child (fn [] (throw (js/Error. "Hello!")))
-          err-b (uix.core/create-error-boundary
-                 {:display-name "err-b-2"
-                  :error->state ex-message
-                  :handle-catch (fn [err info] (reset! handle-catch err))}
-                 (fn [cause {:keys [done x child]}]
-                   (is (= 1 x))
-                   (cond
-                     (nil? @cause) child
-
-                     (= :recover @cause)
-                     (do
-                       (is (some? @handle-catch))
-                       (done)
-                       x)
-
-                     :else (do (is (= "Hello!" @cause))
-                               (js/setTimeout #(reset! cause :recover) 20)
-                               x))))]
-      (async done
-             (t/render ($ err-b {:done done :x 1 :child child})))))
-
 (deftest test-jsfy-deps
   (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
          (vec (uix.core/jsfy-deps [1 "str" :k/w 'uix.core/sym #uuid "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]))))
@@ -113,6 +51,105 @@
          (vec (uix.core/jsfy-deps #js [1 "str" :k/w 'uix.core/sym #uuid "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]))))
   (is (= #{} (uix.core/jsfy-deps #{})))
   (is (= {} (uix.core/jsfy-deps {}))))
+
+(deftest test-lazy
+  (async done
+         (let [expected-value :x
+               lazy-f (uix.core/lazy (fn [] (js/Promise. (fn [res] (js/setTimeout #(res expected-value) 100)))))]
+           (is (.-uix-component? lazy-f))
+           (try
+             (._init lazy-f (.-_payload lazy-f))
+             (catch :default e
+               (is (instance? js/Promise e))
+               (.then e (fn [v]
+                          (is (= expected-value (.-default ^js v)))
+                          (done))))))))
+
+(deftest test-create-class
+  (let [actual (atom {:constructor {:this nil :props nil}
+                      :getInitialState {:this nil}
+                      :render {:state nil :props nil}
+                      :componentDidMount false
+                      :componentWillUnmount false})
+        component (uix.core/create-class
+                   {:displayName "test-comp"
+                    :constructor (fn [this props]
+                                   (swap! actual assoc :constructor {:this this :props props}))
+                    :getInitialState (fn [this]
+                                       (swap! actual assoc :getInitialState {:this this})
+                                       #js {:x 1})
+                    :componentDidMount #(swap! actual assoc :componentDidMount true)
+                    :componentWillUnmount #(swap! actual assoc :componentWillUnmount true)
+                    :render (fn []
+                              (this-as this
+                                       (swap! actual assoc :render {:state (.-state this) :props (.-props this)})
+                                       "Hello!"))})
+        root (js/document.createElement "div")]
+    (react-dom/render ($ component {:x 1}) root)
+    (is (instance? component (-> @actual :constructor :this)))
+    (is (-> @actual :constructor :props .-argv (= {:x 1})))
+    (is (instance? component (-> @actual :getInitialState :this)))
+    (is (-> @actual :render :props .-argv (= {:x 1})))
+    (is (-> @actual :render :state .-x (= 1)))
+    (is (:componentDidMount @actual))
+    (is (= "Hello!" (.-textContent root)))
+    (react-dom/unmountComponentAtNode root)
+    (is (:componentWillUnmount @actual))))
+
+(deftest test-convert-props
+  (testing "shallow conversion"
+    (let [obj (attrs/convert-props
+               {:x 1
+                :y :keyword
+                :f identity
+                :style {:border :red
+                        :margin-top "12px"}
+                :class :class
+                :for :for
+                :charset :charset
+                :hello-world "yo"
+                "yo-yo" "string"
+                :plugins [1 2 3]
+                :data-test-id "hello"
+                :aria-role "button"}
+               #js []
+               true)]
+      (is (= 1 (.-x obj)))
+      (is (= "keyword" (.-y obj)))
+      (is (= identity (.-f obj)))
+      (is (= "red" (.. obj -style -border)))
+      (is (= "12px" (.. obj -style -marginTop)))
+      (is (= "class" (.-className obj)))
+      (is (= "for" (.-htmlFor obj)))
+      (is (= "charset" (.-charSet obj)))
+      (is (= "yo" (.-helloWorld obj)))
+      (is (= [1 2 3] (.-plugins obj)))
+      (is (= "string" (aget obj "yo-yo")))
+      (is (= "hello" (aget obj "data-test-id")))
+      (is (= "button" (aget obj "aria-role")))
+      (is (= "a b c" (.-className (attrs/convert-props {:class [:a :b "c"]} #js [] true)))))))
+
+(deftest test-as-react
+  (uix.core/defui test-c [props]
+    (is (map? props))
+    (is (= "TEXT" (:text props)))
+    ($ :h1 (:text props)))
+  (let [h1 (uix.core/as-react test-c)
+        el (h1 #js {:text "TEXT"})
+        props (.-props el)]
+    (is (= (.-type el) "h1"))
+    (is (= (.-children props) "TEXT"))))
+
+(defui test-source-component []
+  "HELLO")
+
+(deftest test-source
+  (is (= (uix.core/source test-source-component)
+         "(defui test-source-component []\n  \"HELLO\")"))
+  (is (= (uix.core/source uix.hiccup/form-compiled)
+         "(defui form-compiled [{:keys [children]}]\n  ($ :form children))"))
+  (is (= (uix.core/source row-compiled)
+         "(defui row-compiled [{:keys [children]}]\n  ($ :div.row children))")))
 
 (defn -main []
   (run-tests))

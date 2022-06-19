@@ -2,16 +2,24 @@
 
 _Idiomatic ClojureScript interface to modern React.js_
 
+API compatibility: React v17
+
+UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
+
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
+
+## Installation
 
 ```clj
 {:deps {uix.core/uix.core {:git/url "https://github.com/pitch-io/uix.git"
                            :deps/root "core"
-                           :sha "0780168c0d82be211ef21a503d49ee7b9d6c1c69"}
+                           :sha "a9be95ed5033dddcb77f67a1c6faa08e58ea08b2"}
         uix.dom/uix.dom {:git/url "https://github.com/pitch-io/uix.git"
                          :deps/root "dom"
-                         :sha "0780168c0d82be211ef21a503d49ee7b9d6c1c69"}}}
+                         :sha "a9be95ed5033dddcb77f67a1c6faa08e58ea08b2"}}}
 ```
+
+## Usage
 
 ```clj
 (ns my.app
@@ -37,11 +45,14 @@ _Idiomatic ClojureScript interface to modern React.js_
 - [What is UIx?](/docs/what-is-uix.md)
 - [Components](/docs/components.md)
 - [Elements](/docs/elements.md)
+- [Hooks](/docs/hooks.md)
 - [State](/docs/state.md)
 - [Effects](/docs/effects.md)
 - [Interop with React](/docs/interop-with-react.md)
 - [Interop with Reagent](/docs/interop-with-reagent.md)
 - [Code-splitting and React.lazy](/docs/code-splitting.md)
+- [Migrating from Reagent](/docs/migrating-from-reagent.md)
+- [Hot reloading](/docs/hot-reloading.md)
 
 ## Testing
 

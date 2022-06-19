@@ -4,18 +4,27 @@
             [uix.compiler.attributes :as attrs]
             [cljs.analyzer :as ana]))
 
-(defmulti compile-attrs (fn [tag attrs opts] tag))
+(defmulti compile-attrs
+  "Compiles a map of attributes into JS object,
+  or emits interpretation call for runtime, when a value
+  at props position is dynamic (symbol)"
+  (fn [tag attrs opts] tag))
 
 (defmethod compile-attrs :element [_ attrs {:keys [tag-id-class]}]
   (if (or (map? attrs) (nil? attrs))
     `(cljs.core/array
       ~(cond-> attrs
+         ;; interpret :style if it's not map literal
          (and (some? (:style attrs))
               (not (map? (:style attrs))))
          (assoc :style `(uix.compiler.attributes/convert-props ~(:style attrs) (cljs.core/array) true))
+         ;; merge parsed id and class with attrs map
          :always (attrs/set-id-class tag-id-class)
+         ;; camel-casify the map
          :always (attrs/compile-attrs {:custom-element? (last tag-id-class)})
+         ;; emit JS object literal
          :always js/to-js))
+    ;; otherwise emit interpretation call
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array ~@tag-id-class) false)))
 
 (defmethod compile-attrs :component [_ props _]
@@ -27,19 +36,6 @@
   (if (map? attrs)
     `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
-
-(defmethod compile-attrs :suspense [_ attrs _]
-  (if (map? attrs)
-    `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
-    `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
-
-(defmethod compile-attrs :interop [_ props _]
-  (if (map? props)
-    `(cljs.core/array
-      ~(cond-> props
-         :always (attrs/compile-attrs {:custom-element? true})
-         :always (js/to-js-map true)))
-    `(uix.compiler.attributes/interpret-attrs ~props (cljs.core/array) true)))
 
 (defn- input-component? [x]
   (contains? #{"input" "textarea"} x))
@@ -55,7 +51,7 @@
   '#{for map mapv filter filterv remove keep keep-indexed})
 
 (defn- elements-list?
-  "Returns true when `v` is a seq form normally used to render a list of elements
+  "Returns true when `v` is form commonly used to render a list of elements
   `(map ...)`, `(for ...)`, etc"
   [v]
   (and (list? v)
@@ -72,13 +68,11 @@
     (into [(first v) {}] (rest v))
     v))
 
-;; Compiles HyperScript into React.createElement
 (defmulti compile-element
+  "Compiles UIx elements into React.createElement"
   (fn [[tag] _]
     (cond
       (= :<> tag) :fragment
-      (= :# tag) :suspense
-      (= :> tag) :interop
       (keyword? tag) :element
       :else :component)))
 
@@ -103,14 +97,3 @@
         attrs (compile-attrs :fragment attrs nil)
         ret `(>el fragment ~attrs (cljs.core/array ~@children))]
     ret))
-
-(defmethod compile-element :suspense [v _]
-  (let [[_ attrs & children] v
-        attrs (compile-attrs :suspense attrs nil)
-        ret `(>el suspense ~attrs (cljs.core/array ~@children))]
-    ret))
-
-(defmethod compile-element :interop [v _]
-  (let [[_ tag props & children] v
-        props (compile-attrs :interop props nil)]
-    `(>el ~tag ~props (cljs.core/array ~@children))))

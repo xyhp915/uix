@@ -34,6 +34,16 @@
   [root]
   (.unmount root))
 
+(defn render
+  "DEPRECATED: Renders element into DOM node. The first argument is React element."
+  [element node]
+  (rdom/render element node))
+
+(defn hydrate
+  "DEPRECATED: Hydrates server rendered document at `node` with `element`."
+  [element node]
+  (rdom/hydrate element node))
+
 (defn flush-sync
   "Force React to flush any updates inside the provided callback synchronously.
   This ensures that the DOM is updated immediately.
@@ -44,6 +54,11 @@
 
 (defn batched-updates [f]
   (rdom/unstable_batchedUpdates f))
+
+(defn unmount-at-node
+  "Unmounts React component rendered into DOM node"
+  [node]
+  (rdom/unmountComponentAtNode node))
 
 (defn find-dom-node
   "If this component has been mounted into the DOM, this returns the corresponding native browser DOM element.

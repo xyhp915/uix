@@ -3,7 +3,7 @@
   (:require [reagent.core :as r]
             ["react-dom/server" :as rserver]
             [react :as react]
-            [uix.core :refer [$]]
+            [uix.core :refer [defui $]]
             [uix.hiccup :as hiccup]
             [uix.react :refer [Editor]]))
 
