@@ -42,20 +42,20 @@
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
                 [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])}
   defui
-  "Compiles UIx component into React component at compile-time."
+  "Creates UIx component. Similar to defn, but doesn't support multi arity.
+  A component should have a single argument of props."
   [sym & fdecl]
-  (let [[fname args body] (parse-defui-sig sym fdecl)
-        sym (with-meta sym {:tag 'js})
-        body-with-fast-refresh (uix.dev/with-fast-refresh sym body)]
-    (uix.source/register-symbol! &env sym)
-    (hooks.linter/lint! sym body-with-fast-refresh &env)
-    `(do
-       ~(if (empty? args)
-          (no-args-component fname body-with-fast-refresh)
-          (with-args-component fname args body-with-fast-refresh))
-       (set! (.-uix-component? ~sym) true)
-       (set! (.-displayName ~sym) ~(str (-> &env :ns :name) "/" sym))
-       ~(uix.dev/fast-refresh-signature sym body-with-fast-refresh))))
+  (let [[fname args fdecl] (parse-defui-sig sym fdecl)]
+    (let [sym (with-meta sym {:tag 'js})
+          body (uix.dev/with-fast-refresh sym fdecl)]
+      (hooks.linter/lint! sym fdecl &env)
+      `(do
+         ~(if (empty? args)
+            (no-args-component fname body)
+            (with-args-component fname args body))
+         (set! (.-uix-component? ~sym) true)
+         (set! (.-displayName ~sym) ~(str (-> &env :ns :name) "/" sym))
+         ~(uix.dev/fast-refresh-signature sym body)))))
 
 (defmacro source
   "Returns source string of UIx component"

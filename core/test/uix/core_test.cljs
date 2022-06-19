@@ -5,16 +5,8 @@
             [react :as r]
             [react-dom]
             [uix.test-utils :as t]
-            [uix.compiler.attributes :as attrs]))
-
-(deftest test-lib
-  (is (= (seq (uix.lib/re-seq* (re-pattern "foo") "foo bar foo baz foo zot"))
-         (list "foo" "foo" "foo")))
-
-  (is (= (map vec (uix.lib/re-seq* (re-pattern "f(.)o") "foo bar foo baz foo zot"))
-         (list ["foo" "o"] ["foo" "o"] ["foo" "o"])))
-
-  (is (= '("") (seq (uix.lib/re-seq* #"\s*" "")))))
+            [uix.compiler.attributes :as attrs]
+            [uix.hiccup :refer [row-compiled]]))
 
 (deftest test-use-ref
   (uix.core/defui test-use-ref-comp [_]
@@ -136,6 +128,28 @@
       (is (= "hello" (aget obj "data-test-id")))
       (is (= "button" (aget obj "aria-role")))
       (is (= "a b c" (.-className (attrs/convert-props {:class [:a :b "c"]} #js [] true)))))))
+
+(deftest test-as-react
+  (uix.core/defui test-c [props]
+    (is (map? props))
+    (is (= "TEXT" (:text props)))
+    ($ :h1 (:text props)))
+  (let [h1 (uix.core/as-react test-c)
+        el (h1 #js {:text "TEXT"})
+        props (.-props el)]
+    (is (= (.-type el) "h1"))
+    (is (= (.-children props) "TEXT"))))
+
+(defui test-source-component []
+  "HELLO")
+
+(deftest test-source
+  (is (= (uix.core/source test-source-component)
+         "(defui test-source-component []\n  \"HELLO\")"))
+  (is (= (uix.core/source uix.hiccup/form-compiled)
+         "(defui form-compiled [{:keys [children]}]\n  ($ :form children))"))
+  (is (= (uix.core/source row-compiled)
+         "(defui row-compiled [{:keys [children]}]\n  ($ :div.row children))")))
 
 (defn -main []
   (run-tests))
