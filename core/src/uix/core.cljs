@@ -155,6 +155,12 @@
   []
   (hooks/use-transition))
 
+(defn start-transition
+  "Marks updates in `f` as transitions
+  See: https://reactjs.org/docs/react-api.html#starttransition"
+  [f]
+  (react/startTransition f))
+
 (defn use-id
   "Returns unique ID that is stable across the server and client, while avoiding hydration mismatches.
 
