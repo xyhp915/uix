@@ -26,12 +26,17 @@
       (validate-children child)))
   true)
 
+(defn- with-debug-source [args debug-source]
+  (when debug-source
+    (let [props (or (aget args 1) #js {})]
+      (set! (.-__source props) debug-source)
+      (aset args 1 props))))
+
 (defn >el [tag attrs-children children debug-source]
   (let [args (-> #js [tag] (.concat attrs-children) (.concat children))]
     (when ^boolean goog.DEBUG
       (validate-children (.slice args 2))
-      (when debug-source
-        (set! (.-__source (aget args 1)) debug-source)))
+      (with-debug-source args debug-source))
     (.apply react/createElement nil args)))
 
 (defn create-uix-input [tag attrs-children children debug-source]

@@ -151,5 +151,15 @@
   (is (= (uix.core/source row-compiled)
          "(defui row-compiled [{:keys [children]}]\n  ($ :div.row children))")))
 
+(deftest test-debug-source
+  (let [dom-el ($ :h1)
+        comp-el ($ :h1)]
+    (is (= 155 (.. dom-el  -_source -lineNumber)))
+    (is (= 16 (.. dom-el  -_source -columnNumber)))
+    (is (= "uix/core_test.cljs" (.. dom-el  -_source -fileName)))
+    (is (= 156 (.. comp-el  -_source -lineNumber)))
+    (is (= 17 (.. comp-el  -_source -columnNumber)))
+    (is (= "uix/core_test.cljs" (.. comp-el  -_source -fileName)))))
+
 (defn -main []
   (run-tests))

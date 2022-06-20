@@ -18,11 +18,14 @@
 
 (deftest test-$
   (is (= (macroexpand-1 '(uix.core/$ :h1))
-         '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
+         '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array)
+                                (clojure.core/when goog.DEBUG (js* "{'fileName':~{},'lineNumber':~{},'columnNumber':~{}}" nil nil nil)))))
   (is (= (macroexpand-1 '(uix.core/$ identity {} 1 2))
-         '(uix.compiler.alpha/component-element identity (cljs.core/array {}) (cljs.core/array 1 2))))
+         '(uix.compiler.alpha/component-element identity (cljs.core/array {}) (cljs.core/array 1 2)
+                                                (clojure.core/when goog.DEBUG (js* "{'fileName':~{},'lineNumber':~{},'columnNumber':~{}}" nil nil nil)))))
   (is (= (macroexpand-1 '(uix.core/$ identity {:x 1 :ref 2} 1 2))
-         '(uix.compiler.alpha/component-element identity (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2)))))
+         '(uix.compiler.alpha/component-element identity (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2)
+                                                (clojure.core/when goog.DEBUG (js* "{'fileName':~{},'lineNumber':~{},'columnNumber':~{}}" nil nil nil))))))
 
 (defn test-linter [form expected-messages]
   (let [errors (atom [])

@@ -36,8 +36,11 @@
 
 (deftest test-compile-html
   (is (= (aot/compile-element [:h1] nil)
-         '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
+         '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array)
+                                (clojure.core/when goog.DEBUG (js* "{'fileName':~{},'lineNumber':~{},'columnNumber':~{}}" nil nil nil)))))
   (is (= (aot/compile-element '[x {} 1 2] nil)
-         '(uix.compiler.alpha/component-element x (cljs.core/array {}) (cljs.core/array 1 2))))
+         '(uix.compiler.alpha/component-element x (cljs.core/array {}) (cljs.core/array 1 2)
+                                                (clojure.core/when goog.DEBUG (js* "{'fileName':~{},'lineNumber':~{},'columnNumber':~{}}" nil nil nil)))))
   (is (= (aot/compile-element '[x {:x 1 :ref 2} 1 2] nil)
-         '(uix.compiler.alpha/component-element x (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2)))))
+         '(uix.compiler.alpha/component-element x (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2)
+                                                (clojure.core/when goog.DEBUG (js* "{'fileName':~{},'lineNumber':~{},'columnNumber':~{}}" nil nil nil))))))
