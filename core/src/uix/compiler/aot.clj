@@ -4,6 +4,17 @@
             [uix.compiler.attributes :as attrs]
             [cljs.analyzer :as ana]))
 
+(def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
+
+(defn debug-source
+  "DEV-only: adds source origin information for every UIx element
+  so that they can be filtered by location in React DevTools"
+  [env]
+  (let [{:keys [line column]} env
+        {:keys [file]} (-> env :ns :meta)
+        source-obj (js/to-js {:fileName file :lineNumber line :columnNumber column})]
+    `(when ~goog-debug ~source-obj)))
+
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,
   or emits interpretation call for runtime, when a value
@@ -82,18 +93,18 @@
         attrs-children (compile-attrs :element attrs {:tag-id-class tag-id-class})
         tag-str (first tag-id-class)
         ret (if (input-component? tag-str)
-              `(create-uix-input ~tag-str ~attrs-children (cljs.core/array ~@children))
-              `(>el ~tag-str ~attrs-children (cljs.core/array ~@children)))]
+              `(create-uix-input ~tag-str ~attrs-children (cljs.core/array ~@children) ~(debug-source env))
+              `(>el ~tag-str ~attrs-children (cljs.core/array ~@children) ~(debug-source env)))]
     ret))
 
 (defmethod compile-element :component [v {:keys [env]}]
   (let [[tag props & children] (normalize-element env v)
         tag (vary-meta tag assoc :tag 'js)
         props-children (compile-attrs :component props nil)]
-    `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))
+    `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children) ~(debug-source env))))
 
-(defmethod compile-element :fragment [v _]
+(defmethod compile-element :fragment [v {:keys [env]}]
   (let [[_ attrs & children] v
         attrs (compile-attrs :fragment attrs nil)
-        ret `(>el fragment ~attrs (cljs.core/array ~@children))]
+        ret `(>el fragment ~attrs (cljs.core/array ~@children) ~(debug-source env))]
     ret))

@@ -26,17 +26,19 @@
       (validate-children child)))
   true)
 
-(defn >el [tag attrs-children children]
+(defn >el [tag attrs-children children debug-source]
   (let [args (-> #js [tag] (.concat attrs-children) (.concat children))]
     (when ^boolean goog.DEBUG
-      (validate-children (.slice args 2)))
+      (validate-children (.slice args 2))
+      (when debug-source
+        (set! (.-__source (aget args 1)) debug-source)))
     (.apply react/createElement nil args)))
 
-(defn create-uix-input [tag attrs-children children]
+(defn create-uix-input [tag attrs-children children debug-source]
   (if (uix.compiler.input/should-use-reagent-input?)
     (let [props (aget attrs-children 0)
           children (.concat #js [(aget attrs-children 1)] children)]
       (react/createElement uix.compiler.input/reagent-input #js {:props props :tag tag :children children}))
-    (>el tag attrs-children children)))
+    (>el tag attrs-children children debug-source)))
 
 (def fragment react/Fragment)
