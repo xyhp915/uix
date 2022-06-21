@@ -49,7 +49,7 @@ jobs:
       - run: rm ~/.gitconfig
 
       - run: cd core && scripts/test | tee ../build_info && curl -sSLo ../build_info_master https://github.com/pitch-io/uix/releases/latest/download/build_info
-      - run: cd ../dom && scripts/test
+      - run: cd dom && scripts/test
 
       - when:
           condition:
