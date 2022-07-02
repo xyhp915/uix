@@ -5,7 +5,13 @@
 ;; == State hook ==
 
 (defn use-state [value]
-  (r/useState value))
+  (let [[v set-v] (r/useState value)
+        enhanced-set-v (react/useCallback (fn [f & args]
+                                            (if (fn? f)
+                                              (set-v #(apply f % args))
+                                              (set-v f)))
+                                          #js [set-v])]
+    #js [v enhanced-set-v]))
 
 (defn use-reducer
   ([f value]
