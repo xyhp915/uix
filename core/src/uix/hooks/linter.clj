@@ -174,6 +174,12 @@
        "React Hooks must be called in the exact same order in every component render.\n"
        "Read https://reactjs.org/docs/hooks-rules.html for more context"))
 
+(defmethod ana/error-message ::hook-in-callback [_ {:keys [name column line source]}]
+  ;; https://github.com/facebook/react/blob/bcbeb52bf36c6f5ecdad46a48e87cf4354c5a64f/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L503
+  (str "React Hook " source " cannot be called inside a callback.\n"
+       "React Hooks must be called in a component or a custom hook declared via `uix.core/defhook`.\n"
+       "Found in " name ", at " line ":" column))
+
 ;; re-frame linter
 
 (defn- rf-subscribe-call? [form]
@@ -211,12 +217,6 @@
   (str "re-frame subscription " source " is non-reactive in UIx components when called via "
        (:name v) ", use `use-subscribe` hook instead.\n"
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
-
-(defmethod ana/error-message ::hook-in-callback [_ {:keys [name column line source]}]
-  ;; https://github.com/facebook/react/blob/bcbeb52bf36c6f5ecdad46a48e87cf4354c5a64f/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L503
-  (str "React Hook " source " cannot be called inside a callback.\n"
-       "React Hooks must be called in a component or a custom hook declared via `uix.core/defhook`.\n"
-       "Found in " name ", at " line ":" column))
 
 (defn lint! [sym form env]
   (binding [*context* (atom {:errors [] :env env})]
