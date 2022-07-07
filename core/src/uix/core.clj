@@ -9,19 +9,19 @@
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
 
-(defn- no-args-component [sym body]
+(defn- no-args-component [sym var-sym body]
   `(defn ~sym []
      (let [f# (fn [] ~@body)]
        (if ~goog-debug
-         (binding [*current-component* ~sym] (f#))
+         (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
-(defn- with-args-component [sym args body]
+(defn- with-args-component [sym var-sym args body]
   `(defn ~sym [props#]
      (let [~args (cljs.core/array (glue-args props#))
            f# (fn [] ~@body)]
        (if ~goog-debug
-         (binding [*current-component* ~sym] (f#))
+         (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
 (defn parse-defui-sig [sym fdecl]
@@ -46,16 +46,19 @@
   A component should have a single argument of props."
   [sym & fdecl]
   (let [[fname args fdecl] (parse-defui-sig sym fdecl)]
-    (let [sym (with-meta sym {:tag 'js})
-          body (uix.dev/with-fast-refresh sym fdecl)]
-      (hooks.linter/lint! sym fdecl &env)
-      `(do
-         ~(if (empty? args)
-            (no-args-component fname body)
-            (with-args-component fname args body))
-         (set! (.-uix-component? ~sym) true)
-         (set! (.-displayName ~sym) ~(str (-> &env :ns :name) "/" sym))
-         ~(uix.dev/fast-refresh-signature sym body)))))
+    (hooks.linter/lint! sym fdecl &env)
+    (if (uix.lib/cljs-env? &env)
+      (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
+            body (uix.dev/with-fast-refresh var-sym fdecl)]
+        `(do
+           ~(if (empty? args)
+              (no-args-component fname var-sym body)
+              (with-args-component fname var-sym args body))
+           (set! (.-uix-component? ~var-sym) true)
+           (set! (.-displayName ~var-sym) ~(str var-sym))
+           ~(uix.dev/fast-refresh-signature var-sym body)))
+      `(defn ~fname ~args
+         ~@fdecl))))
 
 (defmacro source
   "Returns source string of UIx component"

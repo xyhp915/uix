@@ -6,17 +6,21 @@ API compatibility: React v17
 
 UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
 
+Discuss at #uix on [Clojurians Slack](http://clojurians.net)
+
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
+[![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
+[![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.dom.svg)](https://clojars.org/com.pitch/uix.dom)
 
 ## Installation
 
+```
+yarn add react@17.0.2 react-dom@17.0.2
+```
+
 ```clj
-{:deps {uix.core/uix.core {:git/url "https://github.com/pitch-io/uix.git"
-                           :deps/root "core"
-                           :sha "a9be95ed5033dddcb77f67a1c6faa08e58ea08b2"}
-        uix.dom/uix.dom {:git/url "https://github.com/pitch-io/uix.git"
-                         :deps/root "dom"
-                         :sha "a9be95ed5033dddcb77f67a1c6faa08e58ea08b2"}}}
+{:deps {com.pitch/uix.core {:mvn/version "0.5.0"}
+        com.pitch/uix.dom {:mvn/version "0.5.0"}}}
 ```
 
 ## Usage
@@ -34,7 +38,7 @@ UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
   (let [[state set-state!] (uix.core/use-state 0)]
     ($ :<>
       ($ button {:on-click #(set-state! dec)} "-")
-      ($ :span state)]
+      ($ :span state)
       ($ button {:on-click #(set-state! inc)} "+"))))
 
 (uix.dom/render ($ app) (js/document.getElementById "root"))
@@ -52,7 +56,11 @@ UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
 - [Interop with Reagent](/docs/interop-with-reagent.md)
 - [Code-splitting and React.lazy](/docs/code-splitting.md)
 - [Migrating from Reagent](/docs/migrating-from-reagent.md)
+- [Server-side rendering](/docs/server-side-rendering.md)
 - [Hot reloading](/docs/hot-reloading.md)
+- [React DevTools](/docs/react-devtools.md)
+- [Code linting](/docs/code-linting.md)
+- [Utilities](/docs/utilities.md)
 
 ## Testing
 
@@ -62,3 +70,9 @@ scripts/test
 
 _Note: to ensure you're using the right Node.js version, you can use [nvm](https://github.com/nvm-sh/nvm) and run `nvm use`
 once in the directory. Otherwise the Node.js version you use is in the `.nvmrc` file. See nvm repo for more documentation._
+
+## Thanks to
+
+- [UIx v1](https://github.com/roman01la/uix) for initial set of ideas and learnings
+- [Helix](https://github.com/lilactown/helix) for even more ideas
+- [Pitch](https://github.com/pitch-io) for sponsoring and dogfooding the work

@@ -2,9 +2,7 @@
   (:require [clojure.test :refer :all]
             [uix.core]
             [cljs.analyzer :as ana]
-            [uix.hooks.linter :as linter]
-            [uix.lib])
-  (:import (cljs.tagged_literals JSValue)))
+            [uix.lib]))
 
 (deftest test-parse-sig
   (let [[sym methods] (uix.lib/parse-sig 'test '("docstring" ([x y] x) ([x] x)))]
@@ -30,41 +28,23 @@
   (is (nil? (uix.core/vector->js-array nil))))
 
 (deftest test-$
-  (is (= (macroexpand-1 '(uix.core/$ :h1))
-         '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
-  (is (= (macroexpand-1 '(uix.core/$ identity {} 1 2))
-         '(uix.compiler.alpha/component-element identity (cljs.core/array {}) (cljs.core/array 1 2))))
-  (is (= (macroexpand-1 '(uix.core/$ identity {:x 1 :ref 2} 1 2))
-         '(uix.compiler.alpha/component-element identity (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2)))))
+  (testing "in cljs env"
+    (with-redefs [uix.lib/cljs-env? (fn [_] true)
+                  ana/resolve-var (fn [_ _] nil)]
+      (is (= (macroexpand-1 '(uix.core/$ :h1))
+             '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
+      (is (= (macroexpand-1 '(uix.core/$ identity {} 1 2))
+             '(uix.compiler.alpha/component-element identity (cljs.core/array {}) (cljs.core/array 1 2))))
+      (is (= (macroexpand-1 '(uix.core/$ identity {:x 1 :ref 2} 1 2))
+             '(uix.compiler.alpha/component-element identity (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2))))))
+  (testing "in clj env"
+    (is (= (macroexpand-1 '(uix.core/$ :h1))
+           [:h1]))
+    (is (= (macroexpand-1 '(uix.core/$ identity {} 1 2))
+           '[identity {} 1 2]))
+    (is (= (macroexpand-1 '(uix.core/$ identity {:x 1 :ref 2} 1 2))
+           '[identity {:x 1 :ref 2} 1 2]))))
 
-(defn test-linter [form expected-messages]
-  (let [errors (atom [])
-        _ (with-redefs [ana/warning #(swap! errors conj %&)]
-            (macroexpand-1 form))
-        actual-messages (map (fn [[warning-type _ extra]]
-                               (ana/error-message warning-type extra))
-                             @errors)]
-    (is (= actual-messages expected-messages))))
-
-(deftest test-hooks
-  (test-linter
-   '(uix.core/use-effect identity)
-   ["React Hook received a function whose dependencies are unknown. Pass an inline function instead.\n```\n(uix.core/use-effect identity)\n```"])
-  (test-linter
-   '(uix.core/use-effect identity [])
-   ["React Hook received a function whose dependencies are unknown. Pass an inline function instead.\n```\n(uix.core/use-effect identity [])\n```"])
-  (let [form `(uix.core/use-effect ~'(fn []) ~(JSValue. []))]
-    (test-linter
-     form
-     [(str "React Hook was passed a dependency list that is a JavaScript array, instead of Clojure’s vector. Change it to be a vector literal.\n"
-           (linter/ppr form))]))
-  (test-linter
-   `(uix.core/use-effect ~'(fn []) ~'coll)
-   [(str "React Hook was passed a dependency list that is not a vector literal. This means we can’t statically verify whether you've passed the correct dependencies. Change it to be a vector literal with explicit set of dependencies.\n"
-         (linter/ppr '(uix.core/use-effect (fn []) coll)))])
-  (test-linter
-   `(uix.core/use-effect ~'(fn []) [:kw])
-   [(str "React Hook was passed literal values in dependency vector: [:kw]\nThose are not valid dependencies because they never change. You can safely remove them.\n"
-         (linter/ppr '(uix.core/use-effect (fn []) [:kw])))]))
-  ;; TODO: missing & unnecessary deps
-  ;; TODO: set-state w/o deps
+(uix.core/defui clj-component [props] props)
+(deftest test-defui
+  (is (= {:x 1} (clj-component {:x 1}))))

@@ -1,7 +1,8 @@
 (ns uix.lib
   #?(:cljs (:require-macros [uix.lib :refer [doseq-loop]]))
-  #?(:clj (:require [cljs.core]))
-  #?(:cljs (:require [goog.object :as gobj])))
+  #?(:cljs (:require [goog.object :as gobj]))
+  #?(:clj (:require [clojure.walk]
+                    [cljs.core])))
 
 #?(:clj
    (defmacro assert! [x message]
@@ -44,3 +45,18 @@
            m (conj {:arglists (list 'quote (#'cljs.core/sigs fdecl))} m)
            m (conj (if (meta name) (meta name) {}) m)]
        [(with-meta name m) fdecl])))
+
+#?(:clj
+   (defn cljs-env? [env]
+     (boolean (:ns env))))
+
+#?(:clj
+   (defn find-form [pred sexp]
+     (let [forms (atom [])]
+       (clojure.walk/prewalk
+        (fn [x]
+          (when (pred x)
+            (swap! forms conj x))
+          x)
+        sexp)
+       @forms)))

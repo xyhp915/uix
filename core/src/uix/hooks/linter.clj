@@ -4,7 +4,9 @@
             [clojure.string :as str]
             [clojure.pprint :as pp]
             [cljs.analyzer.api :as ana-api]
-            [uix.lib])
+            [uix.lib]
+            [clojure.java.io :as io]
+            [clojure.edn])
   (:import (cljs.tagged_literals JSValue)
            (java.io Writer)))
 
@@ -164,15 +166,51 @@
   ;; https://github.com/facebook/react/blob/d63cd972454125d4572bb8ffbfeccbdf0c5eb27b/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L457
   (str "React Hook " source " is called conditionally.\n"
        "React Hooks must be called in the exact same order in every component render.\n"
-       "Found in " name ", at " line ":" column))
+       "Read https://reactjs.org/docs/hooks-rules.html for more context"))
 
 (defmethod ana/error-message ::hook-in-loop [_ {:keys [name column line source]}]
   ;; https://github.com/facebook/react/blob/d63cd972454125d4572bb8ffbfeccbdf0c5eb27b/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L438
-  (str "React Hook " source " may be executed more than once. "
-       "Possibly because it is called in a loop. "
-       "React Hooks must be called in the exact same order in "
-       "every component render.\n"
-       "Found in " name ", at " line ":" column))
+  (str "React Hook " source " may be executed more than once. Possibly because it is called in a loop.\n"
+       "React Hooks must be called in the exact same order in every component render.\n"
+       "Read https://reactjs.org/docs/hooks-rules.html for more context"))
+
+;; re-frame linter
+
+(defn- rf-subscribe-call? [form]
+  (and (list? form)
+       (symbol? (first form))
+       (= "subscribe" (name (first form)))))
+
+(defn- read-config [path]
+  (let [file (io/file ".uix/config.edn")
+        config (try
+                 (if (.isFile file)
+                   (clojure.edn/read-string (slurp file))
+                   {})
+                 (catch Exception e
+                   {}))]
+    (get-in config path)))
+
+(defn- read-re-frame-config []
+  (-> (reduce-kv (fn [ret k v]
+                   (update ret v (fnil conj #{}) k))
+                 '{re-frame.core/subscribe #{re-frame.core/subscribe}}
+                 (read-config [:linters :re-frame :resolve-as]))
+      (get 're-frame.core/subscribe)))
+
+(defn lint-re-frame! [form env]
+  (let [config (read-re-frame-config)
+        sources (->> (uix.lib/find-form rf-subscribe-call? form)
+                     (keep #(let [v (ana/resolve-var env (first %))]
+                              (when (contains? config (:name v))
+                                (assoc v :source %)))))]
+    (run! #(ana/warning ::non-reactive-re-frame-subscribe env %)
+          sources)))
+
+(defmethod ana/error-message ::non-reactive-re-frame-subscribe [_ {:keys [source] :as v}]
+  (str "re-frame subscription " source " is non-reactive in UIx components when called via "
+       (:name v) ", use `use-subscribe` hook instead.\n"
+       "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
 (defmethod ana/error-message ::hook-in-callback [_ {:keys [name column line source]}]
   ;; https://github.com/facebook/react/blob/bcbeb52bf36c6f5ecdad46a48e87cf4354c5a64f/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L503
@@ -181,9 +219,9 @@
        "Found in " name ", at " line ":" column))
 
 (defn lint! [sym form env]
-  (binding [*context* (atom {:errors []
-                             :env env})]
+  (binding [*context* (atom {:errors [] :env env})]
     (lint-hooks! form)
+    (lint-re-frame! form env)
     (let [{:keys [errors]} @*context*
           {:keys [column line]} env]
       (run! #(ana/warning (:type %) env (into {:name (str (-> env :ns :name) "/" sym)
@@ -212,10 +250,22 @@
     ;; return only those that are local in `env`
     (filter #(get-in env [:locals % :name]) @syms)))
 
-(defn find-free-variables [env f deps]
-  (let [all-local-variables (find-local-variables env f)
+(defn- ast->seq [ast]
+  (tree-seq :children (fn [{:keys [children] :as ast}]
+                        (let [get-children (apply juxt children)]
+                          (->> (get-children ast)
+                               (mapcat #(if (vector? %) % [%])))))
+            ast))
+
+(defn- find-free-variables [env f deps]
+  (let [ast (ana/analyze env f)
         deps (set deps)]
-    (filter #(nil? (deps %)) all-local-variables)))
+    (->> (ast->seq ast)
+         (filter #(and (= :local (:op %)) ;; should be a local
+                       (get-in env [:locals (:name %) :name]) ;; from an outer scope
+                       (-> % :info :shadow not) ;; but not a local shadowing locals from outer scope
+                       (not (deps (:name %))))) ;; and not declared in deps vector
+         (map :name))))
 
 (defmethod pp/code-dispatch JSValue [alis]
   (.write ^Writer *out* "#js ")
@@ -230,8 +280,7 @@
     (str "```\n" source "\n```")))
 
 (defmethod ana/error-message ::inline-function [_ {:keys [source]}]
-  (str "React Hook received a function whose dependencies "
-       "are unknown. Pass an inline function instead.\n"
+  (str "React Hook received a function whose dependencies are unknown. Pass an inline function instead.\n"
        (ppr source)))
 
 (defmethod ana/error-message ::missing-deps [_ {:keys [source missing-deps unnecessary-deps suggested-deps]}]
@@ -257,6 +306,7 @@
                    (str/join "\n"))
               "\n"))
        "Update the dependencies vector to be: [" (str/join " " suggested-deps) "]\n"
+       "Read https://beta.reactjs.org/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
        (ppr source)))
 
 (defmethod ana/error-message ::deps-array-literal [_ {:keys [source]}]
@@ -359,10 +409,10 @@
   (let [free-vars (find-free-variables env f deps)
         all-unnecessary-deps (set (find-unnecessary-deps env (concat free-vars deps)))
         declared-unnecessary-deps (keep all-unnecessary-deps deps)
-        #_#_missing-deps (filter (comp not all-unnecessary-deps) free-vars)
+        missing-deps (filter (comp not all-unnecessary-deps) free-vars)
         suggested-deps (-> (filter (comp not (set declared-unnecessary-deps)) deps)
-                           #_(into missing-deps))]
-    [#_missing-deps declared-unnecessary-deps suggested-deps]))
+                           (into missing-deps))]
+    [missing-deps declared-unnecessary-deps suggested-deps]))
 
 (defn- lint-body [env form f deps]
   (cond
@@ -370,10 +420,11 @@
     (not (fn-literal? f)) [::inline-function {:source form}]
 
     (vector? deps)
-    (let [[#_missing-deps declared-unnecessary-deps suggested-deps] (find-missing-and-unnecessary-deps env f deps)]
+    (let [[missing-deps declared-unnecessary-deps suggested-deps] (find-missing-and-unnecessary-deps env f deps)]
       ;; when hook function is referencing vars from out scope that are missing in deps vector
-      (when (or #_(seq missing-deps) (seq declared-unnecessary-deps))
-        [::missing-deps {#_#_:missing-deps missing-deps
+      (when (or (and (:lint-deps (meta deps)) (seq missing-deps))
+                (seq declared-unnecessary-deps))
+        [::missing-deps {:missing-deps missing-deps
                          :unnecessary-deps declared-unnecessary-deps
                          :suggested-deps suggested-deps
                          :source form}]))
