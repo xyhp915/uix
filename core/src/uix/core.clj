@@ -92,7 +92,7 @@
     ...)"
   [sym & fdecl]
   (let [[fname methods] (parse-defhook-sig sym fdecl)
-        fname (vary-meta fname assoc :defhook true)]
+        fname (vary-meta fname assoc ::hook true)]
     (doseq [[_ & body] methods]
       (hooks.linter/lint! sym body &env))
     `(defn ~fname ~@methods)))
