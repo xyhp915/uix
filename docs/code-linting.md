@@ -172,17 +172,33 @@ re-frame subscription (rf/subscribe [:user/id])) is non-reactive in UIx componen
 Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context
 ```
 
-# Configuring the linter
-
-UIx's linter can be provided with external configuration that should live in `.uix/config.edn` file at the root of your project.
-
-Currently the only onfiguration option available is for re-frame `subscribe` checks for cases when you are wrapping the function in application code.
-
-Example
+## Configuration
 
 ```clojure
 {:linters
- {:re-frame
-  {:resolve-as {my.app/subscribe re-frame.core/subscribe}}}}
+ {:re-frame {:resolve-as {my.app/subscribe re-frame.core/subscribe}}}}
   ;; re-frame.core/subscribe is checked by default
 ```
+
+# Element type linter
+
+The rule makes sure that unsupported element type is not passed to `$`. The tule is disabled by default unless configured as showed in the example below.
+
+```clojure
+($ :div) ;; good
+($ 'div) ;; error
+($ "div") ;; error
+```
+
+In order to help with transition from Reagent to UIx and avoid accidental use of Reagent components in `$`, the linter assumes that any non-`defui` component which is defined in application code (see `:project-namespace-roots` in config below) is Reagent component. Thus if you have plain React components in your project written in ClojureScript it's recommended to turn them into `defui`s.
+
+## Configuration
+
+```clojure
+{:linters
+ {:uix {:$ {:project-namespace-roots #{my.app}}}}}
+```
+
+# Configuring the linter
+
+UIx's linter can be provided with external configuration that should live in `.uix/config.edn` file at the root of your project.
