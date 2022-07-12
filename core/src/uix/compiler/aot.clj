@@ -94,8 +94,8 @@
 (defmethod ana/error-message ::unknown-element-type [_ {:keys [tag]}]
   (str
    (cond
-     (string? tag) "`uix.core/$` was passed as string as element type, which is not supported.\n"
-     (and (list? tag) (= 'quote (first tag))) "`uix.core/$` was passed quoted symbol as element type, which is not supported.\n"
+     (string? tag) "`uix.core/$` was passed a string as element type, which is not supported.\n"
+     (and (list? tag) (= 'quote (first tag))) "`uix.core/$` was passed a quoted symbol as element type, which is not supported.\n"
      :else (str "Unknown element type `" tag "` of type " (type tag) " was passed into `$`.\n"))
    "UIx expects element type to be one of: :<> (fragment), :div (keyword) or symbol (defui or plain react component)"))
 

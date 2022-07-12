@@ -212,53 +212,57 @@
 ;; === Exhaustive Deps ===
 
 (deftest test-build
-  (let [out-str (with-out-str (shadow.cljs.devtools.cli/-main "compile" "linter-test"))]
+  (with-redefs [uix.hooks.linter/read-config (fn [path]
+                                               (case path
+                                                 [:linters :uix :$] {:project-namespace-roots '#{uix}}
+                                                 nil))]
+    (let [out-str (with-out-str (shadow.cljs.devtools.cli/-main "compile" "linter-test"))]
 
-    (testing "should fail on missing dependency"
-      (is (str/includes? out-str (str ::hooks.linter/missing-deps)))
-      (is (str/includes? out-str "React Hook has missing dependencies: [x]")))
+      (testing "should fail on missing dependency"
+        (is (str/includes? out-str (str ::hooks.linter/missing-deps)))
+        (is (str/includes? out-str "React Hook has missing dependencies: [x]")))
 
-    (testing "should not fail on disabled missing deps check"
-      (is (not (str/includes? out-str "React Hook has missing dependencies: [z]"))))
+      (testing "should not fail on disabled missing deps check"
+        (is (not (str/includes? out-str "React Hook has missing dependencies: [z]"))))
 
-    (testing "should fail on unnecessary deps"
-      (is (str/includes? out-str "`ref` is an unnecessary dependency because it's a ref that doesn't change"))
-      (is (str/includes? out-str "`set-v` is an unnecessary dependency because it's a state updater function with a stable identity")))
+      (testing "should fail on unnecessary deps"
+        (is (str/includes? out-str "`ref` is an unnecessary dependency because it's a ref that doesn't change"))
+        (is (str/includes? out-str "`set-v` is an unnecessary dependency because it's a state updater function with a stable identity")))
 
-    (testing "#72 should not fail with a local var shadowing the var in outer scope"
-      (is (not (str/includes? out-str "React Hook has missing dependencies: [y]"))))
+      (testing "#72 should not fail with a local var shadowing the var in outer scope"
+        (is (not (str/includes? out-str "React Hook has missing dependencies: [y]"))))
 
-    (testing "should fail when a function reference passed into a hook"
-      (is (str/includes? out-str (str ::hooks.linter/inline-function)))
-      (is (str/includes? out-str "React Hook received a function whose dependencies are unknown.")))
+      (testing "should fail when a function reference passed into a hook"
+        (is (str/includes? out-str (str ::hooks.linter/inline-function)))
+        (is (str/includes? out-str "React Hook received a function whose dependencies are unknown.")))
 
-    (testing "should fail on deps being a JS array"
-      (is (str/includes? out-str (str ::hooks.linter/deps-array-literal))))
+      (testing "should fail on deps being a JS array"
+        (is (str/includes? out-str (str ::hooks.linter/deps-array-literal))))
 
-    (testing "should fail on deps being something else, rather than vector"
-      (is (str/includes? out-str (str ::hooks.linter/deps-coll-literal))))
+      (testing "should fail on deps being something else, rather than vector"
+        (is (str/includes? out-str (str ::hooks.linter/deps-coll-literal))))
 
-    (testing "should fail on deps vector including a literal of a primitive type"
-      (is (str/includes? out-str (str ::hooks.linter/literal-value-in-deps)))
-      (is (str/includes? out-str "[:kw, 1, str, , true]")))
+      (testing "should fail on deps vector including a literal of a primitive type"
+        (is (str/includes? out-str (str ::hooks.linter/literal-value-in-deps)))
+        (is (str/includes? out-str "[:kw, 1, str, , true]")))
 
-    (testing "should fail on set-state in an effect hook w/o deps"
-      (is (str/includes? out-str (str ::hooks.linter/unsafe-set-state)))
-      (is (str/includes? out-str "React Hook contains a call to `set-value`")))
+      (testing "should fail on set-state in an effect hook w/o deps"
+        (is (str/includes? out-str (str ::hooks.linter/unsafe-set-state)))
+        (is (str/includes? out-str "React Hook contains a call to `set-value`")))
 
-    (testing "should fail on hook call in a branch"
-      (is (str/includes? out-str (str ::hooks.linter/hook-in-branch)))
-      (is (str/includes? out-str "React Hook (uix.core/use-effect (fn [])) is called conditionally.")))
+      (testing "should fail on hook call in a branch"
+        (is (str/includes? out-str (str ::hooks.linter/hook-in-branch)))
+        (is (str/includes? out-str "React Hook (uix.core/use-effect (fn [])) is called conditionally.")))
 
-    (testing "should fail on hook call in loop"
-      (is (str/includes? out-str (str ::hooks.linter/hook-in-loop)))
-      (is (str/includes? out-str "React Hook (uix.core/use-effect (fn [])) may be executed more than once.")))
+      (testing "should fail on hook call in loop"
+        (is (str/includes? out-str (str ::hooks.linter/hook-in-loop)))
+        (is (str/includes? out-str "React Hook (uix.core/use-effect (fn [])) may be executed more than once.")))
 
-    (testing "should fail when non-UIx component is used in `$`"
-      (is (str/includes? out-str (str ::hooks.linter/reagent-component-in-$)))
-      (is (str/includes? out-str "Invalid use of non-UIx component `uix.linter-test/test-reagent-comp`")))
+      (testing "should fail when non-UIx component is used in `$`"
+        (is (str/includes? out-str (str ::hooks.linter/reagent-component-in-$)))
+        (is (str/includes? out-str "Invalid use of non-UIx component `uix.linter-test/test-reagent-comp`")))
 
-    (testing "should fail when unknown type of tag is passed into `$`"
-      (is (str/includes? out-str (str :uix.compiler.aot/unknown-element-type)))
-      (is (str/includes? out-str "`uix.core/$` was passed as string as element type, which is not supported."))
-      (is (str/includes? out-str "`uix.core/$` was passed quoted symbol as element type, which is not supported.")))))
+      (testing "should fail when unknown type of tag is passed into `$`"
+        (is (str/includes? out-str (str :uix.compiler.aot/unknown-element-type)))
+        (is (str/includes? out-str "`uix.core/$` was passed a string as element type, which is not supported."))
+        (is (str/includes? out-str "`uix.core/$` was passed a quoted symbol as element type, which is not supported."))))))

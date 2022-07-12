@@ -206,14 +206,14 @@
 
 (defn lint-element [[tag] {:keys [env]}]
   (when (symbol? tag)
-    (let [config (or (read-config [:linters :uix :$]))]
+    (let [config (read-config [:linters :uix :$])]
       (when (seq (:project-namespace-roots config))
         (let [v (ana/resolve-var env tag)
               uix-component? (uix.lib/uix-component-var? v)
               in-app-code? (->> (into #{} (map str) (:project-namespace-roots config))
                                 (some #(str/starts-with? (str (:ns v)) %)))
-              reagent-component? (and (not uix-component?) in-app-code?)
-              js-component? (= 'js (:ns v))]
+              js-component? (or (= 'js (:ns v)) (= 'js (:tag v)))
+              reagent-component? (and (not uix-component?) (not js-component?) in-app-code?)]
           (when reagent-component?
             (ana/warning ::reagent-component-in-$ env {:var v})))))))
 
