@@ -70,14 +70,34 @@
     (into [(first v) {}] (rest v))
     v))
 
+(defn- uix-component? [tag env]
+  (and (symbol? tag)
+       (uix.lib/uix-component-var? (ana/resolve-var env tag))))
+
+(defn- interop-element? [tag]
+  (or (symbol? tag)
+      (and (list? tag)
+           (not= 'quote (first tag)))))
+
 (defmulti compile-element*
   "Compiles UIx elements into React.createElement"
   (fn [[tag] {:keys [env]}]
     (cond
       (= :<> tag) :fragment
       (keyword? tag) :element
-      (uix.lib/uix-component-var? (ana/resolve-var env tag)) :component
-      (symbol? tag) :interop)))
+      (uix-component? tag env) :component
+      (interop-element? tag) :interop)))
+
+(defmethod compile-element* :default [[tag] {:keys [env]}]
+  (ana/warning ::unknown-element-type env {:tag tag}))
+
+(defmethod ana/error-message ::unknown-element-type [_ {:keys [tag]}]
+  (str
+   (cond
+     (string? tag) "`uix.core/$` was passed as string as element type, which is not supported.\n"
+     (and (list? tag) (= 'quote (first tag))) "`uix.core/$` was passed quoted symbol as element type, which is not supported.\n"
+     :else (str "Unknown element type `" tag "` of type " (type tag) " was passed into `$`.\n"))
+   "UIx expects element type to be one of: :<> (fragment), :div (keyword) or symbol (defui or plain react component)"))
 
 (defmethod compile-element* :element [v {:keys [env]}]
   (let [[tag attrs & children] (normalize-element env v)

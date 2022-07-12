@@ -254,6 +254,11 @@
       (is (str/includes? out-str (str ::hooks.linter/hook-in-loop)))
       (is (str/includes? out-str "React Hook (uix.core/use-effect (fn [])) may be executed more than once.")))
 
-    (testing "should when Reagent component is used in `$`"
+    (testing "should fail when non-UIx component is used in `$`"
       (is (str/includes? out-str (str ::hooks.linter/reagent-component-in-$)))
-      (is (str/includes? out-str "Invalid use of non-UIx component `uix.linter-test/test-reagent-comp`")))))
+      (is (str/includes? out-str "Invalid use of non-UIx component `uix.linter-test/test-reagent-comp`")))
+
+    (testing "should fail when unknown type of tag is passed into `$`"
+      (is (str/includes? out-str (str :uix.compiler.aot/unknown-element-type)))
+      (is (str/includes? out-str "`uix.core/$` was passed as string as element type, which is not supported."))
+      (is (str/includes? out-str "`uix.core/$` was passed quoted symbol as element type, which is not supported.")))))

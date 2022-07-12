@@ -55,3 +55,6 @@
 ($ test-reagent-comp {} 1 2)
 ($ test-uix-comp {} 1 2)
 ($ react/Fragment {} 1 2)
+
+($ "string" {} 1 2)
+($ 'symbol {} 1 2)
