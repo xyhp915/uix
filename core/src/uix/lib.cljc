@@ -41,3 +41,8 @@
           x)
         sexp)
        @forms)))
+
+#?(:clj
+   (defn uix-component-var? [v]
+     (or (-> v :meta :uix/component)
+         (-> v :tag (= :uix/component)))))

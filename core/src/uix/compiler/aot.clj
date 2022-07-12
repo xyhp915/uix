@@ -72,11 +72,12 @@
 
 (defmulti compile-element*
   "Compiles UIx elements into React.createElement"
-  (fn [[tag] _]
+  (fn [[tag] {:keys [env]}]
     (cond
       (= :<> tag) :fragment
       (keyword? tag) :element
-      :else :component)))
+      (uix.lib/uix-component-var? (ana/resolve-var env tag)) :component
+      (symbol? tag) :interop)))
 
 (defmethod compile-element* :element [v {:keys [env]}]
   (let [[tag attrs & children] (normalize-element env v)
@@ -92,7 +93,13 @@
   (let [[tag props & children] (normalize-element env v)
         tag (vary-meta tag assoc :tag 'js)
         props-children (compile-attrs :component props nil)]
-    `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))
+    `(uix.compiler.alpha/uix-component-element ~tag ~props-children (cljs.core/array ~@children))))
+
+(defmethod compile-element* :interop [v {:keys [env]}]
+  (let [[tag props & children] (normalize-element env v)
+        tag (vary-meta tag assoc :tag 'js)
+        props-children (compile-attrs :component props nil)]
+    `(uix.compiler.alpha/react-component-element ~tag ~props-children (cljs.core/array ~@children))))
 
 (defmethod compile-element* :fragment [v _]
   (let [[_ attrs & children] v

@@ -10,13 +10,13 @@
 
 (def ^:dynamic *current-component*)
 
-;; React's top-level API
+;; React top-level API
 
 (def ^:private built-in-static-method-names
   [:childContextTypes :contextTypes :contextType
    :getDerivedStateFromProps :getDerivedStateFromError])
 
-(defn create-class
+(defn ^{:tag :uix/component} create-class
   "Creates class based React component"
   [{:keys [constructor getInitialState render
            ;; lifecycle methods
@@ -65,7 +65,7 @@
 (defn- memo-compare-args [a b]
   (= (glue-args a) (glue-args b)))
 
-(defn memo
+(defn ^{:tag :uix/component} memo
   "Takes component `f` and optional comparator function `should-update?`
   that takes previous and next props of the component.
   Returns memoized `f`.

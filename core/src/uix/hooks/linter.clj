@@ -209,7 +209,7 @@
     (let [config (or (read-config [:linters :uix :$]) {:root-ns '#{uix}})]
       (when (seq (:root-ns config))
         (let [v (ana/resolve-var env tag)
-              uix-component? (-> v :meta :uix/component)
+              uix-component? (uix.lib/uix-component-var? v)
               in-app-code? (contains? (:root-ns config) (symbol (first (str/split (str (:ns v)) #"\."))))
               reagent-component? (and (not uix-component?) in-app-code?)
               js-component? (= 'js (:ns v))]
