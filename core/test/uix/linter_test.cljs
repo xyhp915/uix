@@ -1,5 +1,6 @@
 (ns uix.linter-test
-  (:require [uix.core :refer [defui $]]))
+  (:require [uix.core :refer [defui $]]
+            [react]))
 
 (defui test-missing-deps [{:keys [x]}]
   (uix.core/use-effect (fn [] x) ^:lint-deps []))
@@ -48,3 +49,9 @@
 (defui test-hook-in-loop []
   (for [x []]
     (uix.core/use-effect (fn []))))
+
+(defn test-reagent-comp [])
+(defui test-uix-comp [])
+($ test-reagent-comp {} 1 2)
+($ test-uix-comp {} 1 2)
+($ react/Fragment {} 1 2)

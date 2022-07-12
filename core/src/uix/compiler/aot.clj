@@ -3,7 +3,8 @@
   (:require [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]
             [cljs.analyzer :as ana]
-            [uix.lib]))
+            [uix.lib]
+            [uix.hooks.linter :as hooks.linter]))
 
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,
@@ -101,5 +102,7 @@
 
 (defn compile-element [v {:keys [env] :as opts}]
   (if (uix.lib/cljs-env? env)
-    (compile-element* v opts)
+    (do
+      (hooks.linter/lint-element v opts)
+      (compile-element* v opts))
     v))

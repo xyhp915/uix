@@ -204,6 +204,26 @@
                    {}))]
     (get-in config path)))
 
+(defn lint-element [[tag] {:keys [env]}]
+  (when (symbol? tag)
+    (let [config (or (read-config [:linters :uix :$]) {:root-ns '#{uix}})]
+      (when (seq (:root-ns config))
+        (let [v (ana/resolve-var env tag)
+              uix-component? (-> v :meta :uix/component)
+              in-app-code? (contains? (:root-ns config) (symbol (first (str/split (str (:ns v)) #"\."))))
+              reagent-component? (and (not uix-component?) in-app-code?)
+              js-component? (= 'js (:ns v))]
+          (when reagent-component?
+            (ana/warning ::reagent-component-in-$ env {:var v})))))))
+
+(defmethod ana/error-message ::reagent-component-in-$ [_ opts]
+  (let [name (-> opts :var :name)]
+    (str "Invalid use of non-UIx component `" name "` in `uix.core/$` form.\n"
+         "`$` can only be used to create React elements from UIx or plain React components.\n"
+         "If you want to render Reagent element in UIx component, write it as Hiccup\n"
+         "and wrap with `r/as-element`: `(r/as-element [" name "])`\n"
+         "If you have plain React component in application code, turn it into UIx component via `defui`.")))
+
 (defn- read-re-frame-config []
   (-> (reduce-kv (fn [ret k v]
                    (update ret v (fnil conj #{}) k))

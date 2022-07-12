@@ -1,6 +1,6 @@
 (ns uix.compiler-test
-  (:require [clojure.test :refer [deftest is are testing run-tests]]
-            [uix.compiler.alpha :as uixc]
+  (:require [react]
+            [clojure.test :refer [deftest is are testing run-tests]]
             [uix.test-utils :refer [as-string js-equal? with-error symbol-for]]
             [uix.core :refer [defui $]]
             [uix.dom]))
@@ -144,12 +144,11 @@
            (as-string ($ comp3))))))
 
 (deftest test-interop
-  (defn testc-interop [])
   (testing "Interop element type"
-    (is (.-type ($ testc-interop))
-        testc-interop))
+    (is (.-type ($ react/Fragment))
+        react/Fragment))
   (testing "Shallowly converted props"
-    (let [el ($ testc-interop {:a 1 :b {:c 2}} :child)
+    (let [el ($ react/Fragment {:a 1 :b {:c 2}} :child)
           props (.-props el)]
       (is (.-a props) 1)
       (is (.-b props) {:c 2})
@@ -160,19 +159,6 @@
     (uix.dom/create-portal 1 2)
     (catch :default e
       (is "Target container is not a DOM element." (.-message e)))))
-
-(deftest test-validate-component
-  (defn testc-validate-component-1 [])
-  (defn testc-validate-component-2 [])
-  (defn testc-validate-component-3 [])
-  (aset testc-validate-component-1 "G_1" testc-validate-component-1)
-  (is (thrown-with-msg? js/Error #"Invalid use of Reagent component uix\$compiler_test\$testc_validate_component_1 in.*"
-                        (uixc/validate-component testc-validate-component-1)))
-  (is (thrown-with-msg? js/Error #"Invalid use of Reagent component uix\$compiler_test\$testc_validate_component_1 in.*"
-                        ($ testc-validate-component-1)))
-  (set! (.-uix-component? ^clj testc-validate-component-2) true)
-  (is (true? (uixc/validate-component testc-validate-component-2)))
-  (is (true? (uixc/validate-component testc-validate-component-3))))
 
 (deftest test-nil-attrs
   (defui test-nil-attrs-component [])

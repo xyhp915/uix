@@ -60,18 +60,19 @@
   [sym & fdecl]
   (let [[fname args fdecl] (parse-sig sym fdecl)]
     (hooks.linter/lint! sym fdecl &env)
-    (if (uix.lib/cljs-env? &env)
-      (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh var-sym fdecl)]
-        `(do
-           ~(if (empty? args)
-              (no-args-component fname var-sym body)
-              (with-args-component fname var-sym args body))
-           (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
-           ~(uix.dev/fast-refresh-signature var-sym body)))
-      `(defn ~fname ~args
-         ~@fdecl))))
+    (let [fname (vary-meta fname assoc :uix/component true)]
+      (if (uix.lib/cljs-env? &env)
+        (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
+              body (uix.dev/with-fast-refresh var-sym fdecl)]
+          `(do
+             ~(if (empty? args)
+                (no-args-component fname var-sym body)
+                (with-args-component fname var-sym args body))
+             (set! (.-uix-component? ~var-sym) true)
+             (set! (.-displayName ~var-sym) ~(str var-sym))
+             ~(uix.dev/fast-refresh-signature var-sym body)))
+        `(defn ~fname ~args
+           ~@fdecl)))))
 
 (defmacro source
   "Returns source string of UIx component"
