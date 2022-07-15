@@ -1,4 +1,4 @@
-(ns uix.hooks.linter
+(ns uix.linter
   (:require [clojure.walk]
             [cljs.analyzer :as ana]
             [clojure.string :as str]
@@ -32,7 +32,55 @@
 (defn effect-hook? [form]
   (contains? effect-hooks (name (first form))))
 
-(declare lint-hooks!*)
+(defn form->loc [form]
+  (select-keys form [:line :column]))
+
+(defn find-env-for-form [type form]
+  (case type
+    (::hook-in-branch ::hook-in-loop
+                      ::deps-coll-literal ::literal-value-in-deps
+                      ::unsafe-set-state ::missing-key)
+    (form->loc (meta form))
+
+    ::inline-function
+    (form->loc (meta (second form)))
+
+    ::deps-array-literal
+    (form->loc (meta (.-val form)))
+
+    nil))
+
+(defn add-error! [form type]
+  (swap! *context* update :errors conj {:source form
+                                        :source-context *source-context*
+                                        :type type
+                                        :env (find-env-for-form type form)}))
+
+(defn- uix-element? [form]
+  (and (list? form) (= '$ (first form))))
+
+(defn- missing-key? [[_ _ attrs :as form]]
+  (cond
+    (and (map? attrs) (not (contains? attrs :key)))
+    (add-error! attrs ::missing-key)
+
+    (or (and (not (map? attrs))
+             (not (symbol? attrs))
+             (not (list? attrs)))
+        (uix-element? attrs))
+    (add-error! form ::missing-key)))
+
+(def mapping-forms
+  '{:for #{for}
+    :iter-fn #{map mapv map-indexed reduce reduce-kv
+               keep keep-indexed mapcat}})
+
+(defn- lint-missing-key! [kv sym body]
+  (when (and (contains? (get mapping-forms kv) sym)
+             (uix-element? (last body)))
+    (missing-key? (last body))))
+
+(declare lint-body!*)
 
 (def forms
   '{:when #{when when-not when-let when-some when-first}
@@ -64,62 +112,64 @@
   form)
 
 (defmethod maybe-lint :when [[_ test & body]]
-  (lint-hooks!* test :in-branch? false)
-  (run! #(lint-hooks!* % :in-branch? true) body))
+  (lint-body!* test :in-branch? false)
+  (run! #(lint-body!* % :in-branch? true) body))
 
 (defmethod maybe-lint :if [[_ test then else]]
-  (lint-hooks!* test :in-branch? false)
-  (lint-hooks!* then :in-branch? true)
-  (lint-hooks!* else :in-branch? true))
+  (lint-body!* test :in-branch? false)
+  (lint-body!* then :in-branch? true)
+  (lint-body!* else :in-branch? true))
 
 (defmethod maybe-lint :logical [[_ test & tests]]
-  (lint-hooks!* test :in-branch? false)
-  (run! #(lint-hooks!* % :in-branch? true) tests))
+  (lint-body!* test :in-branch? false)
+  (run! #(lint-body!* % :in-branch? true) tests))
 
 (defmethod maybe-lint :cond [[_ clause & clauses]]
-  (lint-hooks!* clause :in-branch? false)
-  (run! #(lint-hooks!* % :in-branch? true) clauses))
+  (lint-body!* clause :in-branch? false)
+  (run! #(lint-body!* % :in-branch? true) clauses))
 
 (defmethod maybe-lint :condp [[_ pred e clause & clauses]]
-  (lint-hooks!* pred :in-branch? false)
-  (lint-hooks!* e :in-branch? false)
-  (lint-hooks!* clause :in-branch? false)
-  (run! #(lint-hooks!* % :in-branch? true) clauses))
+  (lint-body!* pred :in-branch? false)
+  (lint-body!* e :in-branch? false)
+  (lint-body!* clause :in-branch? false)
+  (run! #(lint-body!* % :in-branch? true) clauses))
 
 (defmethod maybe-lint :cond-threaded [[_ e & clauses]]
-  (lint-hooks!* e :in-branch? false)
+  (lint-body!* e :in-branch? false)
   (->> (partition 2 clauses)
        (run! (fn [[test expr]]
-               (lint-hooks!* test :in-branch? false)
-               (lint-hooks!* expr :in-branch? true)))))
+               (lint-body!* test :in-branch? false)
+               (lint-body!* expr :in-branch? true)))))
 
 (defmethod maybe-lint :some-threaded [[_ e clause & clauses]]
-  (lint-hooks!* e :in-branch? false)
-  (lint-hooks!* clause :in-branch? false)
-  (run! #(lint-hooks!* % :in-branch? true) clauses))
+  (lint-body!* e :in-branch? false)
+  (lint-body!* clause :in-branch? false)
+  (run! #(lint-body!* % :in-branch? true) clauses))
 
 (defmethod maybe-lint :case [[_ e clause & clauses]]
-  (lint-hooks!* e :in-branch? false)
-  (lint-hooks!* clause :in-branch? false)
-  (run! #(lint-hooks!* % :in-branch? true) clauses))
+  (lint-body!* e :in-branch? false)
+  (lint-body!* clause :in-branch? false)
+  (run! #(lint-body!* % :in-branch? true) clauses))
 
 (defmethod maybe-lint :loop [[_ bindings & body]]
-  (lint-hooks!* bindings :in-loop? false)
-  (run! #(lint-hooks!* % :in-loop? true) body))
+  (lint-body!* bindings :in-loop? false)
+  (run! #(lint-body!* % :in-loop? true) body))
 
-(defmethod maybe-lint :for [[_ bindings & body]]
+(defmethod maybe-lint :for [[sym bindings & body]]
   (let [[binding & bindings] (partition 2 bindings)]
-    (lint-hooks!* (second binding) :in-loop? false)
-    (run! (fn [[v expr]] (lint-hooks!* expr :in-loop? true))
+    (lint-body!* (second binding) :in-loop? false)
+    (run! (fn [[v expr]] (lint-body!* expr :in-loop? true))
           bindings)
-    (run! #(lint-hooks!* % :in-loop? true) body)))
+    (lint-missing-key! :for sym body)
+    (run! #(lint-body!* % :in-loop? true) body)))
 
-(defmethod maybe-lint :iter-fn [[_ f :as form]]
+(defmethod maybe-lint :iter-fn [[sym f :as form]]
   (when (and (list? f)
              ('#{fn fn*} (first f))
              (vector? (second f)))
     (let [[_ _ & body] f]
-      (run! #(lint-hooks!* % :in-loop? true) body))))
+      (lint-missing-key! :iter-fn sym body)
+      (run! #(lint-body!* % :in-loop? true) body))))
 
 (defmethod maybe-lint :callback [[_ & fdecl]]
   (let [[_ methods] (if (symbol? (first fdecl))
@@ -127,14 +177,16 @@
                       (uix.lib/parse-sig 'noop fdecl))]
     (->> methods
          (mapcat rest)
-         (run! #(lint-hooks!* % :in-callback? true)))))
+         (run! #(lint-body!* % :in-callback? true)))))
 
-(defn add-error! [form type]
-  (swap! *context* update :errors conj {:source form
-                                        :source-context *source-context*
-                                        :type type}))
+(defn- ast->seq [ast]
+  (tree-seq :children (fn [{:keys [children] :as ast}]
+                        (let [get-children (apply juxt children)]
+                          (->> (get-children ast)
+                               (mapcat #(if (vector? %) % [%])))))
+            ast))
 
-(defn lint-hooks!*
+(defn lint-body!*
   [expr & {:keys [in-branch? in-loop? in-callback?]
            :or {in-branch? *in-branch?*
                 in-loop? *in-loop?*
@@ -159,8 +211,14 @@
      expr)
     nil))
 
-(defn lint-hooks! [exprs]
-  (run! lint-hooks!* exprs))
+(defn lint-body! [exprs]
+  (run! lint-body!* exprs))
+
+(defmethod ana/error-message ::missing-key [_ _]
+  (str "UIx element is missing :key attribute, which is required\n"
+       "since the element is rendered as a list item.\n"
+       "Make sure to add a unique value for `:key` attribute derived from element's props,\n"
+       "do not use index."))
 
 (defmethod ana/error-message ::hook-in-branch [_ {:keys [name column line source]}]
   ;; https://github.com/facebook/react/blob/d63cd972454125d4572bb8ffbfeccbdf0c5eb27b/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L457
@@ -219,16 +277,18 @@
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
 (defn lint! [sym form env]
-  (binding [*context* (atom {:errors [] :env env})]
-    (lint-hooks! form)
+  (binding [*context* (atom {:errors []})]
+    (lint-body! form)
     (lint-re-frame! form env)
     (let [{:keys [errors]} @*context*
           {:keys [column line]} env]
-      (run! #(ana/warning (:type %) env (into {:name (str (-> env :ns :name) "/" sym)
-                                               :column column
-                                               :line line}
-                                              %))
-            errors))))
+      (doseq [err errors]
+        (ana/warning (:type err)
+                     (or (:env err) env)
+                     (into {:name (str (-> env :ns :name) "/" sym)
+                            :column column
+                            :line line}
+                           err))))))
 
 ;; === Exhaustive Deps ===
 
@@ -249,13 +309,6 @@
      form)
     ;; return only those that are local in `env`
     (filter #(get-in env [:locals % :name]) @syms)))
-
-(defn- ast->seq [ast]
-  (tree-seq :children (fn [{:keys [children] :as ast}]
-                        (let [get-children (apply juxt children)]
-                          (->> (get-children ast)
-                               (mapcat #(if (vector? %) % [%])))))
-            ast))
 
 (defn- find-free-variables [env f deps]
   (let [ast (ana/analyze env f)
@@ -280,8 +333,7 @@
     (str "```\n" source "\n```")))
 
 (defmethod ana/error-message ::inline-function [_ {:keys [source]}]
-  (str "React Hook received a function whose dependencies are unknown. Pass an inline function instead.\n"
-       (ppr source)))
+  "React Hook received a function whose dependencies are unknown. Pass an inline function instead.")
 
 (defmethod ana/error-message ::missing-deps [_ {:keys [source missing-deps unnecessary-deps suggested-deps]}]
   (str "React Hook has "
@@ -346,14 +398,16 @@
   (when deps
     (cond
       ;; when deps are passed as JS Array, should be a vector instead
-      (and (= (type deps) JSValue) (vector? (.-val deps))) [::deps-array-literal {:source form}]
+      (and (= (type deps) JSValue) (vector? (.-val deps))) [::deps-array-literal {:source form :env (find-env-for-form ::deps-array-literal deps)}]
 
       ;; when deps are neither JS Array nor Clojure's vector, should be a vector instead
-      (not (vector? deps)) [::deps-coll-literal {:source form}]
+      (not (vector? deps)) [::deps-coll-literal {:source form :env (find-env-for-form ::deps-coll-literal deps)}]
 
       ;; when deps vector has a primitive literal, it can be safely removed
       (and (vector? deps) (seq (deps->literals deps)))
-      [::literal-value-in-deps {:source form :literals (deps->literals deps)}])))
+      [::literal-value-in-deps {:source form
+                                :literals (deps->literals deps)
+                                :env (find-env-for-form ::literal-value-in-deps deps)}])))
 
 (defn find-hook-for-symbol [env sym]
   (when-let [init (-> env :locals (get sym) :init)]
@@ -417,7 +471,7 @@
 (defn- lint-body [env form f deps]
   (cond
     ;; when a reference to a function passed into a hook, should be an inline function instead
-    (not (fn-literal? f)) [::inline-function {:source form}]
+    (not (fn-literal? f)) [::inline-function {:source form :env (find-env-for-form ::inline-function form)}]
 
     (vector? deps)
     (let [[missing-deps declared-unnecessary-deps suggested-deps] (find-missing-and-unnecessary-deps env f deps)]
@@ -433,7 +487,8 @@
     (when-let [unsafe-calls (find-unsafe-set-state-calls env f)]
       ;; when set-state is called directly in a hook without deps, causing infinite loop
       [::unsafe-set-state {:unsafe-calls unsafe-calls
-                           :source form}])))
+                           :source form
+                           :env (find-env-for-form ::unsafe-set-state (first unsafe-calls))}])))
 
 (defn lint-exhaustive-deps [env form f deps]
   (let [errors [(lint-deps form deps)
@@ -442,5 +497,5 @@
 
 (defn lint-exhaustive-deps! [env form f deps]
   (doseq [[error-type opts] (lint-exhaustive-deps env form f deps)]
-    (ana/warning error-type env opts)))
+    (ana/warning error-type (or (:env opts) env) opts)))
 
