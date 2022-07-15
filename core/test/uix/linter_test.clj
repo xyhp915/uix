@@ -258,4 +258,8 @@
       (is (str/includes? out-str (str :uix.linter/missing-key)))
       (is (str/includes? out-str "UIx element is missing :key attribute, which is required"))
       (is (str/includes? out-str "($ :div.test-missing-key {} x)"))
-      (is (str/includes? out-str "($ :div.test-missing-key ($ x))")))))
+      (is (str/includes? out-str "($ :div.test-missing-key ($ x))")))
+
+    (testing "should fail on hook call in a callback"
+      (is (str/includes? out-str (str :uix.linter/hook-in-callback)))
+      (is (str/includes? out-str "React Hook (uix.core/use-state 0) cannot be called inside a callback")))))

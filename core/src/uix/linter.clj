@@ -37,7 +37,7 @@
 
 (defn find-env-for-form [type form]
   (case type
-    (::hook-in-branch ::hook-in-loop
+    (::hook-in-branch ::hook-in-loop ::hook-in-callback
                       ::deps-coll-literal ::literal-value-in-deps
                       ::unsafe-set-state ::missing-key)
     (form->loc (meta form))
@@ -235,8 +235,7 @@
 (defmethod ana/error-message ::hook-in-callback [_ {:keys [name column line source]}]
   ;; https://github.com/facebook/react/blob/bcbeb52bf36c6f5ecdad46a48e87cf4354c5a64f/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L503
   (str "React Hook " source " cannot be called inside a callback.\n"
-       "React Hooks must be called in a component or a custom hook declared via `uix.core/defhook`.\n"
-       "Found in " name ", at " line ":" column))
+       "React Hooks must be called in a component or a custom hook declared via `uix.core/defhook`."))
 
 ;; re-frame linter
 
