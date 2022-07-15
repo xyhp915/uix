@@ -39,7 +39,7 @@
   (case type
     (::hook-in-branch ::hook-in-loop ::hook-in-callback
                       ::deps-coll-literal ::literal-value-in-deps
-                      ::unsafe-set-state ::missing-key)
+                      ::unsafe-set-state ::missing-key ::non-defhook-hook)
     (form->loc (meta form))
 
     ::inline-function
@@ -186,6 +186,12 @@
                                (mapcat #(if (vector? %) % [%])))))
             ast))
 
+(defn defhook? [form]
+  (let [var (ana/resolve-var (:env @*context*) (first form))]
+    (or (= 'uix.core (:ns var))
+        (= 'js (:ns var))
+        (some-> var :meta :defhook))))
+
 (defn lint-body!*
   [expr & {:keys [in-branch? in-loop? in-callback?]
            :or {in-branch? *in-branch?*
@@ -201,6 +207,7 @@
          (do (when *in-branch?* (add-error! form ::hook-in-branch))
              (when *in-loop?* (add-error! form ::hook-in-loop))
              (when *in-callback?* (add-error! form ::hook-in-callback))
+             (when-not (defhook? form) (add-error! form ::non-defhook-hook))
              nil)
 
          (and (list? form) (or (not *in-branch?*) (not *in-loop?*) (not *in-callback?*)))
@@ -213,6 +220,11 @@
 
 (defn lint-body! [exprs]
   (run! lint-body!* exprs))
+
+(defmethod ana/error-message ::non-defhook-hook [_ {:keys [name column line source]}]
+  (str "The function `" source "` is named after React Hook, but doesn't appear to be one.\n"
+       "If it's indeed a hook, make sure to declare it via `uix.core/defhook`,\n"
+       "otherwise use a different name for the function, to not confuse it with a hook."))
 
 (defmethod ana/error-message ::missing-key [_ _]
   (str "UIx element is missing :key attribute, which is required\n"
@@ -276,7 +288,7 @@
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
 (defn lint! [sym form env]
-  (binding [*context* (atom {:errors []})]
+  (binding [*context* (atom {:errors [] :env env})]
     (lint-body! form)
     (lint-re-frame! form env)
     (let [{:keys [errors]} @*context*

@@ -53,8 +53,12 @@
   (for [x []]
     ($ :div.test-missing-key {} x))
   (for [x []]
-    ($ :div.test-missing-key ($ x)))
+    ($ :div.test-missing-key ($ x))))
 
-  (defui test-hook-in-callback []
-    (fn []
-      (uix.core/use-state 0))))
+(defui test-hook-in-callback []
+  (fn []
+    (uix.core/use-state 0)))
+
+(defn use-g [])
+(defui test-non-defhook []
+  (use-g))

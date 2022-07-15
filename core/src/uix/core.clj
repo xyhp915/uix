@@ -47,17 +47,17 @@
   A component should have a single argument of props."
   [sym & fdecl]
   (let [[fname args fdecl] (parse-defui-sig sym fdecl)]
-    (uix.linter/lint! sym fdecl &env)
     (if (uix.lib/cljs-env? &env)
-      (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh var-sym fdecl)]
-        `(do
-           ~(if (empty? args)
-              (no-args-component fname var-sym body)
-              (with-args-component fname var-sym args body))
-           (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
-           ~(uix.dev/fast-refresh-signature var-sym body)))
+      (do (uix.linter/lint! sym fdecl &env)
+          (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
+                body (uix.dev/with-fast-refresh var-sym fdecl)]
+            `(do
+               ~(if (empty? args)
+                  (no-args-component fname var-sym body)
+                  (with-args-component fname var-sym args body))
+               (set! (.-uix-component? ~var-sym) true)
+               (set! (.-displayName ~var-sym) ~(str var-sym))
+               ~(uix.dev/fast-refresh-signature var-sym body))))
       `(defn ~fname ~args
          ~@fdecl))))
 
@@ -94,8 +94,9 @@
   [sym & fdecl]
   (let [[fname methods] (parse-defhook-sig sym fdecl)
         fname (vary-meta fname assoc ::hook true)]
-    (doseq [[_ & body] methods]
-      (uix.linter/lint! sym body &env))
+    (when (uix.lib/cljs-env? &env)
+      (doseq [[_ & body] methods]
+        (uix.linter/lint! sym body &env)))
     `(defn ~fname ~@methods)))
 
 ;; === Hooks ===

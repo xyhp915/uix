@@ -262,4 +262,8 @@
 
     (testing "should fail on hook call in a callback"
       (is (str/includes? out-str (str :uix.linter/hook-in-callback)))
-      (is (str/includes? out-str "React Hook (uix.core/use-state 0) cannot be called inside a callback")))))
+      (is (str/includes? out-str "React Hook (uix.core/use-state 0) cannot be called inside a callback")))
+
+    (testing "should fail when a non-hook function with `use-` name is used in a component"
+      (is (str/includes? out-str (str :uix.linter/non-defhook-hook)))
+      (is (str/includes? out-str "The function `(use-g)` is named after React Hook, but doesn't appear to be on")))))
