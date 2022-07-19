@@ -6,7 +6,8 @@
             [uix.hooks.alpha :as hooks]
             [uix.compiler.aot]
             [uix.lib :refer [doseq-loop map->js]]
-            [cljs-bean.core :as bean]))
+            [cljs-bean.core :as bean]
+            [cljs.spec.alpha :as s]))
 
 (def ^:dynamic *current-component*)
 
@@ -170,3 +171,18 @@
   (let [lazy-component (react/lazy #(.then (f) (fn [component] #js {:default component})))]
     (set! (.-uix-component? lazy-component) true)
     lazy-component))
+
+;; PropTypes helpers
+(defn- normalize-children [children]
+  (seq
+    (cond
+      (.isArray js/Array children) children
+      (some? children) (array children)
+      :else children)))
+
+(defn assert-props [spec props]
+  (let [props# (if (contains? props :children)
+                 (update props :children normalize-children)
+                 props)]
+    (when-not (s/valid? spec props#)
+      (js/console.warn (s/explain-str spec props#)))))

@@ -5,7 +5,8 @@
             [cljs.core]
             [uix.linter]
             [uix.dev]
-            [uix.lib]))
+            [uix.lib]
+            [uix.linter.props]))
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
 
@@ -16,13 +17,17 @@
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
-(defn- with-args-component [sym var-sym args body]
-  `(defn ~sym [props#]
-     (let [~args (cljs.core/array (glue-args props#))
-           f# (fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym] (f#))
-         (f#)))))
+(defn- with-args-component [sym var-sym args body props-spec]
+  (let [uix-props-sym (gensym "uix-props")]
+    `(defn ~sym [props#]
+       (let [~uix-props-sym (glue-args props#)
+             ~args (cljs.core/array ~uix-props-sym)
+             f# (fn []
+                  ~(when props-spec `(when ~goog-debug (assert-props ~props-spec ~uix-props-sym)))
+                  ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym] (f#))
+           (f#))))))
 
 (defn parse-sig [name fdecl]
   (let [[fdecl m] (if (string? (first fdecl))
@@ -58,7 +63,8 @@
   "Creates UIx component. Similar to defn, but doesn't support multi arity.
   A component should have a single argument of props."
   [sym & fdecl]
-  (let [[fname args fdecl] (parse-sig sym fdecl)]
+  (let [[fname args fdecl] (parse-sig sym fdecl)
+        [fdecl props-spec] (uix.linter.props/make-props-check &env sym fdecl)]
     (uix.linter/lint! sym fdecl &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
@@ -66,7 +72,7 @@
         `(do
            ~(if (empty? args)
               (no-args-component fname var-sym body)
-              (with-args-component fname var-sym args body))
+              (with-args-component fname var-sym args body props-spec))
            (set! (.-uix-component? ~var-sym) true)
            (set! (.-displayName ~var-sym) ~(str var-sym))
            ~(uix.dev/fast-refresh-signature var-sym body)))
@@ -84,8 +90,10 @@
   DOM element: ($ :button#id.class {:on-click handle-click} \"click me\")
   React component: ($ title-bar {:title \"Title\"})"
   ([tag]
+   (uix.linter.props/assert-props-spec &env tag {} [])
    (uix.compiler.aot/compile-element [tag] {:env &env}))
   ([tag props & children]
+   (uix.linter.props/assert-props-spec &env tag props children)
    (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
 ;; === Hooks ===

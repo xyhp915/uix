@@ -1,7 +1,8 @@
 (ns uix.lib
   #?(:cljs (:require-macros [uix.lib :refer [doseq-loop]]))
   #?(:cljs (:require [goog.object :as gobj]))
-  #?(:clj (:require [clojure.walk])))
+  #?(:clj (:require [clojure.walk]
+                    [cljs.analyzer :as ana])))
 
 #?(:clj
    (defmacro assert! [x message]
@@ -41,3 +42,20 @@
           x)
         sexp)
        @forms)))
+
+#?(:clj
+   (defn- ->sym
+     "Returns a symbol from a symbol or var"
+     [x]
+     (if (map? x)
+       (:name x)
+       x)))
+
+#?(:clj
+   (defn ns-qualify
+     "Qualify symbol s by resolving it or using the current *ns*."
+     [env s]
+     (if (namespace s)
+       (binding [ana/*private-var-access-nowarn* true]
+         (->sym (ana/resolve-var env s)))
+       (symbol (str ana/*cljs-ns*) (str s)))))
