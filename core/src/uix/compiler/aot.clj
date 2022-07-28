@@ -2,6 +2,7 @@
   "Compiler code that translates HyperScript into React calls at compile-time."
   (:require [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]
+            [clojure.set :as set]
             [cljs.analyzer :as ana]
             [uix.lib]))
 
@@ -87,8 +88,32 @@
               `(>el ~tag-str ~attrs-children (cljs.core/array ~@children)))]
     ret))
 
+(defn- validate-destructured-props [props-sig props env component-name]
+  (when (and (map? props) (map? props-sig) (= [:keys] (keys props-sig)))
+    (let [actual-keys (set (keys props))
+          expected-keys (into #{} (map (comp keyword name)) (:keys props-sig))
+          unexpected-props (set/difference actual-keys expected-keys)]
+      (when (seq unexpected-props)
+        (let [env (select-keys (meta props) [:line :column])]
+          (ana/warning ::unexpected-props env {:unexpected-props (vec unexpected-props)
+                                               :expected-props (vec expected-keys)
+                                               :component-name component-name}))))))
+
+(defmethod ana/error-message ::unexpected-props [_ {:keys [unexpected-props expected-props component-name]}]
+  (str "Invalid signature: UIx component `" component-name "` expects only the following props " expected-props ",\n"
+       "but also got additional set of props " unexpected-props ".\n"
+       "Is that a typo? Either fix it or remove unused props since they can cause unnecessary updates of the component."))
+
+(defn- validate-signature [[tag props & children] env]
+  (when (symbol? tag)
+    (let [v (ana/resolve-var env tag)]
+      (when-let [args (-> v :meta :uix/args first)]
+        (let [props-sig (first args)]
+          (validate-destructured-props props-sig props env (:name v)))))))
+
 (defmethod compile-element* :component [v {:keys [env]}]
-  (let [[tag props & children] (normalize-element env v)
+  (let [[tag props & children :as el] (normalize-element env v)
+        _ (validate-signature el env)
         tag (vary-meta tag assoc :tag 'js)
         props-children (compile-attrs :component props nil)]
     `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))

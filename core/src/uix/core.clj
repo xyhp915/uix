@@ -37,7 +37,10 @@
         [fdecl m] (if (map? (last fdecl))
                     [(butlast fdecl) (conj m (last fdecl))]
                     [fdecl m])
-        m (conj {:arglists (list 'quote (#'cljs.core/sigs fdecl))} m)
+        sigs (#'cljs.core/sigs fdecl)
+        m (conj {:arglists (list 'quote sigs)
+                 :uix/args sigs}
+                m)
         m (conj (if (meta name) (meta name) {}) m)]
     (uix.lib/assert!
      (= 1 (count fdecl))
