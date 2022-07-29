@@ -59,3 +59,6 @@
       (do
         ($ :div.test-missing-key ($ x))
         ($ :div.test-missing-key-nested ($ x))))))
+
+(defui test-props-validation [{:keys [x]}])
+($ test-props-validation {:y 1})

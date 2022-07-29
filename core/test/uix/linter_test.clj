@@ -259,4 +259,8 @@
       (is (str/includes? out-str "UIx element is missing :key attribute, which is required"))
       (is (str/includes? out-str "($ :div.test-missing-key {} x)"))
       (is (str/includes? out-str "($ :div.test-missing-key ($ x))"))
-      (is (str/includes? out-str "($ :div.test-missing-key-nested ($ x))")))))
+      (is (str/includes? out-str "($ :div.test-missing-key-nested ($ x))")))
+
+    (testing "should fail on invalid props"
+      (is (str/includes? out-str (str :uix.compiler.aot/unexpected-props)))
+      (is (str/includes? out-str "Invalid props: UIx component `uix.linter-test/test-props-validation` expects only the following props: :x")))))
