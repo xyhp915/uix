@@ -4,7 +4,8 @@
             [uix.compiler.attributes :as attrs]
             [clojure.set :as set]
             [cljs.analyzer :as ana]
-            [uix.lib]))
+            [uix.lib]
+            [clojure.string :as str]))
 
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,
@@ -100,8 +101,8 @@
                                                :component-name component-name}))))))
 
 (defmethod ana/error-message ::unexpected-props [_ {:keys [unexpected-props expected-props component-name]}]
-  (str "Invalid signature: UIx component `" component-name "` expects only the following props " expected-props ",\n"
-       "but also got additional set of props " unexpected-props ".\n"
+  (str "Invalid props: UIx component `" component-name "` expects only the following props: " (str/join ", " expected-props) ",\n"
+       "but also got additional set of props: " (str/join ", " unexpected-props) ".\n"
        "Is that a typo? Either fix it or remove unused props since they can cause unnecessary updates of the component."))
 
 (defn- validate-signature [[tag props & children] env]
