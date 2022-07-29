@@ -263,4 +263,6 @@
 
     (testing "should fail on invalid props"
       (is (str/includes? out-str (str :uix.compiler.aot/unexpected-props)))
-      (is (str/includes? out-str "Invalid props: UIx component `uix.linter-test/test-props-validation` expects only the following props: :x")))))
+      (is (str/includes? out-str "Invalid props: UIx component `uix.linter-test/test-props-validation` expects only the following props: :x"))
+      (is (str/includes? out-str (str :uix.compiler.aot/no-props-expected)))
+      (is (str/includes? out-str "Invalid props: UIx component `uix.linter-test/test-props-validation-no-props-expected` doesn't expect any props")))))

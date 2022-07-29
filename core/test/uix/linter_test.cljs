@@ -62,3 +62,6 @@
 
 (defui test-props-validation [{:keys [x]}])
 ($ test-props-validation {:y 1})
+
+(defui test-props-validation-no-props-expected [])
+($ test-props-validation-no-props-expected {:y 1})

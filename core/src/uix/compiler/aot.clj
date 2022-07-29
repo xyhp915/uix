@@ -89,9 +89,9 @@
               `(>el ~tag-str ~attrs-children (cljs.core/array ~@children)))]
     ret))
 
-(defn- validate-destructured-props [props-sig props env component-name]
+(defn- validate-destructured-props [props-sig props component-name]
   (when (and (map? props) (map? props-sig) (= [:keys] (keys props-sig)))
-    (let [actual-keys (set (keys props))
+    (let [actual-keys (disj (set (keys props)) :key)
           expected-keys (into #{} (map (comp keyword name)) (:keys props-sig))
           unexpected-props (set/difference actual-keys expected-keys)]
       (when (seq unexpected-props)
@@ -100,17 +100,28 @@
                                                :expected-props (vec expected-keys)
                                                :component-name component-name}))))))
 
+(defn- validate-no-props-expected [args [tag & props] component-name]
+  (when (and (or (empty? args) (= '_ (first args)))
+             (seq props))
+    (let [env (select-keys (or (meta (first props)) (meta tag))
+                           [:line :column])]
+      (ana/warning ::no-props-expected env {:component-name component-name}))))
+
 (defmethod ana/error-message ::unexpected-props [_ {:keys [unexpected-props expected-props component-name]}]
   (str "Invalid props: UIx component `" component-name "` expects only the following props: " (str/join ", " expected-props) ",\n"
        "but also got additional set of props: " (str/join ", " unexpected-props) ".\n"
        "Is that a typo? Either fix it or remove unused props since they can cause unnecessary updates of the component."))
 
-(defn- validate-signature [[tag props & children] env]
+(defmethod ana/error-message ::no-props-expected [_ {:keys [component-name]}]
+  (str "Invalid props: UIx component `" component-name "` doesn't expect any props.\n"
+       "Should the component take props? Either fix it or remove the props since they can cause unnecessary updates of the component."))
+
+(defn- validate-signature [[tag props & children :as el] env]
   (when (symbol? tag)
     (let [v (ana/resolve-var env tag)]
       (when-let [args (-> v :meta :uix/args second)]
-        (let [props-sig (first args)]
-          (validate-destructured-props props-sig props env (:name v)))))))
+        (validate-no-props-expected args el (:name v))
+        (validate-destructured-props (first args) props (:name v))))))
 
 (defmethod compile-element* :component [v {:keys [env]}]
   (let [[tag props & children :as el] (normalize-element env v)
