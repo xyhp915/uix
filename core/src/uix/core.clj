@@ -39,7 +39,7 @@
                     [fdecl m])
         sigs (#'cljs.core/sigs fdecl)
         m (conj {:arglists (list 'quote sigs)
-                 :uix/args sigs}
+                 :uix/args (list 'quote (first sigs))}
                 m)
         m (conj (if (meta name) (meta name) {}) m)]
     (uix.lib/assert!

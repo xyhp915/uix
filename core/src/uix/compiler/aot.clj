@@ -107,7 +107,7 @@
 (defn- validate-signature [[tag props & children] env]
   (when (symbol? tag)
     (let [v (ana/resolve-var env tag)]
-      (when-let [args (-> v :meta :uix/args first)]
+      (when-let [args (-> v :meta :uix/args second)]
         (let [props-sig (first args)]
           (validate-destructured-props props-sig props env (:name v)))))))
 
