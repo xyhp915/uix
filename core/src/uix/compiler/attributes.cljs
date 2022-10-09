@@ -11,7 +11,9 @@
 (def prop-name-cache
   #js {:class "className"
        :for "htmlFor"
-       :charset "charSet"})
+       :charset "charSet"
+       :class-id "classID"
+       :item-id "itemID"})
 
 (def custom-prop-name-cache #js {})
 
@@ -98,10 +100,12 @@
     (reduce-kv kv-conv-shallow #js {} x)
     x))
 
+(declare class-names)
+
 (defn class-names-coll [classes]
   (let [^js/Array classes (reduce (fn [^js/Array a c]
                                     (when ^boolean c
-                                      (->> (if (keyword? c) (-name ^not-native c) c)
+                                      (->> (if (keyword? c) (-name ^not-native c) (class-names c))
                                            (.push a)))
                                     a)
                                   #js []
