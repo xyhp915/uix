@@ -28,12 +28,18 @@
                    {}))]
     (get-in config path)))
 
+(defn ignore? [form]
+  (-> form meta :uix/ignore true?))
+
 (defn hook? [sym]
   (and (symbol? sym)
        (some? (re-find #"^use-|use[A-Z]" (name sym)))))
 
 (defn hook-call? [form]
-  (and (list? form) (hook? (first form))))
+  (and (list? form)
+       (hook? (first form))
+       (-> form meta :uix/ignore nil?)
+       (not (ignore? form))))
 
 (def effect-hooks
   #{"use-effect" "useEffect"
@@ -202,10 +208,16 @@
     ;; Always returning true when the linter runs in non CLJS env,
     ;; since the function depends on cljs env
     true
-    (let [var (ana/resolve-var (:env @*context*) (first form))]
+    (let [sym (first form)
+          var (ana/resolve-var (:env @*context*) sym)
+          current-ns (-> @*context* :env :ns :name)]
       (or (= 'uix.core (:ns var))
           (= 'js (:ns var))
-          (some-> var :meta :uix/hook)))))
+          (some-> var :meta :uix/hook)
+          ;; a local (unresolved var)
+          (= var {:op :var
+                  :name (symbol (str current-ns) (str sym))
+                  :ns current-ns})))))
 
 (defn lint-body!*
   [expr & {:keys [in-branch? in-loop?]
@@ -261,7 +273,8 @@
 (defn- rf-subscribe-call? [form]
   (and (list? form)
        (symbol? (first form))
-       (= "subscribe" (name (first form)))))
+       (= "subscribe" (name (first form)))
+       (not (ignore? form))))
 
 (defn- read-re-frame-config []
   (-> (reduce-kv (fn [ret k v]
