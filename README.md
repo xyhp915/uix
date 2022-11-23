@@ -21,8 +21,8 @@ yarn add react@17.0.2 react-dom@17.0.2
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "0.7.0"}
-        com.pitch/uix.dom {:mvn/version "0.7.0"}}}
+{:deps {com.pitch/uix.core {:mvn/version "0.7.1"}
+        com.pitch/uix.dom {:mvn/version "0.7.1"}}}
 ```
 
 ## Usage

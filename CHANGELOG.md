@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.7.1
+
+### Improvements
+
+- Fix rules of hooks linter [f7276d](https://github.com/pitch-io/uix/commit/f7276decf191e0b804f7f393add91ebd982dcade)
+
 ## 0.7.0
 
 ### New
