@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 0.7.1
+
+### Improvements
+
+- Fix rules of hooks linter [f7276d](https://github.com/pitch-io/uix/commit/f7276decf191e0b804f7f393add91ebd982dcade)
+
+## 0.7.0
+
+### New
+
+- Added `uix.core/fn` macro [924e4b](https://github.com/pitch-io/uix/commit/924e4b37f841120312054dac283c2b59125e7cda)
+
 ## 0.6.2
 
 ### Improvements
