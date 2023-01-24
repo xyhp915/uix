@@ -25,6 +25,7 @@
     (is (empty? @msgs))))
 
 (defn render [el]
-  (let [root (.createElement js/document "div")]
-    (.append (.getElementById js/document "root") root)
-    (dom/render el root)))
+  (let [node (.createElement js/document "div")
+        _ (.append (.getElementById js/document "root") node)
+        root (dom/create-root node)]
+    (dom/render-root el root)))
