@@ -4,7 +4,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 
 > "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
 
-API compatibility: React v17
+API compatibility: React v18.2.0
 
 UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
 
@@ -17,12 +17,12 @@ Discuss at #uix on [Clojurians Slack](http://clojurians.net)
 ## Installation
 
 ```
-yarn add react@17.0.2 react-dom@17.0.2
+yarn add react@18.2.0 react-dom@18.2.0
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "0.7.1"}
-        com.pitch/uix.dom {:mvn/version "0.7.1"}}}
+{:deps {com.pitch/uix.core {:mvn/version "0.8.0"}
+        com.pitch/uix.dom {:mvn/version "0.8.0"}}}
 ```
 
 ## Usage
@@ -43,7 +43,10 @@ yarn add react@17.0.2 react-dom@17.0.2
       ($ :span state)
       ($ button {:on-click #(set-state! inc)} "+"))))
 
-(uix.dom/render ($ app) (js/document.getElementById "root"))
+(defonce root
+  (uix.dom/create-root (js/document.getElementById "root")))
+
+(uix.dom/render-root ($ app) root)
 ```
 
 ## Docs

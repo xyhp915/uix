@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.8.0
+
+### New
+- React v18.2.0 API compatibility [#59](https://github.com/pitch-io/uix/pull/59)
+- New hooks wrappers: `use-insertion-effect`, `use-deferred-value`, `use-transition`, `start-transition`, `use-id` and `use-sync-external-store`
+- New `uix.dom` public API: `create-root`, `hydrate-root`, `render-root` and `unmount-root`
+
 ## 0.7.1
 
 ### Improvements
