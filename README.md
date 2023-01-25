@@ -76,6 +76,10 @@ scripts/test
 _Note: to ensure you're using the right Node.js version, you can use [nvm](https://github.com/nvm-sh/nvm) and run `nvm use`
 once in the directory. Otherwise the Node.js version you use is in the `.nvmrc` file. See nvm repo for more documentation._
 
+## Who's using UIx2?
+- [Pitch](https://pitch.com/)
+- [Cognician](https://info.cognician.com/)
+
 ## Thanks to
 
 - [UIx v1](https://github.com/roman01la/uix) for initial set of ideas and learnings
