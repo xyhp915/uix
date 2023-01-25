@@ -76,6 +76,17 @@ scripts/test
 _Note: to ensure you're using the right Node.js version, you can use [nvm](https://github.com/nvm-sh/nvm) and run `nvm use`
 once in the directory. Otherwise the Node.js version you use is in the `.nvmrc` file. See nvm repo for more documentation._
 
+## Publishing
+1. Update version in core/release.edn, dom/release.edn and in README.md
+2. Update docs if needed
+3. Update CHANGELOG.md
+4. Publish both `core` and `dom` packages to Clojars
+
+```
+cd core && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
+cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
+```
+
 ## Who's using UIx2?
 - [Pitch](https://pitch.com/)
 - [Cognician](https://info.cognician.com/)
