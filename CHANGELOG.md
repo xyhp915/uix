@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.8.1
+
+### Improvements
+- Fixed how react-dom API is exposed (react-dom vs react-dom/client)
+
 ## 0.8.0
 
 ### New

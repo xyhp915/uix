@@ -1,6 +1,7 @@
 (ns uix.dom
   "Public API"
-  (:require ["react-dom/client" :as rdom]))
+  (:require ["react-dom/client" :as rdom-client]
+            [react-dom :as rdom]))
 
 ;; react-dom top-level API
 
@@ -9,20 +10,20 @@
 
   See: https://reactjs.org/docs/react-dom-client.html#createroot"
   ([node]
-   (rdom/createRoot node))
+   (rdom-client/createRoot node))
   ([node {:keys [on-recoverable-error identifier-prefix] :as options}]
-   (rdom/createRoot node #js {:onRecoverableError on-recoverable-error
-                              :identifierPrefix identifier-prefix})))
+   (rdom-client/createRoot node #js {:onRecoverableError on-recoverable-error
+                                     :identifierPrefix identifier-prefix})))
 
 (defn hydrate-root
   "Same as `create-root`, but is used to hydrate a container whose HTML contents were rendered by ReactDOMServer.
 
   See: https://reactjs.org/docs/react-dom-client.html#hydrateroot"
   ([container element]
-   (rdom/hydrateRoot container element))
+   (rdom-client/hydrateRoot container element))
   ([container element {:keys [on-recoverable-error identifier-prefix] :as options}]
-   (rdom/hydrateRoot container element #js {:onRecoverableError on-recoverable-error
-                                            :identifierPrefix identifier-prefix})))
+   (rdom-client/hydrateRoot container element #js {:onRecoverableError on-recoverable-error
+                                                   :identifierPrefix identifier-prefix})))
 
 (defn render-root
   "Renders React root into the DOM node."
