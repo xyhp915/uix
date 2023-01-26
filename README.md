@@ -90,6 +90,7 @@ cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 ## Who's using UIx2?
 - [Pitch](https://pitch.com/)
 - [Cognician](https://info.cognician.com/)
+- [Multiply](https://multiply.co/)
 
 ## Thanks to
 
