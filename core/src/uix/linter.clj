@@ -42,30 +42,33 @@
   (contains? effect-hooks (name (first form))))
 
 (defn form->loc [form]
-  (select-keys form [:line :column]))
+  (select-keys (meta form) [:line :column]))
 
 (defn find-env-for-form [type form]
   (case type
     (::hook-in-branch ::hook-in-loop
                       ::deps-coll-literal ::literal-value-in-deps
                       ::unsafe-set-state ::missing-key)
-    (form->loc (meta form))
+    (form->loc form)
 
     ::inline-function
-    (form->loc (meta (second form)))
+    (form->loc (second form))
 
     ::deps-array-literal
-    (form->loc (meta (.-val form)))
+    (form->loc (.-val form))
 
     nil))
 
-(defn add-error! [form type]
-  (swap! *component-context* update :errors conj {:source form
-                                                  :source-context *source-context*
-                                                  :type type
-                                                  :env (find-env-for-form type form)}))
+(defn add-error!
+  ([form type]
+   (add-error! form type (find-env-for-form type form)))
+  ([form type env]
+   (swap! *component-context* update :errors conj {:source form
+                                                   :source-context *source-context*
+                                                   :type type
+                                                   :env env})))
 
-(defn- uix-element? [form]
+(defn uix-element? [form]
   (and (list? form) (= '$ (first form))))
 
 (defn- missing-key? [[_ _ attrs :as form]]
@@ -269,10 +272,17 @@
        (:name v) ", use `use-subscribe` hook instead.\n"
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
+(defmulti lint-component (fn [type sym body env]))
+
+(defn- run-linters! [sym form env]
+  (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn lint-component)]
+    (f key sym form env)))
+
 (defn lint! [sym form env]
   (binding [*component-context* (atom {:errors []})]
     (lint-body! form)
     (lint-re-frame! form env)
+    (run-linters! sym form env)
     (let [{:keys [errors]} @*component-context*
           {:keys [column line]} env]
       (doseq [err errors]
@@ -491,4 +501,3 @@
 (defn lint-exhaustive-deps! [env form f deps]
   (doseq [[error-type opts] (lint-exhaustive-deps env form f deps)]
     (ana/warning error-type (or (:env opts) env) opts)))
-
