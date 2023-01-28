@@ -1,4 +1,5 @@
 {:deps true
+ :dev-http {3000 "./"}
  :builds
  {:test {:target :browser
          :output-dir "out"
@@ -12,4 +13,11 @@
                                            :closure-defines {goog.DEBUG false}}}}
   :linter-test {:target :browser
                 :output-dir "out"
-                :modules {:main {:entries [uix.linter-test]}}}}}
+                :modules {:main {:entries [uix.linter-test]}}}
+
+  :examples {:target :browser
+             :output-dir "out"
+             :asset-path "/out"
+             :modules {:main {:entries [uix.examples]}}
+             :release {:compiler-options {:infer-externs true
+                                          :closure-defines {goog.DEBUG false}}}}}}

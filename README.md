@@ -66,6 +66,7 @@ yarn add react@18.2.0 react-dom@18.2.0
 - [React DevTools](/docs/react-devtools.md)
 - [Code linting](/docs/code-linting.md)
 - [Utilities](/docs/utilities.md)
+- [Examples](/core/dev/uix/examples.cljs)
 
 ## Testing
 
