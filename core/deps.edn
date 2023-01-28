@@ -7,7 +7,7 @@
                                     enlive/enlive {:mvn/version "1.1.6"}
                                     hiccup/hiccup {:mvn/version "1.0.5"}
                                     rum/rum {:mvn/version "0.11.2"}}}
-           :test {:extra-paths ["test"]
+           :test {:extra-paths ["test" "dev"]
                   :extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}
                                org.clojure/clojurescript {:mvn/version "1.10.879"}
                                thheller/shadow-cljs {:mvn/version "2.15.5"}

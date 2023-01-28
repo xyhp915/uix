@@ -42,30 +42,33 @@
   (contains? effect-hooks (name (first form))))
 
 (defn form->loc [form]
-  (select-keys form [:line :column]))
+  (select-keys (meta form) [:line :column]))
 
 (defn find-env-for-form [type form]
   (case type
     (::hook-in-branch ::hook-in-loop
                       ::deps-coll-literal ::literal-value-in-deps
                       ::unsafe-set-state ::missing-key)
-    (form->loc (meta form))
+    (form->loc form)
 
     ::inline-function
-    (form->loc (meta (second form)))
+    (form->loc (second form))
 
     ::deps-array-literal
-    (form->loc (meta (.-val form)))
+    (form->loc (.-val form))
 
     nil))
 
-(defn add-error! [form type]
-  (swap! *component-context* update :errors conj {:source form
-                                                  :source-context *source-context*
-                                                  :type type
-                                                  :env (find-env-for-form type form)}))
+(defn add-error!
+  ([form type]
+   (add-error! form type (find-env-for-form type form)))
+  ([form type env]
+   (swap! *component-context* update :errors conj {:source form
+                                                   :source-context *source-context*
+                                                   :type type
+                                                   :env env})))
 
-(defn- uix-element? [form]
+(defn uix-element? [form]
   (and (list? form) (= '$ (first form))))
 
 (defn- missing-key? [[_ _ attrs :as form]]
@@ -269,19 +272,31 @@
        (:name v) ", use `use-subscribe` hook instead.\n"
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
-(defn lint! [sym form env]
+(defmulti lint-component (fn [type form env]))
+(defmulti lint-element (fn [type form env]))
+(defmulti lint-hook-with-deps (fn [type form env]))
+
+(defn- run-linters! [mf & args]
+  (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn mf)]
+    (apply f key args)))
+
+(defn- report-errors!
+  ([env]
+   (report-errors! env nil))
+  ([env m]
+   (let [{:keys [errors]} @*component-context*
+         {:keys [column line]} env]
+     (run! #(ana/warning (:type %)
+                         (or (:env %) env)
+                         (merge {:column column :line line} m %))
+           errors))))
+
+(defn lint! [sym body form env]
   (binding [*component-context* (atom {:errors []})]
-    (lint-body! form)
-    (lint-re-frame! form env)
-    (let [{:keys [errors]} @*component-context*
-          {:keys [column line]} env]
-      (doseq [err errors]
-        (ana/warning (:type err)
-                     (or (:env err) env)
-                     (into {:name (str (-> env :ns :name) "/" sym)
-                            :column column
-                            :line line}
-                           err))))))
+    (lint-body! body)
+    (lint-re-frame! body env)
+    (run-linters! lint-component form env)
+    (report-errors! env {:name (str (-> env :ns :name) "/" sym)})))
 
 ;; === Exhaustive Deps ===
 
@@ -490,5 +505,12 @@
 
 (defn lint-exhaustive-deps! [env form f deps]
   (doseq [[error-type opts] (lint-exhaustive-deps env form f deps)]
-    (ana/warning error-type (or (:env opts) env) opts)))
+    (ana/warning error-type (or (:env opts) env) opts))
+  (binding [*component-context* (atom {:errors []})]
+    (run-linters! lint-hook-with-deps form env)
+    (report-errors! env)))
 
+(defn lint-element* [form env]
+  (binding [*component-context* (atom {:errors []})]
+    (uix.linter/run-linters! uix.linter/lint-element form env)
+    (report-errors! env)))

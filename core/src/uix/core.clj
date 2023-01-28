@@ -86,7 +86,7 @@
   A component should have a single argument of props."
   [sym & fdecl]
   (let [[fname args fdecl] (parse-sig `defui sym fdecl)]
-    (uix.linter/lint! sym fdecl &env)
+    (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
             body (uix.dev/with-fast-refresh var-sym fdecl)]
@@ -108,7 +108,7 @@
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
         [fname args body] (parse-sig `fn sym fdecl)]
-    (uix.linter/lint! sym body &env)
+    (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})]
         `(let [~var-sym ~(if (empty? args)
@@ -131,8 +131,10 @@
   DOM element: ($ :button#id.class {:on-click handle-click} \"click me\")
   React component: ($ title-bar {:title \"Title\"})"
   ([tag]
+   (uix.linter/lint-element* &form &env)
    (uix.compiler.aot/compile-element [tag] {:env &env}))
   ([tag props & children]
+   (uix.linter/lint-element* &form &env)
    (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
 ;; === Hooks ===

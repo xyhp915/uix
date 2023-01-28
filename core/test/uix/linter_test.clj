@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [shadow.cljs.devtools.cli]
             [uix.linter]
+            [uix.linters]
             [clojure.string :as str]))
 
 ;; === Rules of Hooks ===
@@ -265,4 +266,12 @@
       (is (str/includes? out-str "UIx element is missing :key attribute, which is required"))
       (is (str/includes? out-str "($ :div.test-missing-key {} x)"))
       (is (str/includes? out-str "($ :div.test-missing-key ($ x))"))
-      (is (str/includes? out-str "($ :div.test-missing-key-nested ($ x))")))))
+      (is (str/includes? out-str "($ :div.test-missing-key-nested ($ x))")))
+
+    (testing "plugin linters should work"
+      (is (str/includes? out-str (str :component/kebab-case-name)))
+      (is (str/includes? out-str (str :hooks/too-many-lines)))
+      (is (str/includes? out-str (str :element/no-inline-styles)))
+      (is (str/includes? out-str "Component name should be in kebab case"))
+      (is (str/includes? out-str "React hook is too large to be declared directly in component's body"))
+      (is (str/includes? out-str "Inline styles are not allowed, put them into a CSS file instead")))))
