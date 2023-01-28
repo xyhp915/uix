@@ -65,3 +65,14 @@
       (do
         ($ :div.test-missing-key ($ x))
         ($ :div.test-missing-key-nested ($ x))))))
+
+(defui Button [{:keys [on-click children]}]
+  (uix.core/use-effect
+   (fn []
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+   [])
+  ($ :button {:on-click on-click
+              :style {:color "red"}}
+     children))

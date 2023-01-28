@@ -272,26 +272,31 @@
        (:name v) ", use `use-subscribe` hook instead.\n"
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
-(defmulti lint-component (fn [type sym body env]))
+(defmulti lint-component (fn [type form env]))
+(defmulti lint-element (fn [type form env]))
+(defmulti lint-hook-with-deps (fn [type form env]))
 
-(defn- run-linters! [sym form env]
-  (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn lint-component)]
-    (f key sym form env)))
+(defn- run-linters! [mf & args]
+  (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn mf)]
+    (apply f key args)))
 
-(defn lint! [sym form env]
+(defn- report-errors!
+  ([env]
+   (report-errors! env nil))
+  ([env m]
+   (let [{:keys [errors]} @*component-context*
+         {:keys [column line]} env]
+     (run! #(ana/warning (:type %)
+                         (or (:env %) env)
+                         (merge {:column column :line line} m %))
+           errors))))
+
+(defn lint! [sym body form env]
   (binding [*component-context* (atom {:errors []})]
-    (lint-body! form)
-    (lint-re-frame! form env)
-    (run-linters! sym form env)
-    (let [{:keys [errors]} @*component-context*
-          {:keys [column line]} env]
-      (doseq [err errors]
-        (ana/warning (:type err)
-                     (or (:env err) env)
-                     (into {:name (str (-> env :ns :name) "/" sym)
-                            :column column
-                            :line line}
-                           err))))))
+    (lint-body! body)
+    (lint-re-frame! body env)
+    (run-linters! lint-component form env)
+    (report-errors! env {:name (str (-> env :ns :name) "/" sym)})))
 
 ;; === Exhaustive Deps ===
 
@@ -500,4 +505,12 @@
 
 (defn lint-exhaustive-deps! [env form f deps]
   (doseq [[error-type opts] (lint-exhaustive-deps env form f deps)]
-    (ana/warning error-type (or (:env opts) env) opts)))
+    (ana/warning error-type (or (:env opts) env) opts))
+  (binding [*component-context* (atom {:errors []})]
+    (run-linters! lint-hook-with-deps form env)
+    (report-errors! env)))
+
+(defn lint-element* [form env]
+  (binding [*component-context* (atom {:errors []})]
+    (uix.linter/run-linters! uix.linter/lint-element form env)
+    (report-errors! env)))
