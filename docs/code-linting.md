@@ -203,3 +203,11 @@ It is possible to add re-frame specific rules to the linter config file (located
   {:resolve-as {my.app/subscribe re-frame.core/subscribe}}}}
   ;; re-frame.core/subscribe is checked by default
 ```
+
+## Custom linters
+UIx exposes a public API to register custom linters, so that you can have your own linting rules specific to your project. There are three types of linters in UIx:
+- Component linters `uix.linter/lint-component` — those execute on entire `defui` form
+- Element linters `uix.linter/lint-element` — execute per `$` form
+- Hook linters `uix.linter/lint-hook-with-deps` — execute for every Hook form that takes deps (`use-effect`, `use-callback`, etc.)
+
+See [core/dev/uix/linters.clj](/core/dev/uix/linters.clj) for a set of complete examples.
