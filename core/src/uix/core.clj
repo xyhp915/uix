@@ -1,6 +1,6 @@
 (ns uix.core
   "Public API"
-  (:refer-clojure :exclude [fn])
+  (:refer-clojure :exclude [fn destructure])
   (:require [clojure.core :as core]
             [uix.compiler.aot]
             [uix.source]
@@ -11,6 +11,39 @@
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
 
+(defn destructure [m arg]
+  (assert (symbol? arg) "arg should be a symbol")
+  (if (and (map? m) (contains? m '&))
+    (let [ks (->> (dissoc m '&)
+                  (mapcat (core/fn [[k v]]
+                            (cond
+                              (symbol? k) [(keyword v)]
+                              (= k :keys) (map keyword v)
+                              (= k :strs) (map str v)
+                              (= k :syms) (map #(do `'~(symbol %)) v)
+                              (= (name k) "keys") (map #(keyword (namespace k) (str %)) v)
+                              (= (name k) "syms") (map #(do `'~(symbol (namespace k) (str %))) v)
+                              :else nil))))]
+      [(dissoc m '&) arg
+       (m '&) `(dissoc ~arg ~@ks)])
+    [m arg]))
+
+(comment
+  (destructure '{:keys [a b]
+                 :j/keys [t]
+                 :yo/syms [o]
+                 kk :d
+                 & c}
+               'props))
+
+(macroexpand-1
+ '(defui component [{:keys [a b]
+                     :j/keys [t]
+                     :yo/syms [o]
+                     kk :d
+                     & c}]
+    1))
+
 (defn- no-args-component [sym var-sym body]
   `(defn ~sym []
      (let [f# (core/fn [] ~@body)]
@@ -19,17 +52,36 @@
          (f#)))))
 
 (defn- with-args-component [sym var-sym args body]
-  `(defn ~sym [props#]
-     (let [clj-props# (glue-args props#)
-           ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym]
-           (assert (or (map? clj-props#)
-                       (nil? clj-props#))
-                   (str "UIx component expects a map of props, but instead got " clj-props#))
-           (f#))
-         (f#)))))
+  (let [props-sym (gensym "props")]
+    `(defn ~sym [props#]
+       (let [~props-sym (glue-args props#)
+             ~@(destructure (first args) props-sym)
+             f# (core/fn [] ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym]
+             (assert (or (map? ~props-sym)
+                         (nil? ~props-sym))
+                     (str "UIx component expects a map of props, but instead got " ~props-sym))
+             (f#))
+           (f#))))))
+
+(defn- component-clj [sym args body]
+  (if (empty? args)
+    `(defn ~sym ~args ~@body)
+    (let [props-sym (gensym "props")]
+      `(defn ~sym [~props-sym]
+         (assert (map? ~props-sym) (str "UIx component expects a map of props, but instead got " ~props-sym))
+         (let [~@(destructure (first args) props-sym)]
+           ~@body)))))
+
+(defn- fn-clj [sym args body]
+  (if (empty? args)
+    `(core/fn ~sym ~args ~@body)
+    (let [props-sym (gensym "props")]
+      `(core/fn ~sym [~props-sym]
+         (assert (map? ~props-sym) (str "UIx component expects a map of props, but instead got " ~props-sym))
+         (let [~@(destructure (first args) props-sym)]
+           ~@body)))))
 
 (defn- no-args-fn-component [sym var-sym body]
   `(core/fn ~sym []
@@ -39,17 +91,18 @@
          (f#)))))
 
 (defn- with-args-fn-component [sym var-sym args body]
-  `(core/fn ~sym [props#]
-     (let [clj-props# (glue-args props#)
-           ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym]
-           (assert (or (map? clj-props#)
-                       (nil? clj-props#))
-                   (str "UIx component expects a map of props, but instead got " clj-props#))
-           (f#))
-         (f#)))))
+  (let [props-sym (gensym "props")]
+    `(core/fn ~sym [props#]
+       (let [~props-sym (glue-args props#)
+             ~@(destructure (first args) props-sym)
+             f# (core/fn [] ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym]
+             (assert (or (map? ~props-sym)
+                         (nil? ~props-sym))
+                     (str "UIx component expects a map of props, but instead got " ~props-sym))
+             (f#))
+           (f#))))))
 
 (defn parse-sig [form name fdecl]
   (let [[fdecl m] (if (string? (first fdecl))
@@ -97,8 +150,7 @@
            (set! (.-uix-component? ~var-sym) true)
            (set! (.-displayName ~var-sym) ~(str var-sym))
            ~(uix.dev/fast-refresh-signature var-sym body)))
-      `(defn ~fname ~args
-         ~@fdecl))))
+      (component-clj fname args fdecl))))
 
 (defmacro fn
   "Creates anonymous UIx component. Similar to fn, but doesn't support multi arity.
@@ -117,8 +169,7 @@
            (set! (.-uix-component? ~var-sym) true)
            (set! (.-displayName ~var-sym) ~(str var-sym))
            ~var-sym))
-      `(core/fn ~fname ~args
-         ~@fdecl))))
+      (fn-clj fname args fdecl))))
 
 (defmacro source
   "Returns source string of UIx component"

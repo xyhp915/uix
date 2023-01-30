@@ -39,3 +39,17 @@
 (def clj-fn-component (uix.core/fn [props] props))
 (deftest test-fn
   (is (= {:x 1} (clj-fn-component {:x 1}))))
+
+(uix.core/defui clj-component
+  [{:keys [a b x]
+    :j/keys [t]
+    :yo/syms [o]
+    kk :d
+    :& {}
+    :as m
+    :or {x 9}}]
+  [a b x t o kk c m])
+
+(deftest test-defui-destructuring
+  (is (= '[1 2 9 3 4 5 {:p 6 :k 7} {:a 1, :b 2, :j/t 3, yo/o 4, :d 5, :p 6, :k 7}]
+         (clj-component {:a 1 :b 2 :j/t 3 'yo/o 4 :d 5 :p 6 :k 7}))))
