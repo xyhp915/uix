@@ -67,6 +67,7 @@ yarn add react@18.2.0 react-dom@18.2.0
 - [Code linting](/docs/code-linting.md)
 - [Utilities](/docs/utilities.md)
 - [Examples](/core/dev/uix/examples.cljs)
+- [Internals](/docs/internals.md)
 
 ## Testing
 
@@ -78,6 +79,7 @@ _Note: to ensure you're using the right Node.js version, you can use [nvm](https
 once in the directory. Otherwise the Node.js version you use is in the `.nvmrc` file. See nvm repo for more documentation._
 
 ## Publishing
+
 1. Update version in core/release.edn, dom/release.edn and in README.md
 2. Update docs if needed
 3. Update CHANGELOG.md
@@ -89,6 +91,7 @@ cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 ```
 
 ## Who's using UIx2?
+
 - [Pitch](https://pitch.com/)
 - [Cognician](https://info.cognician.com/)
 - [Multiply](https://multiply.co/)
