@@ -23,7 +23,7 @@ This one is a lot more involved. While the core package wraps a public API from 
 1. Handles props passing, to make sure that Clojure's data structures can be used as component props, otherwise React will destroy them when validating props object
 2. Emits React component when compiling as ClojureScript and a plain function when running on JVM
 3. Injects `react-refresh` setup for [hot-reloading](/docs/hot-reloading.md) in dev
-4. Assignes readbale component name to improve debugging (those names are printed in stack traces and in React DevTools)
+4. Assigns readable component name to improve debugging (those names are printed in stack traces and in React DevTools)
 5. Makes sure that a component is a single-arity function that takes a map of props
 6. Runs a [linter](/docs/code-linting.md) on component's body
 
