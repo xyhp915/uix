@@ -326,7 +326,8 @@
                        (get-in env [:locals (:name %) :name]) ;; from an outer scope
                        (-> % :info :shadow not) ;; but not a local shadowing locals from outer scope
                        (not (deps (:name %))))) ;; and not declared in deps vector
-         (map :name))))
+         (map :name)
+         distinct)))
 
 (defmethod pp/code-dispatch JSValue [alis]
   (.write ^Writer *out* "#js ")

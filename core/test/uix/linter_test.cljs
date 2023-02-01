@@ -76,3 +76,9 @@
   ($ :button {:on-click on-click
               :style {:color "red"}}
      children))
+
+(defui test-duplicate-syms [{:keys [dsym]}]
+  (uix.core/use-effect
+   (fn []
+     (prn dsym dsym dsym))
+   ^:lint-deps []))
