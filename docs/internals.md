@@ -38,7 +38,7 @@ This one is a lot more involved. While the core package wraps a public API from 
 
 #### Element compiler
 
-This part, while there's not much code to it, is propbably where the most of complexity in UIx lives.
+This part, while there's not much code to it, is probably where the most of complexity in UIx lives.
 
 `uix.compiler.aot` namespace (ahead of time compiler) takes care of compiling `$` elements to ClojureScript that is as close as possible to plain JS from performance standpoint. The compilation process boils down to transforming something like `($ :div {:on-click on-click} ...)` into `(react/createElement "div" #js {:onClick on-click} ...)`. The end goal is to have as less Clojure data types as possible in the end to achieve best performance.
 
