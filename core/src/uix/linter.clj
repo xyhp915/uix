@@ -482,11 +482,10 @@
     ;; when a reference to a function passed into a hook, should be an inline function instead
     (not (fn-literal? f)) [::inline-function {:source form :env (find-env-for-form ::inline-function form)}]
 
-    (vector? deps)
+    (and (vector? deps) (not (:lint/disable (meta deps))))
     (let [[missing-deps declared-unnecessary-deps suggested-deps] (find-missing-and-unnecessary-deps env f deps)]
       ;; when hook function is referencing vars from out scope that are missing in deps vector
-      (when (or (and (:lint-deps (meta deps)) (seq missing-deps))
-                (seq declared-unnecessary-deps))
+      (when (or (seq missing-deps) (seq declared-unnecessary-deps))
         [::missing-deps {:missing-deps missing-deps
                          :unnecessary-deps declared-unnecessary-deps
                          :suggested-deps suggested-deps

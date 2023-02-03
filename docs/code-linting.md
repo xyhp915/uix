@@ -68,7 +68,7 @@ The rule here is to call the function at the top level of the component body.
 
 ### A hook doesn't meet its dependencies requirements
 
-> This rule is currently experimental and disabled, it's possible to opt-in by adding `^:lint-deps` meta onto in front of the deps vector
+> This rule is currently experimental, to opt-out add `^:lint/disable` meta in front of the deps vector
 
 This rule will check for missing and unnecessary dependencies and suggest a correct deps vector.
 
