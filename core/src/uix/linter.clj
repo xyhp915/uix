@@ -260,10 +260,13 @@
   (read-re-frame-config))
 
 (defn lint-re-frame! [form env]
-  (let [sources (->> (uix.lib/find-form rf-subscribe-call? form)
-                     (keep #(let [v (ana/resolve-var env (first %))]
-                              (when (contains? re-frame-config (:name v))
-                                (assoc v :source %)))))]
+  (let [resolve-fn (if (uix.lib/cljs-env? env)
+                     ana/resolve-var
+                     resolve)
+        sources    (->> (uix.lib/find-form rf-subscribe-call? form)
+                        (keep #(let [v (resolve-fn env (first %))]
+                                 (when (contains? re-frame-config (:name v))
+                                   (assoc v :source %)))))]
     (run! #(ana/warning ::non-reactive-re-frame-subscribe env %)
           sources)))
 
