@@ -17,10 +17,6 @@ jobs:
           at: ~/repo
       - github-cli/setup
       - run:
-          name: Install Headless Chrome dependencies
-          command: |
-            sudo apt-get update && sudo apt-get install -yq libxss1
-      - run:
           name: Create Release
           command: |
             gh release create $(git rev-parse --short HEAD) build_info
@@ -35,6 +31,10 @@ jobs:
     steps:
       - checkout
       - github-cli/setup
+      - run:
+          name: Install Headless Chrome dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -yq libxss1
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
 
