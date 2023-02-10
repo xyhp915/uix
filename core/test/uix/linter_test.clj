@@ -1,8 +1,10 @@
 (ns uix.linter-test
   (:require [clojure.test :refer [deftest is testing]]
             [shadow.cljs.devtools.cli]
+            [uix.assertions]
             [uix.linter]
             [uix.linters]
+            [uix.core]
             [clojure.string :as str]))
 
 ;; === Rules of Hooks ===
@@ -278,3 +280,17 @@
 
     (testing "should dedupe missing deps"
       (is (not (str/includes? out-str "[dsym dsym dsym]"))))))
+
+;; === Subscribe call in JVM ===
+
+(defn subscribe [v]
+  {:value v})
+
+(def some-value "x")
+
+(deftest test-subscribe-function-call
+  (testing "subscribe function can be used in clj"
+    (is (not-thrown?
+         (macroexpand-1 '(uix.core/defui subscribe-component [props]
+                           (let [current-value (subscribe some-value)]
+                             (:value current-value))))))))
