@@ -186,5 +186,27 @@
     (is (= "HELLO! 2" (.-textContent root)))
     (react-dom/unmountComponentAtNode root)))
 
+(defui dyn-uix-comp [props]
+  ($ :button props))
+
+(defn dyn-react-comp [^js props]
+  ($ :button
+     {:title (.-title props)
+      :children (.-children props)}))
+
+(deftest test-dynamic-element
+  (testing "dynamic element as a keyword"
+    (let [as :button#btn.action]
+      (is (= "<button title=\"hey\" id=\"btn\" class=\"action\">hey</button>"
+             (t/as-string ($ as {:title "hey"} "hey"))))))
+  (testing "dynamic element as uix component"
+    (let [as dyn-uix-comp]
+      (is (= "<button title=\"hey\">hey</button>"
+             (t/as-string ($ as {:title "hey"} "hey"))))))
+  (testing "dynamic element as react component"
+    (let [as dyn-react-comp]
+      (is (= "<button title=\"hey\">hey</button>"
+             (t/as-string ($ as {:title "hey"} "hey")))))))
+
 (defn -main []
   (run-tests))

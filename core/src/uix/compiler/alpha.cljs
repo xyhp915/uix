@@ -19,28 +19,43 @@
                              "Reagent element should be Hiccup wrapped with r/as-element, i.e. (r/as-element [" name-str "])")))))
   true)
 
+(defn- normalise-args [component-type js-props props-children]
+  (if (= 2 (.-length ^js props-children))
+    #js [component-type js-props (aget props-children 1)]
+    #js [component-type js-props]))
+
 (defn- uix-component-element [component-type ^js props-children children]
   (let [props (aget props-children 0)
         js-props (if-some [key (:key props)]
                    #js {:key key :argv (dissoc props :key)}
                    #js {:argv props})
-        args (if (= 2 (.-length props-children))
-               #js [component-type js-props (aget props-children 1)]
-               #js [component-type js-props])]
+        args (normalise-args component-type js-props props-children)]
     (.apply react/createElement nil (.concat args children))))
 
 (defn- react-component-element [component-type ^js props-children children]
   (let [js-props (-> (aget props-children 0)
                      (attrs/interpret-attrs #js [] true)
                      (aget 0))
-        args (if (= 2 (.-length props-children))
-               #js [component-type js-props (aget props-children 1)]
-               #js [component-type js-props])]
+        args (normalise-args component-type js-props props-children)]
+    (.apply react/createElement nil (.concat args children))))
+
+(defn- dynamic-element [component-type ^js props-children children]
+  (let [tag-id-class (attrs/parse-tag component-type)
+        js-props (-> (aget props-children 0)
+                     (attrs/interpret-attrs tag-id-class false)
+                     (aget 0))
+        tag (aget tag-id-class 0)
+        args (normalise-args tag js-props props-children)]
     (.apply react/createElement nil (.concat args children))))
 
 (defn component-element [^clj component-type props-children children]
   (when ^boolean goog.DEBUG
     (validate-component component-type))
-  (if (.-uix-component? component-type)
+  (cond
+    (.-uix-component? component-type)
     (uix-component-element component-type props-children children)
-    (react-component-element component-type props-children children)))
+
+    (keyword? component-type)
+    (dynamic-element component-type props-children children)
+
+    :else (react-component-element component-type props-children children)))

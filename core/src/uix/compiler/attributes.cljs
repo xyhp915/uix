@@ -129,7 +129,26 @@
   ([a b & rst]
    (reduce class-names (class-names a b) rst)))
 
-(defn set-id-class
+(def re-tag
+  "HyperScript tag pattern :div :div#id.class etc."
+  #"([^\.#]*)(?:#([^\.#]+))?(?:\.([^#]+))?")
+
+(defn parse-tag
+  "Takes HyperScript tag (:div#id.class) and returns parsed tag, id and class fields,
+  and boolean indicating if tag name is a custom element (a custom DOM element that has hyphen in the name)"
+  [tag]
+  (let [tag-str (name tag)]
+    (when (and (not (re-matches re-tag tag-str))
+               (re-find #"[#\.]" tag-str))
+      ;; Throwing NPE here because shadow catches those to bring up error view in a browser
+      (throw (js/Error. (str "Invalid tag name (found: " tag-str "). Make sure that the name matches the format and ordering is correct `:tag#id.class`"))))
+    (let [[tag id class-name] (next (re-matches re-tag tag-str))
+          tag (if (= "" tag) "div" tag)
+          class-name (when-not (nil? class-name)
+                       (str/replace class-name #"\." " "))]
+      #js [tag id class-name (some? (re-find #"-" tag))])))
+
+(defn- set-id-class
   "Takes attributes map and parsed tag, and returns attributes merged with class names and id"
   [props id-class]
   (let [props-class (get props :class)
