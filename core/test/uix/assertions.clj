@@ -2,9 +2,8 @@
   (:require [clojure.test :as t]))
 
 (defmethod t/assert-expr 'not-thrown? [msg form]
-  ;; (is (thrown? c expr))
-  ;; Asserts that evaluating expr throws an exception of class c.
-  ;; Returns the exception thrown.
+  ;; (is (not-thrown? expr))
+  ;; Asserts that evaluating expr did not throw during evaluation.
   (let [body (nthnext form 1)]
     `(try ~@body
           (t/do-report {:type :pass, :message ~msg,
