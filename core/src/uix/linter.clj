@@ -70,10 +70,10 @@
   ([form type]
    (add-error! form type (find-env-for-form type form)))
   ([form type env]
-   (swap! *component-context* update :errors conj {:source form
-                                                   :source-context *source-context*
-                                                   :type type
-                                                   :env env})))
+   (swap! *context* update :errors conj {:source form
+                                         :source-context *source-context*
+                                         :type type
+                                         :env env})))
 
 (defn uix-element? [form]
   (and (list? form) (= '$ (first form))))
@@ -317,7 +317,7 @@
   ([env]
    (report-errors! env nil))
   ([env m]
-   (let [{:keys [errors]} @*component-context*
+   (let [{:keys [errors]} @*context*
          {:keys [column line]} env]
      (run! #(ana/warning (:type %)
                          (or (:env %) env)
@@ -325,7 +325,7 @@
            errors))))
 
 (defn lint! [sym body form env]
-  (binding [*component-context* (atom {:errors []})]
+  (binding [*context* (atom {:errors [] :env env})]
     (lint-body! body)
     (lint-re-frame! body env)
     (run-linters! lint-component form env)
@@ -539,11 +539,11 @@
 (defn lint-exhaustive-deps! [env form f deps]
   (doseq [[error-type opts] (lint-exhaustive-deps env form f deps)]
     (ana/warning error-type (or (:env opts) env) opts))
-  (binding [*component-context* (atom {:errors []})]
+  (binding [*context* (atom {:errors []})]
     (run-linters! lint-hook-with-deps form env)
     (report-errors! env)))
 
 (defn lint-element* [form env]
-  (binding [*component-context* (atom {:errors []})]
+  (binding [*context* (atom {:errors []})]
     (uix.linter/run-linters! uix.linter/lint-element form env)
     (report-errors! env)))

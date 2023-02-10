@@ -73,12 +73,11 @@
   "Creates UIx component. Similar to defn, but doesn't support multi arity.
   A component should have a single argument of props."
   [sym & fdecl]
-  (let [[fname args fdecl] (parse-sig `defui sym fdecl)]
+  (let [[fname args fdecl] (parse-defui-sig `defui sym fdecl)]
     (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
             body (uix.dev/with-fast-refresh var-sym fdecl)]
-        (uix.linter/lint! sym fdecl &env)
         `(do
            ~(if (empty? args)
               (no-args-component fname var-sym body)
@@ -96,11 +95,10 @@
   (let [[sym fdecl] (if (symbol? (first fdecl))
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
-        [fname args body] (parse-sig `fn sym fdecl)]
+        [fname args body] (parse-defui-sig `fn sym fdecl)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})]
-        (uix.linter/lint! sym body &env)
         `(let [~var-sym ~(if (empty? args)
                            (no-args-fn-component fname var-sym body)
                            (with-args-fn-component fname var-sym args body))]
@@ -146,7 +144,7 @@
         fname (vary-meta fname assoc :uix/hook true)]
     (when (uix.lib/cljs-env? &env)
       (doseq [[_ & body] methods]
-        (uix.linter/lint! sym body &env)))
+        (uix.linter/lint! sym body &form &env)))
     `(defn ~fname ~@methods)))
 
 ;; === Hooks ===
