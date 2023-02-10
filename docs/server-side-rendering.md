@@ -63,11 +63,9 @@ For that it's recommended to put shared code in `.cljc` namespaces and use [read
   (:require [uix.core :refer [$]]
             [uix.dom :as dom.client]
             [app.ui :as ui]))
-
-(defn hydrate
-  "Hydrates server generated HTML into dynamic React UI"
-  [root-node]
-  (dom.client/hydrate ($ ui/title-bar) root-node))
+            
+;; Hydrates server generated HTML into dynamic React UI
+(dom.client/hydrate-root (js/document.getElementById "root") ($ ui/title-bar))
 ```
 
 ## Hooks

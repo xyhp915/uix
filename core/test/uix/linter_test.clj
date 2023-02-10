@@ -1,7 +1,10 @@
 (ns uix.linter-test
   (:require [clojure.test :refer [deftest is testing]]
             [shadow.cljs.devtools.cli]
+            [uix.assertions]
             [uix.linter]
+            [uix.linters]
+            [uix.core]
             [clojure.string :as str]))
 
 ;; === Rules of Hooks ===
@@ -271,3 +274,28 @@
       (is (str/includes? out-str (str :uix.linter/non-defhook-hook)))
       (is (str/includes? out-str "The function `(use-g)` is named after React Hook, but doesn't appear to be on"))
       (is (not (str/includes? out-str "The function `(use-f)` is named after React Hook, but doesn't appear to be on"))))))
+
+    (testing "plugin linters should work"
+      (is (str/includes? out-str (str :component/kebab-case-name)))
+      (is (str/includes? out-str (str :hooks/too-many-lines)))
+      (is (str/includes? out-str (str :element/no-inline-styles)))
+      (is (str/includes? out-str "Component name should be in kebab case"))
+      (is (str/includes? out-str "React hook is too large to be declared directly in component's body"))
+      (is (str/includes? out-str "Inline styles are not allowed, put them into a CSS file instead")))
+
+    (testing "should dedupe missing deps"
+      (is (not (str/includes? out-str "[dsym dsym dsym]"))))))
+
+;; === Subscribe call in JVM ===
+
+(defn subscribe [v]
+  {:value v})
+
+(def some-value "x")
+
+(deftest test-subscribe-function-call
+  (testing "subscribe function can be used in clj"
+    (is (not-thrown?
+         (macroexpand-1 '(uix.core/defui subscribe-component [props]
+                           (let [current-value (subscribe some-value)]
+                             (:value current-value))))))))

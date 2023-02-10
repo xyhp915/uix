@@ -2,10 +2,10 @@
   (:require [uix.core :refer [defui $]]))
 
 (defui test-missing-deps [{:keys [x]}]
-  (uix.core/use-effect (fn [] x) ^:lint-deps []))
+  (uix.core/use-effect (fn [] x) []))
 
 (defui test-missing-deps-disabled [{:keys [z]}]
-  (uix.core/use-effect (fn [] z) []))
+  (uix.core/use-effect (fn [] z) ^:lint/disable []))
 
 (defui test-unnecessary-deps []
   (let [ref (uix.core/use-ref)
@@ -21,7 +21,7 @@
    (fn []
      (let [y 1]
        y))
-   ^:lint-deps []))
+   []))
 
 (defui test-fn-ref-passed-into-hook []
   (uix.core/use-effect identity))
@@ -71,3 +71,20 @@
 (defui test-non-defhook []
   (use-g)
   (use-f))
+
+(defui Button [{:keys [on-click children]}]
+  (uix.core/use-effect
+   (fn []
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+   [])
+  ($ :button {:on-click on-click
+              :style {:color "red"}}
+     children))
+
+(defui test-duplicate-syms [{:keys [dsym]}]
+  (uix.core/use-effect
+   (fn []
+     (prn dsym dsym dsym))
+   []))

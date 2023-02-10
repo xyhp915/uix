@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 0.8.1
+
+### Improvements
+- Fixed how react-dom API is exposed (react-dom vs react-dom/client)
+
+## 0.8.0
+
+### New
+- React v18.2.0 API compatibility [#59](https://github.com/pitch-io/uix/pull/59)
+- New hooks wrappers: `use-insertion-effect`, `use-deferred-value`, `use-transition`, `start-transition`, `use-id` and `use-sync-external-store`
+- New `uix.dom` public API: `create-root`, `hydrate-root`, `render-root` and `unmount-root`
+
+## 0.7.1
+
+### Improvements
+
+- Fix rules of hooks linter [f7276d](https://github.com/pitch-io/uix/commit/f7276decf191e0b804f7f393add91ebd982dcade)
+
 ## 0.7.0
 
 ### New

@@ -18,28 +18,36 @@
 (defn use-ref [value]
   (r/useRef value))
 
+(defn with-return-value-check [f]
+  #(let [ret (f)]
+     (if (fn? ret) ret js/undefined)))
+
 ;; == Effect hook ==
 (defn use-effect
   ([setup-fn]
-   (r/useEffect
-    #(let [ret (setup-fn)]
-       (if (fn? ret) ret js/undefined))))
+   (r/useEffect (with-return-value-check setup-fn)))
   ([setup-fn deps]
    (r/useEffect
-    #(let [ret (setup-fn)]
-       (if (fn? ret) ret js/undefined))
+    (with-return-value-check setup-fn)
     deps)))
 
 ;; == Layout effect hook ==
 (defn use-layout-effect
   ([setup-fn]
    (r/useLayoutEffect
-    #(let [ret (setup-fn)]
-       (if (fn? ret) ret js/undefined))))
+    (with-return-value-check setup-fn)))
   ([setup-fn deps]
    (r/useLayoutEffect
-    #(let [ret (setup-fn)]
-       (if (fn? ret) ret js/undefined))
+    (with-return-value-check setup-fn)
+    deps)))
+
+(defn use-insertion-effect
+  ([f]
+   (r/useInsertionEffect
+    (with-return-value-check f)))
+  ([f deps]
+   (r/useInsertionEffect
+    (with-return-value-check f)
     deps)))
 
 ;; == Callback hook ==
@@ -69,3 +77,18 @@
    (use-debug v nil))
   ([v fmt]
    (r/useDebugValue v fmt)))
+
+(defn use-deferred-value [v]
+  (r/useDeferredValue v))
+
+(defn use-transition []
+  (r/useTransition))
+
+(defn use-id []
+  (r/useId))
+
+(defn use-sync-external-store
+  ([subscribe get-snapshot]
+   (r/useSyncExternalStore subscribe get-snapshot))
+  ([subscribe get-snapshot get-server-snapshot]
+   (r/useSyncExternalStore subscribe get-snapshot get-server-snapshot)))
