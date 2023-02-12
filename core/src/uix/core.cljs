@@ -213,3 +213,35 @@
   (let [lazy-component (react/lazy #(.then (f) (fn [component] #js {:default component})))]
     (set! (.-uix-component? lazy-component) true)
     lazy-component))
+
+(defn create-error-boundary
+  "Creates React's error boundary component
+
+  display-name       — the name of the component to be displayed in stack trace
+  derive-error-state — maps error object to component's state that is used in render-fn
+  did-catch          — 2 arg function for side-effects, logging etc.
+  receives the exception and additional component info as args
+  render-fn          — takes state value returned from error->state and a vector
+  of arguments passed into error boundary"
+  [{:keys [display-name derive-error-state did-catch]
+    :or   {display-name (str (gensym "uix.error-boundary"))}}
+   render-fn]
+  (let [constructor  (fn [^js/React.Component this _]
+                       (set! (.-state this) #js {:argv nil}))
+        derive-state (fn [error]
+                       #js {:argv (derive-error-state error)})
+        render       (fn []
+                       (this-as this
+                         (let [props     (.-props this)
+                               state     (.-state this)
+                               set-state (fn [new-value]
+                                           (.setState this #js {:argv new-value}))]
+                           (render-fn [(.-argv state) set-state]
+                                      (glue-args props)))))
+        class        (create-class {:constructor              constructor
+                                    :displayName              display-name
+                                    :getDerivedStateFromError derive-state
+                                    :componentDidCatch        did-catch
+                                    :render                   render})]
+    (set! (.-uix-component? class) true)
+    class))
