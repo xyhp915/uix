@@ -43,7 +43,7 @@
 (deftest test-defui
   (defui h1 [{:keys [children]}]
     ($ :h1 {} children))
-  (is (= (t/as-string ($ h1 {} 1))) "<h1>1</h1>"))
+  (is (= (t/as-string ($ h1 {} 1)) "<h1>1</h1>")))
 
 (deftest test-jsfy-deps
   (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
