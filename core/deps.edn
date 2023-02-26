@@ -1,5 +1,5 @@
 {:deps {cljs-bean/cljs-bean {:mvn/version "1.8.0"}}
- :paths ["src"]
+ :paths ["src" "resources"]
  :aliases {:dev {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}}
            :benchmark {:extra-paths ["benchmark"]
                        :extra-deps {reagent/reagent {:mvn/version "1.1.0"}
