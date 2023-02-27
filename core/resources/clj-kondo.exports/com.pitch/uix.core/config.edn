@@ -1,0 +1,4 @@
+{:lint-as {uix.core/fn    clojure.core/fn
+           uix.core/defui clojure.core/defn
+           uix.core/$     hooks.uix/$}
+ :linters {:uix.core/$-arg-validation {:level :warning}}}
