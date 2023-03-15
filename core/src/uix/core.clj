@@ -137,6 +137,25 @@
    (uix.linter/lint-element* &form &env)
    (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
+;; === Error boundary ===
+
+(defn create-error-boundary
+  "Creates React's error boundary component
+
+  display-name       — the name of the component to be displayed in stack trace
+  derive-error-state — maps error object to component's state that is used in render-fn
+  did-catch          — 2 arg function for side-effects, logging etc.
+  receives the exception and additional component info as args
+  render-fn          — takes state value returned from derive-error-state and a vector
+  of arguments passed into error boundary"
+  [{:keys [display-name derive-error-state did-catch]
+    :or   {display-name (str (gensym "uix.error-boundary"))}}
+   render-fn]
+  ^::error-boundary {:display-name       display-name
+                     :render-fn          render-fn
+                     :did-catch          did-catch
+                     :derive-error-state derive-error-state})
+
 ;; === Hooks ===
 
 (defn vector->js-array [coll]

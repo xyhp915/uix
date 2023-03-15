@@ -463,20 +463,34 @@
     (prn (str "Interop elements are not supported on JVM, skipping: " element
               "\nExclude JavaScript components using reader macro: #?(:cljs ...)."))))
 
+(defn render-error-boundary! [f args *state sb]
+  (let [{:keys [display-name render-fn did-catch derive-error-state]} f
+        props {:children args}]
+    (try
+      (-> (render-fn [nil identity] props)
+          (-render-html *state sb))
+      (catch Exception e
+        (did-catch e display-name)
+        (-> (render-fn [(derive-error-state e) identity] props)
+            (-render-html *state sb))))))
+
 (defn render-component! [[f props & children :as el] *state sb]
-  (let [v (if (== (count el) 1)
-            (f)
-            (let [props (if (map? props)
-                          (cond-> (dissoc props :key)
-                            (seq children) (assoc :children children))
-                          {:children (into [props] children)})
-                  props (if (:children props)
-                          (update props :children #(if (== 1 (count %)) (first %) %))
-                          props)]
-              (if (seq props)
-                (f props)
-                (f))))]
-    (-render-html v *state sb)))
+  (if (-> f meta :uix.core/error-boundary)
+    (let [[_ & args] el]
+      (render-error-boundary! f args *state sb))
+    (let [v (if (== (count el) 1)
+              (f)
+              (let [props (if (map? props)
+                            (cond-> (dissoc props :key)
+                              (seq children) (assoc :children children))
+                            {:children (into [props] children)})
+                    props (if (:children props)
+                            (update props :children #(if (== 1 (count %)) (first %) %))
+                            props)]
+                (if (seq props)
+                  (f props)
+                  (f))))]
+      (-render-html v *state sb))))
 
 (defn render-element!
   "Render an element vector as a HTML element."

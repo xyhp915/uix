@@ -43,7 +43,7 @@
 (deftest test-defui
   (defui h1 [{:keys [children]}]
     ($ :h1 {} children))
-  (is (= (t/as-string ($ h1 {} 1))) "<h1>1</h1>"))
+  (is (= (t/as-string ($ h1 {} 1)) "<h1>1</h1>")))
 
 (deftest test-jsfy-deps
   (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
@@ -207,6 +207,66 @@
     (let [as dyn-react-comp]
       (is (= "<button title=\"hey\">hey</button>"
              (t/as-string ($ as {:title "hey"} "hey")))))))
+
+(defonce *error-state (atom nil))
+
+(def error-boundary
+  (uix.core/create-error-boundary
+   {:derive-error-state (fn [error]
+                          {:error error})
+    :did-catch          (fn [error info]
+                          (reset! *error-state error))}
+   (fn [[state _set-state!] {:keys [children]}]
+     (if (:error state)
+       ($ :p "Error")
+       children))))
+
+(defui throwing-component [{:keys [throw?]}]
+  (when throw?
+    (throw "Component throws")))
+
+(defui error-boundary-no-elements []
+  ($ throwing-component {:throw? false}))
+
+(defui error-boundary-catches []
+  ($ error-boundary
+     ($ throwing-component {:throw? true})))
+
+(defui error-boundary-renders []
+  ($ error-boundary
+     ($ throwing-component {:throw? false})
+     ($ :p "After")))
+
+(defui error-boundary-children []
+  ($ error-boundary
+     ($ throwing-component {:throw? false})
+     ($ :p "After throwing")
+     ($ :p "After throwing 2")))
+
+(deftest ssr-error-boundaries
+  (let [root (js/document.createElement "div")]
+    (react-dom/render ($ error-boundary-no-elements) root)
+    (is (= (.-textContent root)  ""))
+    (react-dom/unmountComponentAtNode root)
+
+    (react-dom/render ($ error-boundary-catches) root)
+    (is (= (.-textContent root) "Error"))
+    (react-dom/unmountComponentAtNode root)
+
+    (react-dom/render ($ error-boundary-renders) root)
+    (is (= (.-textContent root) "After"))
+    (react-dom/unmountComponentAtNode root)
+
+    (react-dom/render ($ error-boundary-children) root)
+    (is (= (.-textContent root) "After throwingAfter throwing 2"))
+    (react-dom/unmountComponentAtNode root)))
+
+(deftest ssr-error-boundary-catch-fn
+  (reset! *error-state nil)
+  (let [root (js/document.createElement "div")
+        _    (react-dom/render ($ error-boundary-catches) root)]
+    ;; Tests that did-catch does run
+    (is (str/includes? @*error-state "Component throws"))))
 
 (defn -main []
   (run-tests))

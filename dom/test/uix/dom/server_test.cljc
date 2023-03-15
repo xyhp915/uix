@@ -348,3 +348,58 @@
          (let [react-html (slurp (str render-dir "/markup/" name ".html"))
                uix-html (dom.server/render-to-static-markup ($ f))]
            (is (= react-html uix-html) (diff react-html uix-html)))))))
+
+(defonce *error-state (atom nil))
+
+(def error-boundary
+  (uix.core/create-error-boundary
+   {:derive-error-state (fn [error]
+                          {:error error})
+    :did-catch          (fn [_error info]
+                          (reset! *error-state info))}
+   (fn [[state _set-state!] {:keys [children]}]
+     (if (:error state)
+       ($ :p "Error")
+       children))))
+
+#?(:clj
+   (defui throwing-component [{:keys [throw?]}]
+     (when throw?
+       (throw (ex-info "Component threw" {:error 1})))))
+
+#?(:clj
+   (defui error-boundary-no-elements []
+     ($ throwing-component {:throw? false})))
+
+#?(:clj
+   (defui error-boundary-catches []
+     ($ error-boundary
+        ($ throwing-component {:throw? true}))))
+
+#?(:clj
+   (defui error-boundary-renders []
+     ($ error-boundary
+        ($ throwing-component {:throw? false})
+        ($ :p "After"))))
+
+#?(:clj
+   (defui error-boundary-children []
+     ($ error-boundary
+        ($ throwing-component {:throw? false})
+        ($ :p "After throwing")
+        ($ :p "After throwing 2"))))
+
+#?(:clj
+   (deftest ssr-error-boundaries
+     (is (= (render ($ error-boundary-no-elements)) ""))
+     (is (= (render ($ error-boundary-catches)) "<p>Error</p>"))
+     (is (= (render ($ error-boundary-renders)) "<p>After</p>"))
+     (is (= (render ($ error-boundary-children))
+            "<p>After throwing</p><p>After throwing 2</p>"))))
+
+#?(:clj
+   (deftest ssr-error-boundary-catch-fn
+     (reset! *error-state nil)
+     (let [_ (render ($ error-boundary-catches))]
+       ;; Tests that did-catch does run
+       (is (.contains @*error-state "error-boundary")))))

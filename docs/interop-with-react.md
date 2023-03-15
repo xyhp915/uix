@@ -63,3 +63,34 @@ Now `Button` can used as a normal React component.
 ```js
 <Button onClick={console.log}>press me</Button>
 ```
+
+## Error boundaries 
+
+Although [error boundaries](https://reactjs.org/docs/error-boundaries.html) aren't fully supported in functional React components, its still possible to use them in UIx as class-based components.
+
+Error boundaries are SSR compatible in UIx.
+
+```clojure 
+(def error-boundary
+  (uix.core/create-error-boundary
+   {:derive-error-state (fn [error]
+                          {:error error})
+    :did-catch          (fn [error info]
+                          (logging/error "Component did catch" error)
+                          info)}
+   (fn [[state set-state!] {:keys [children]}]
+     (if-some [error (:error state)]
+       ($ :<>
+         ($ :p.warning "There was an error rendering!")
+         ($ :pre (pr-str error)))
+       children))))
+
+(defui users [{:keys [users]}]
+  ($ :<>
+    ($ error-boundary
+      ($ user-list {:users users})
+      ($ :button "Load more ..."))
+    ($ :a "Back home")))
+```
+
+`derive-error-state` is used to return a value that can be read by the render function passed to `uix.core/create-error-boundary`. You can use this function to parse an exception to a more friendly format, for example. `did-catch` will be called with the exception object and any additional info. In JS the `info` will be the component stack trace. In the JVM `info` will be the name of the error boundary.
