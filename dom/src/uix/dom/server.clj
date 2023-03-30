@@ -396,9 +396,10 @@
   (when-let [inner-html (:dangerouslySetInnerHTML attrs)]
     (when-not (empty? children)
       (throw (Exception. "Invariant Violation: Can only set one of `children` or `props.dangerouslySetInnerHTML`.")))
-    (when-not (:__html inner-html)
+    (when-not (contains? inner-html :__html)
       (throw (Exception. "Invariant Violation: `props.dangerouslySetInnerHTML` must be in the form `{__html: ...}`. Please visit https://fb.me/react-invariant-dangerously-set-inner-html for more information.")))
-    (append! sb (:__html inner-html))
+    (when-not (nil? (:__html inner-html))
+      (append! sb (:__html inner-html)))
     true))
 
 (defn render-textarea-value! [tag attrs sb]

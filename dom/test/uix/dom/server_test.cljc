@@ -403,3 +403,14 @@
      (let [_ (render ($ error-boundary-catches))]
        ;; Tests that did-catch does run
        (is (.contains @*error-state "error-boundary")))))
+
+(defui username [{:keys [username]}]
+  ($ :p {:dangerouslySetInnerHTML {:__html username}}))
+
+(defui bad-username [_]
+  ($ :p {:dangerouslySetInnerHTML {:__not-html "foo"}}))
+
+#?(:clj
+   (deftest nil-dangerously-set-inner-html
+     (is (= (render ($ username {:username nil})) "<p></p>"))
+     (is (thrown? Exception (render ($ bad-username {:foo 1}))))))
