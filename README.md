@@ -25,6 +25,8 @@ yarn add react@18.2.0 react-dom@18.2.0
         com.pitch/uix.dom {:mvn/version "0.8.1"}}}
 ```
 
+Or use starter template project at [pitch-io/uix-starter](https://github.com/pitch-io/uix-starter)
+
 ## Usage
 
 ```clj
