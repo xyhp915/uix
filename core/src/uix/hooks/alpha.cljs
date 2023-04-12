@@ -18,11 +18,11 @@
 (defn use-ref [value]
   (r/useRef value))
 
+;; == Effect hook ==
 (defn with-return-value-check [f]
   #(let [ret (f)]
      (if (fn? ret) ret js/undefined)))
 
-;; == Effect hook ==
 (defn use-effect
   ([setup-fn]
    (r/useEffect (with-return-value-check setup-fn)))
@@ -41,6 +41,7 @@
     (with-return-value-check setup-fn)
     deps)))
 
+;; == Insertion effect hook ==
 (defn use-insertion-effect
   ([f]
    (r/useInsertionEffect

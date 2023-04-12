@@ -232,12 +232,12 @@
                        #js {:argv (derive-error-state error)})
         render       (fn []
                        (this-as this
-                         (let [props     (.-props this)
-                               state     (.-state this)
-                               set-state (fn [new-value]
-                                           (.setState this #js {:argv new-value}))]
-                           (render-fn [(.-argv state) set-state]
-                                      (glue-args props)))))
+                                (let [props     (.-props this)
+                                      state     (.-state this)
+                                      set-state (fn [new-value]
+                                                  (.setState this #js {:argv new-value}))]
+                                  (render-fn [(.-argv state) set-state]
+                                             (glue-args props)))))
         class        (create-class {:constructor              constructor
                                     :displayName              display-name
                                     :getDerivedStateFromError derive-state
