@@ -1,13 +1,36 @@
 # CHANGELOG
 
+## 0.9.0
+
+### New
+
+- Public API for linter plugins [#86](https://github.com/pitch-io/uix/pull/86)
+- Deps linting enabled by default [25cc16](https://github.com/pitch-io/uix/commit/25cc16a5787d30492e17b7d3e254d351e45fc6e9)
+- Added support for dynamic element types [14d5b7](https://github.com/pitch-io/uix/commit/14d5b7d29897c314a7d4a76570f47c58326a5081)
+- Added clj-kondo config [#97](https://github.com/pitch-io/uix/pull/97)
+- Added `error-boundary` component [#98](https://github.com/pitch-io/uix/pull/98)
+- Added support for most React Hooks for SSR on JVM [#104](https://github.com/pitch-io/uix/pull/104)
+
+### Improvements
+
+- Improved missing deps reporting [5567dc](https://github.com/pitch-io/uix/commit/5567dce02e00cfdeb1e2da4fcd18af2fb14c16f0)
+- Fixed re-frame/subscribe linter [#92](https://github.com/pitch-io/uix/pull/92)
+- Fixed `dangerouslySetInnerHTML` throwing on JVM [#102](https://github.com/pitch-io/uix/pull/102)
+
+### Docs
+
+- Documented internals [docs/internals.md](https://github.com/pitch-io/uix/blob/master/docs/internals.md)
+
 ## 0.8.1
 
 ### Improvements
+
 - Fixed how react-dom API is exposed (react-dom vs react-dom/client)
 
 ## 0.8.0
 
 ### New
+
 - React v18.2.0 API compatibility [#59](https://github.com/pitch-io/uix/pull/59)
 - New hooks wrappers: `use-insertion-effect`, `use-deferred-value`, `use-transition`, `start-transition`, `use-id` and `use-sync-external-store`
 - New `uix.dom` public API: `create-root`, `hydrate-root`, `render-root` and `unmount-root`

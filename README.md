@@ -21,11 +21,12 @@ yarn add react@18.2.0 react-dom@18.2.0
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "0.8.1"}
-        com.pitch/uix.dom {:mvn/version "0.8.1"}}}
+{:deps {com.pitch/uix.core {:mvn/version "0.9.0"}
+        com.pitch/uix.dom {:mvn/version "0.9.0"}}}
 ```
 
 ### How to start a new project with UIx
+
 - Run `npx create-uix-app my-app` to scaffold a new project
 - Clone starter template manually from [pitch-io/uix-starter](https://github.com/pitch-io/uix-starter)
 
