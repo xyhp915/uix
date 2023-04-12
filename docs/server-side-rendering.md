@@ -63,11 +63,11 @@ For that it's recommended to put shared code in `.cljc` namespaces and use [read
   (:require [uix.core :refer [$]]
             [uix.dom :as dom.client]
             [app.ui :as ui]))
-            
+
 ;; Hydrates server generated HTML into dynamic React UI
 (dom.client/hydrate-root (js/document.getElementById "root") ($ ui/title-bar))
 ```
 
 ## Hooks
 
-Only a subset of Hooks runs when server rendering, but they are not implemented yet. For now UIx implements baseline serializer, without any React APIs.
+Only a subset of Hooks runs when server rendering. Read React docs to understand how hooks work when server rendering.
