@@ -7,7 +7,8 @@
             [cljs.core]
             [uix.linter]
             [uix.dev]
-            [uix.lib]))
+            [uix.lib]
+            [uix.hooks.alpha :as hooks]))
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
 
@@ -158,6 +159,42 @@
 
 ;; === Hooks ===
 
+(defn use-state [value]
+  (hooks/use-state value))
+
+(defn use-reducer
+  ([f value]
+   (hooks/use-reducer f value))
+  ([f value init-state]
+   (hooks/use-reducer f value init-state)))
+
+(defn use-ref [value]
+  (hooks/use-ref value))
+
+(defn use-context [value]
+  (hooks/use-context value))
+
+(defn use-debug
+  ([v]
+   (hooks/use-debug v))
+  ([v fmt]
+   (hooks/use-debug v fmt)))
+
+(defn use-deferred-value [v]
+  (hooks/use-deferred-value v))
+
+(defn use-transition []
+  (hooks/use-transition))
+
+(defn use-id []
+  (hooks/use-id))
+
+(defn use-sync-external-store
+  ([subscribe get-snapshot]
+   (hooks/use-sync-external-store subscribe get-snapshot))
+  ([subscribe get-snapshot get-server-snapshot]
+   (hooks/use-sync-external-store subscribe get-snapshot get-server-snapshot)))
+
 (defn vector->js-array [coll]
   (cond
     (vector? coll) `(jsfy-deps (cljs.core/array ~@coll))
@@ -165,9 +202,12 @@
     :else coll))
 
 (defn- make-hook-with-deps [sym env form f deps]
-  (uix.linter/lint-exhaustive-deps! env form f deps)
+  (when (uix.lib/cljs-env? env)
+    (uix.linter/lint-exhaustive-deps! env form f deps))
   (if deps
-    `(~sym ~f ~(vector->js-array deps))
+    (if (uix.lib/cljs-env? env)
+      `(~sym ~f ~(vector->js-array deps))
+      `(~sym ~f ~deps))
     `(~sym ~f)))
 
 (defmacro use-effect
@@ -218,8 +258,10 @@
 
   See: https://reactjs.org/docs/hooks-reference.html#useimperativehandle"
   ([ref f]
-   (uix.linter/lint-exhaustive-deps! &env &form f nil)
+   (when (uix.lib/cljs-env? &env)
+     (uix.linter/lint-exhaustive-deps! &env &form f nil))
    `(uix.hooks.alpha/use-imperative-handle ~ref ~f))
   ([ref f deps]
-   (uix.linter/lint-exhaustive-deps! &env &form f deps)
+   (when (uix.lib/cljs-env? &env)
+     (uix.linter/lint-exhaustive-deps! &env &form f deps))
    `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(vector->js-array deps))))
