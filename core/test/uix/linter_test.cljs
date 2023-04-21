@@ -82,3 +82,10 @@
    (fn []
      (prn dsym dsym dsym))
    []))
+
+(defui test-106 [{:keys [x]}]
+  (let [document 1]
+    (uix.core/use-effect
+     (fn []
+       (println x document))
+     [x])))

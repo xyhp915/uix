@@ -163,7 +163,7 @@
       (or class props-class)
       (assoc :class (class-names class props-class)))))
 
-(defn convert-props
+(defn ^js convert-props
   "Converts `props` Clojure map into JS object suitable for
   passing as `props` object into `React.createElement`
 

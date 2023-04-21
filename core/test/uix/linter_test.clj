@@ -279,7 +279,10 @@
       (is (str/includes? out-str "Inline styles are not allowed, put them into a CSS file instead")))
 
     (testing "should dedupe missing deps"
-      (is (not (str/includes? out-str "[dsym dsym dsym]"))))))
+      (is (not (str/includes? out-str "[dsym dsym dsym]"))))
+
+    (testing "#106, should report when missing dep is shadowed JS global"
+      (is (str/includes? out-str "React Hook has missing dependencies: [document]")))))
 
 ;; === Subscribe call in JVM ===
 

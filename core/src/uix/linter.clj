@@ -327,7 +327,8 @@
     (->> (ast->seq ast)
          (filter #(and (= :local (:op %)) ;; should be a local
                        (get-in env [:locals (:name %) :name]) ;; from an outer scope
-                       (-> % :info :shadow not) ;; but not a local shadowing locals from outer scope
+                       (or (-> % :info :shadow not) ;; but not a local shadowing locals from outer scope
+                           (-> % :info :shadow :ns (= 'js))) ;; except when shadowing JS global
                        (not (deps (:name %))))) ;; and not declared in deps vector
          (map :name)
          distinct)))

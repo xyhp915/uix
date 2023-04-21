@@ -8,9 +8,9 @@
                                     hiccup/hiccup {:mvn/version "1.0.5"}
                                     rum/rum {:mvn/version "0.11.2"}}}
            :test {:extra-paths ["test" "dev"]
-                  :extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}
-                               org.clojure/clojurescript {:mvn/version "1.10.879"}
-                               thheller/shadow-cljs {:mvn/version "2.15.5"}
+                  :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
+                               org.clojure/clojurescript {:mvn/version "1.11.60"}
+                               thheller/shadow-cljs {:mvn/version "2.23.1"}
                                uix.dom/uix.dom {:local/root "../dom"}
                                cljsjs/react-dom-server {:mvn/version "16.13.1-0"}
                                clj-diffmatchpatch/clj-diffmatchpatch {:mvn/version "0.0.9.3"}}}
@@ -18,7 +18,7 @@
                      :main-opts ["-m" "deps-library.release"]}
 
            :examples {:extra-paths ["dev"]
-                      :extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}
-                                   org.clojure/clojurescript {:mvn/version "1.10.879"}
-                                   thheller/shadow-cljs {:mvn/version "2.15.5"}
+                      :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
+                                   org.clojure/clojurescript {:mvn/version "1.11.60"}
+                                   thheller/shadow-cljs {:mvn/version "2.23.1"}
                                    uix.dom/uix.dom {:local/root "../dom"}}}}}
