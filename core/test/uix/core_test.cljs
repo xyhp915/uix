@@ -84,18 +84,18 @@
                     :render (fn []
                               (this-as this
                                        (swap! actual assoc :render {:state (.-state this) :props (.-props this)})
-                                       "Hello!"))})
-        root (js/document.createElement "div")]
-    (react-dom/render ($ component {:x 1}) root)
-    (is (instance? component (-> @actual :constructor :this)))
-    (is (-> @actual :constructor :props .-argv (= {:x 1})))
-    (is (instance? component (-> @actual :getInitialState :this)))
-    (is (-> @actual :render :props .-argv (= {:x 1})))
-    (is (-> @actual :render :state .-x (= 1)))
-    (is (:componentDidMount @actual))
-    (is (= "Hello!" (.-textContent root)))
-    (react-dom/unmountComponentAtNode root)
-    (is (:componentWillUnmount @actual))))
+                                       "Hello!"))})]
+    (t/with-react-root
+      ($ component {:x 1})
+      (fn [node]
+        (is (instance? component (-> @actual :constructor :this)))
+        (is (-> @actual :constructor :props .-argv (= {:x 1})))
+        (is (instance? component (-> @actual :getInitialState :this)))
+        (is (-> @actual :render :props .-argv (= {:x 1})))
+        (is (-> @actual :render :state .-x (= 1)))
+        (is (:componentDidMount @actual))
+        (is (= "Hello!" (.-textContent node))))
+      #(is (:componentWillUnmount @actual)))))
 
 (deftest test-convert-props
   (testing "shallow conversion"
@@ -169,8 +169,7 @@
 
 (deftest test-fn
   (let [anon-named-fn (uix.core/fn fn-component [{:keys [x]}] x)
-        anon-fn (uix.core/fn [{:keys [x]}] x)
-        root (js/document.createElement "div")]
+        anon-fn (uix.core/fn [{:keys [x]}] x)]
 
     (is (.-uix-component? ^js anon-named-fn))
     (is (= (.-displayName anon-named-fn) "fn-component"))
@@ -178,13 +177,15 @@
     (is (.-uix-component? ^js anon-fn))
     (is (str/starts-with? (.-displayName anon-fn) "uix-fn"))
 
-    (react-dom/render ($ anon-named-fn {:x "HELLO!"}) root)
-    (is (= "HELLO!" (.-textContent root)))
-    (react-dom/unmountComponentAtNode root)
+    (t/with-react-root
+      ($ anon-named-fn {:x "HELLO!"})
+      (fn [node]
+        (is (= "HELLO!" (.-textContent node)))))
 
-    (react-dom/render ($ anon-fn {:x "HELLO! 2"}) root)
-    (is (= "HELLO! 2" (.-textContent root)))
-    (react-dom/unmountComponentAtNode root)))
+    (t/with-react-root
+      ($ anon-fn {:x "HELLO! 2"})
+      (fn [node]
+        (is (= "HELLO! 2" (.-textContent node)))))))
 
 (defui dyn-uix-comp [props]
   ($ :button props))
@@ -244,29 +245,29 @@
      ($ :p "After throwing 2")))
 
 (deftest ssr-error-boundaries
-  (let [root (js/document.createElement "div")]
-    (react-dom/render ($ error-boundary-no-elements) root)
-    (is (= (.-textContent root)  ""))
-    (react-dom/unmountComponentAtNode root)
+  (t/with-react-root
+    ($ error-boundary-no-elements)
+    #(is (= (.-textContent %) "")))
 
-    (react-dom/render ($ error-boundary-catches) root)
-    (is (= (.-textContent root) "Error"))
-    (react-dom/unmountComponentAtNode root)
+  (t/with-react-root
+    ($ error-boundary-catches)
+    #(is (= (.-textContent %) "Error")))
 
-    (react-dom/render ($ error-boundary-renders) root)
-    (is (= (.-textContent root) "After"))
-    (react-dom/unmountComponentAtNode root)
+  (t/with-react-root
+    ($ error-boundary-renders)
+    #(is (= (.-textContent %) "After")))
 
-    (react-dom/render ($ error-boundary-children) root)
-    (is (= (.-textContent root) "After throwingAfter throwing 2"))
-    (react-dom/unmountComponentAtNode root)))
+  (t/with-react-root
+    ($ error-boundary-children)
+    #(is (= (.-textContent %) "After throwingAfter throwing 2"))))
 
 (deftest ssr-error-boundary-catch-fn
   (reset! *error-state nil)
-  (let [root (js/document.createElement "div")
-        _    (react-dom/render ($ error-boundary-catches) root)]
-    ;; Tests that did-catch does run
-    (is (str/includes? @*error-state "Component throws"))))
+  (t/with-react-root
+    ($ error-boundary-catches)
+    (fn [_]
+      ;; Tests that did-catch does run
+      (is (str/includes? @*error-state "Component throws")))))
 
 (defn -main []
   (run-tests))
