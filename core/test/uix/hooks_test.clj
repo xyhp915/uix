@@ -3,7 +3,7 @@
             [uix.core :as uix]))
 
 (deftest test-use-state
-  (is (= 1 (uix/use-state 1))))
+  (is (= 1 (first (uix/use-state 1)))))
 
 (deftest test-use-reducer
   (let [called? (atom false)
