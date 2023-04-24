@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.9.1
+
+### Improvements
+
+- Fixed incorrect return value of `use-state` hook on JVM [99b85f](https://github.com/pitch-io/uix/commit/99b85f69f5f6402c9b2e0629e0b42913de692330)
+- Fixed Hooks deps linter missing reporting deps which names are shadowing JS globals [2d11b8](https://github.com/pitch-io/uix/commit/2d11b818b8948935feb0689387bf082b64e49db8)
+- Use `createRoot` in tests [32e0bc](https://github.com/pitch-io/uix/commit/32e0bc98fca5ba9433f714bada4f4191b98b5955)
+
 ## 0.9.0
 
 ### New
