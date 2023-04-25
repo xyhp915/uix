@@ -127,15 +127,17 @@
     (uix/fn [{:keys [mx my on-object-changed on-select idx selected size]}]
       (let [[active? set-active] (uix/use-state false)
             selected? (some? selected)
-            on-move (fn [x y]
-                      (on-object-changed idx (assoc selected :x x :y y)))
+            on-move (uix/use-callback
+                      (fn [x y]
+                        (on-object-changed idx (assoc selected :x x :y y)))
+                      [idx selected on-object-changed])
             on-resize (fn [object idx width height]
                         (on-object-changed idx (assoc object :width width :height height)))]
 
         (uix/use-effect
           #(when active?
              (on-move mx my))
-          [selected? active? mx my])
+          [selected? active? mx my on-move])
 
         (uix/use-effect
           #(when selected?
@@ -243,9 +245,11 @@
                             (set-state (assoc-in state [:canvas :selected] nil)))
                            ([idx]
                             (set-state (assoc-in state [:canvas :selected] idx))))
-        on-object-changed (fn [idx object]
-                            (set-state
-                              (assoc-in state [:canvas :objects idx] object)))]
+        on-object-changed (uix/use-callback
+                            (fn [idx object]
+                              (set-state
+                                #(assoc-in % [:canvas :objects idx] object)))
+                            [])]
     ($ :div {:style {:font-family "Inter"
                      :font-size 14
                      :display :flex

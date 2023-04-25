@@ -269,5 +269,9 @@
       ;; Tests that did-catch does run
       (is (str/includes? @*error-state "Component throws")))))
 
+(deftest js-obj-props
+  (let [el ($ :div #js {:title "hello"} 1 2 3)]
+    (is (= "hello" (.. el -props -title)))))
+
 (defn -main []
   (run-tests))
