@@ -4,11 +4,10 @@ _Idiomatic ClojureScript interface to modern React.js_
 
 > "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
 
-API compatibility: React v18.2.0
-
-UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
-
-Discuss at #uix on [Clojurians Slack](http://clojurians.net)
+- API compatibility: React v18.2.0
+- UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
+- Discuss at #uix on [Clojurians Slack](http://clojurians.net)
+- [A slide deck explaining UIx and migration path from Reagent](https://app.pitch.com/app/public/player/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
 
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
