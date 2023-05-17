@@ -2,16 +2,49 @@
   "Wrappers for React Hooks"
   (:require [react :as r]))
 
+(defn- clojure-primitive? [v]
+  (or (keyword? v)
+      (uuid? v)
+      (symbol? v)))
+
+(defn- choose-value [nv cv]
+  (if (and (clojure-primitive? nv) (= nv cv))
+    cv
+    nv))
+
+(defn- use-clojure-primitive-aware-updater
+  "Replicates React's behaviour when updating state with identical primitive JS type,
+  but for keywords, UUIDs and symbols that are in fact non-primitives"
+  [updater]
+  (react/useCallback
+   (fn [v]
+     (updater
+      (fn [cv]
+        (if (fn? v)
+          (choose-value (v cv) cv)
+          (choose-value v cv)))))
+   #js [updater]))
+
 ;; == State hook ==
 
 (defn use-state [value]
-  (r/useState value))
+  (let [[state set-state] (r/useState value)
+        set-state (use-clojure-primitive-aware-updater set-state)]
+    #js [state set-state]))
+
+(defn- clojure-primitive-aware-reducer-updater
+  "Same as `use-clojure-primitive-aware-updater` but for `use-reducer`"
+  [f]
+  (fn [state action]
+    (choose-value (f state action) state)))
 
 (defn use-reducer
   ([f value]
-   (r/useReducer #(f %1 %2) value))
+   (let [updater (clojure-primitive-aware-reducer-updater f)]
+     (r/useReducer updater value)))
   ([f value init-state]
-   (r/useReducer #(f %1 %2) value init-state)))
+   (let [updater (clojure-primitive-aware-reducer-updater f)]
+     (r/useReducer updater value init-state))))
 
 ;; == Ref hook
 

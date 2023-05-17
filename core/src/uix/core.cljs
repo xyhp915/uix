@@ -188,7 +188,7 @@
   [f]
   #(f #js {:argv (bean/bean %)}))
 
-(defn stringify-clojure-primitives [v]
+(defn- stringify-clojure-primitives [v]
   (cond
     ;; fast direct lookup for a string value
     ;; already stored on the instance of the known type
