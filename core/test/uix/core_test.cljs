@@ -4,6 +4,7 @@
             [uix.lib]
             [react :as r]
             [react-dom]
+            ["@testing-library/react" :as rtl]
             [uix.test-utils :as t]
             [uix.compiler.attributes :as attrs]
             [uix.hiccup :refer [row-compiled]]
@@ -272,6 +273,27 @@
 (deftest js-obj-props
   (let [el ($ :div #js {:title "hello"} 1 2 3)]
     (is (= "hello" (.. el -props -title)))))
+
+(defui forward-ref-interop-uix-component [{:keys [state] :as props}]
+  (reset! state props)
+  nil)
+
+(deftest test-forward-ref-interop
+  (let [state (atom nil)
+        forward-ref-interop-uix-component-ref (uix.core/forward-ref forward-ref-interop-uix-component)
+        _ (rtl/render
+           (react/cloneElement
+            ($ forward-ref-interop-uix-component-ref {:y 2 :a {:b 1} :state state} "meh")
+            #js {:ref #js {:current 6} :x 1 :t #js [2 3 4] :o #js {:p 8}}
+            "yo"))
+        {:keys [x y a t o ref]} @state]
+    (is (= x 1))
+    (is (= y 2))
+    (is (= a {:b 1}))
+    (is (= (vec t) [2 3 4]))
+    (is (= (.-p o) 8))
+    (is (= (.-current ref) 6))
+    (is (= state (:state @state)))))
 
 (defn -main []
   (run-tests))
