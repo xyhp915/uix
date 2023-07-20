@@ -245,3 +245,25 @@
                                     :render                   render})]
     (set! (.-uix-component? class) true)
     class))
+
+(defn forward-ref
+  "Like React's `forwardRef`, but should be used only for UIx components
+  when passing them into React components that inject a ref"
+  [component]
+  (let [ref-comp
+        (react/forwardRef
+         (fn [props ref]
+           (let [argv (cond-> (.-argv props)
+                        (.-children props) (assoc :children (.-children props))
+                        :always (assoc :ref ref))
+                 argv (->> (js/Object.entries props)
+                           (reduce
+                            (fn [ret [k v]]
+                              (if-not (or (= k "argv") (= k "children"))
+                                (assoc! ret (keyword k) v)
+                                ret))
+                            (transient argv))
+                           persistent!)]
+             (uix.core/$ component argv))))]
+    (set! (.-uix-component? ref-comp) true)
+    ref-comp))
