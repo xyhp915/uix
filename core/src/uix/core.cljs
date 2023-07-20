@@ -256,14 +256,9 @@
            (let [argv (cond-> (.-argv props)
                         (.-children props) (assoc :children (.-children props))
                         :always (assoc :ref ref))
-                 argv (->> (js/Object.entries props)
-                           (reduce
-                            (fn [ret [k v]]
-                              (if-not (or (= k "argv") (= k "children"))
-                                (assoc! ret (keyword k) v)
-                                ret))
-                            (transient argv))
-                           persistent!)]
+                 argv (merge argv
+                             (-> (bean/bean props)
+                                 (dissoc [:argv :children])))]
              (uix.core/$ component argv))))]
     (set! (.-uix-component? ref-comp) true)
     ref-comp))
