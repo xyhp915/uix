@@ -64,13 +64,34 @@ Now `Button` can used as a normal React component.
 <Button onClick={console.log}>press me</Button>
 ```
 
-## Error boundaries 
+### On `ref` forwarding
+
+Some third party React components can inject a `ref` into a child element, which requires doing [ref forwarding](https://react.dev/reference/react/forwardRef). It's not needed when passing refs between UIx, but is still required for a case when non-UIx component injects a ref into UIx element.
+
+For this specific case there's `uix.core/forward-ref`, which should be used exclusively in such cases. The helper takes care of merging and converting props.
+
+> Note that `forward-ref` also doesn’t transform camel case keys into kebab case.
+
+```clojure
+(defui button [{:keys [ref children on-click onMouseDown]}]
+  ;; both `ref` and `onMouseDown` were injected by `Menu`
+  ...)
+
+(def button-forwarded
+  (uix/forward-ref button))
+
+($ Menu
+  ($ button-forwarded {:on-click handle-click}
+    "press me))
+```
+
+## Error boundaries
 
 Although [error boundaries](https://reactjs.org/docs/error-boundaries.html) aren't fully supported in functional React components, its still possible to use them in UIx as class-based components.
 
 Error boundaries are SSR compatible in UIx.
 
-```clojure 
+```clojure
 (def error-boundary
   (uix.core/create-error-boundary
    {:derive-error-state (fn [error]
