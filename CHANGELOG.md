@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.10.0
+
+### Improvements
+
+- Allow props as js obj into non-uix components b0fe50
+- Should preserve identity of Clojure primitives when updating state with equal-by-value value a7abe1
+- Better forward-ref interop 2753d9
+
 ## 0.9.1
 
 ### Improvements
