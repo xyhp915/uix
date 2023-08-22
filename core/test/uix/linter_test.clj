@@ -287,7 +287,11 @@
     (testing "#100, should report when a key is missing in thread-last macro and vice versa"
       (is (str/includes? out-str "UIx element is missing :key attribute, which is required"))
       (is (str/includes? out-str "(->> {:not-key (str \"bar-\" i)}"))
-      (is (not (str/includes? out-str "(->> {:key (str \"foo-\" i)}"))))))
+      (is (not (str/includes? out-str "(->> {:key (str \"foo-\" i)}"))))
+
+    (testing "#114, should report when an incorrect value is provided as element type"
+      (is (str/includes? out-str "Incorrect element type. UIx elements can be one of the following types"))
+      (is (str/includes? out-str "($ {:hello \"world\"})")))))
 
 ;; === Subscribe call in JVM ===
 

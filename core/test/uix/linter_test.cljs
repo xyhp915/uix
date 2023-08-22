@@ -102,3 +102,8 @@
         (for [i (range 10)]
           (->> {:key (str "foo-" i)}
                ($ :span))))))
+
+(defui test-114 []
+  ($ :div
+     {}
+     ($ {:hello "world"})))
