@@ -282,7 +282,12 @@
       (is (not (str/includes? out-str "[dsym dsym dsym]"))))
 
     (testing "#106, should report when missing dep is shadowed JS global"
-      (is (str/includes? out-str "React Hook has missing dependencies: [document]")))))
+      (is (str/includes? out-str "React Hook has missing dependencies: [document]")))
+
+    (testing "#100, should report when a key is missing in thread-last macro and vice versa"
+      (is (str/includes? out-str "UIx element is missing :key attribute, which is required"))
+      (is (str/includes? out-str "(->> {:not-key (str \"bar-\" i)}"))
+      (is (not (str/includes? out-str "(->> {:key (str \"foo-\" i)}"))))))
 
 ;; === Subscribe call in JVM ===
 

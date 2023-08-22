@@ -89,8 +89,17 @@
 
 (defn- lint-missing-key!* [expr]
   (cond
-    (uix-element? expr) (missing-key? expr)
-    (list? expr) (recur (last expr))))
+    (uix-element? expr)
+    (missing-key? expr)
+
+    (and (list? expr)
+         (= '->> (first expr))
+         (= 3 (count expr))
+         (uix-element? (last expr)))
+    (missing-key? `(~@(last expr) ~(second expr)))
+
+    (list? expr)
+    (recur (last expr))))
 
 (def react-key-rule-enabled?
   (if-some [v (read-config [:linters :react-key :enabled?])]

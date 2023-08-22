@@ -89,3 +89,16 @@
      (fn []
        (println x document))
      [x])))
+
+(defui test-100 [props]
+  ($ :<>
+     ($ :span
+        {}
+        (for [i (range 10)]
+          (->> {:not-key (str "bar-" i)}
+               ($ :span))))
+     ($ :span
+        {}
+        (for [i (range 10)]
+          (->> {:key (str "foo-" i)}
+               ($ :span))))))
