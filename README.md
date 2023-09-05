@@ -8,7 +8,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 - UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
 - Discuss at #uix on [Clojurians Slack](http://clojurians.net)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
-- Try it out live in [UIx Playground](https://uix-playground.vercel.app/)
+- Try it out live in [ClojureScript Studio](https://www.clojurescript.studio/)
 
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
@@ -56,23 +56,23 @@ yarn add react@18.2.0 react-dom@18.2.0
 
 ## Docs
 
-- [What is UIx?](/docs/what-is-uix.md)
-- [Components](/docs/components.md)
-- [Elements](/docs/elements.md)
-- [Hooks](/docs/hooks.md)
-- [State](/docs/state.md)
-- [Effects](/docs/effects.md)
-- [Interop with React](/docs/interop-with-react.md)
-- [Interop with Reagent](/docs/interop-with-reagent.md)
-- [Code-splitting and React.lazy](/docs/code-splitting.md)
-- [Migrating from Reagent](/docs/migrating-from-reagent.md)
-- [Server-side rendering](/docs/server-side-rendering.md)
-- [Hot reloading](/docs/hot-reloading.md)
-- [React DevTools](/docs/react-devtools.md)
-- [Code linting](/docs/code-linting.md)
-- [Utilities](/docs/utilities.md)
+- [What is UIx?](https://pitch-io.github.io/uix/docs/what-is-uix.html)
+- [Components](https://pitch-io.github.io/uix/docs/components.html)
+- [Elements](https://pitch-io.github.io/uix/docs/elements.html)
+- [Hooks](https://pitch-io.github.io/uix/docs/hooks.html)
+- [State](https://pitch-io.github.io/uix/docs/state.html)
+- [Effects](https://pitch-io.github.io/uix/docs/effects.html)
+- [Interop with React](https://pitch-io.github.io/uix/docs/interop-with-react.html)
+- [Interop with Reagent](https://pitch-io.github.io/uix/docs/interop-with-reagent.html)
+- [Code-splitting and React.lazy](https://pitch-io.github.io/uix/docs/code-splitting.html)
+- [Migrating from Reagent](https://pitch-io.github.io/uix/docs/migrating-from-reagent.html)
+- [Server-side rendering](https://pitch-io.github.io/uix/docs/server-side-rendering.html)
+- [Hot reloading](https://pitch-io.github.io/uix/docs/hot-reloading.html)
+- [React DevTools](https://pitch-io.github.io/uix/docs/react-devtools.html)
+- [Code linting](https://pitch-io.github.io/uix/docs/code-linting.html)
+- [Utilities](https://pitch-io.github.io/uix/docs/utilities.html)
 - [Examples](/core/dev/uix/examples.cljs)
-- [Internals](/docs/internals.md)
+- [Internals](https://pitch-io.github.io/uix/docs/internals.html)
 
 ## Testing
 
