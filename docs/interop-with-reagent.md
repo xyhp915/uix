@@ -55,6 +55,7 @@ External data sources can be consumed in hooks-based components via `useSyncExte
          ;; When the last listener was removed
          ;; remove batched updates listener from the ref
          (when (empty? @listeners)
+           (remove-watch ref (aget ref "__rat"))
            (set! (.-react-listeners ref) nil)))))
    [ref]))
 
