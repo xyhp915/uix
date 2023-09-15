@@ -14,7 +14,7 @@ In order to use a Reagent component in UIx you need to wrap Reagent's Hiccup wit
 
 ## Using UIx components in Reagent
 
-When using a UIx component in Reagent (or anywhere else) you can continue to use the`$` macro without changing anything. The macro will make sure that UIx component is properly created no matter  which context it is used in.
+When using a UIx component in Reagent (or anywhere else) you can continue to use the`$` macro without changing anything. The macro will make sure that UIx component is properly created no matter which context it is used in.
 
 ```clojure
 (defui uix-component []
@@ -39,6 +39,13 @@ External data sources can be consumed in hooks-based components via `useSyncExte
             [scheduler]
             [uix.core :as uix]))
 
+(defn- cleanup-ref [ref]
+  (let [^ratom/Reaction temp-ref (aget ref "__rat")]
+    (remove-watch ref temp-ref)
+    (set! (.-watching temp-ref)
+          (.filter (.-watching temp-ref)
+                   #(not (identical? ref %))))))
+
 (defn- use-batched-subscribe
   "Takes an atom-like ref type and returns a function
   that adds change listeners to the ref"
@@ -52,10 +59,10 @@ External data sources can be consumed in hooks-based components via `useSyncExte
      (fn []
        (let [listeners (.-react-listeners ref)]
          (swap! listeners disj listener)
-         ;; When the last listener was removed
+         ;; When the last listener was removed,
          ;; remove batched updates listener from the ref
          (when (empty? @listeners)
-           (remove-watch ref (aget ref "__rat"))
+           (cleanup-ref ref)
            (set! (.-react-listeners ref) nil)))))
    [ref]))
 
@@ -103,7 +110,8 @@ External data sources can be consumed in hooks-based components via `useSyncExte
   subscribes UI component to changes in the subscription
   and returns current state value of the subscription"
   [query]
-  (let [sub (rf/subscribe query)
+  (let [sub (binding [ratom/*ratom-context* #js {}]
+              (rf/subscribe query))
         ;; using an empty atom when re-frame subscription is not registered
         ;; re-frame will still print the error in console
         ref (or sub (atom nil))]
