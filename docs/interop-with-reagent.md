@@ -40,11 +40,11 @@ External data sources can be consumed in hooks-based components via `useSyncExte
             [uix.core :as uix]))
 
 (defn- cleanup-ref [ref]
-  (let [^ratom/Reaction temp-ref (aget ref "__rat")]
+  (when-let [^ratom/Reaction temp-ref (aget ref "__rat")]
     (remove-watch ref temp-ref)
-    (set! (.-watching temp-ref)
-          (.filter (.-watching temp-ref)
-                   #(not (identical? ref %))))))
+    (when-let [watching (.-watching temp-ref)]
+      (set! (.-watching temp-ref)
+            (.filter watching #(not (identical? ref %)))))))
 
 (defn- use-batched-subscribe
   "Takes an atom-like ref type and returns a function
