@@ -32,9 +32,6 @@
   (map rewrite-form forms))
 
 (defn fast-refresh-signature [var-sym body]
-  (binding [*out* *err*]
-    (doseq [form (rewrite-forms (uix.lib/find-form uix.linter/hook-call? body))]
-      (println form)))
   `(when ~goog-debug
      (when (cljs.core/exists? js/window.uix.dev)
        (let [sig# (js/window.uix.dev.signature!)]
