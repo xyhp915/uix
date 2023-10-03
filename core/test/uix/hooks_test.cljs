@@ -86,6 +86,3 @@
                               v)))]
       (is (not (identical? m1 m2))))))
 
-(defn -main []
-  (run-tests))
-

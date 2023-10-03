@@ -15,7 +15,7 @@ echo "Building ClojureScript tests..."
 clojure -A:test:benchmark -M -m shadow.cljs.devtools.cli compile test
 
 echo "Running ClojureScript tests..."
-scripts/test.js $(pwd)
+node out/test.js
 
 echo "Building benchmark..."
 rm -rf out

@@ -3,7 +3,6 @@
             [uix.core :refer [defui $]]
             [uix.lib]
             [react :as r]
-            [react-dom]
             ["@testing-library/react" :as rtl]
             [uix.test-utils :as t]
             [uix.compiler.attributes :as attrs]
@@ -83,7 +82,7 @@
                     :componentDidMount #(swap! actual assoc :componentDidMount true)
                     :componentWillUnmount #(swap! actual assoc :componentWillUnmount true)
                     :render (fn []
-                              (this-as this
+                              (this-as ^react/Component this
                                        (swap! actual assoc :render {:state (.-state this) :props (.-props this)})
                                        "Hello!"))})]
     (t/with-react-root
@@ -137,7 +136,7 @@
     (is (= "TEXT" (:text props)))
     ($ :h1 (:text props)))
   (let [h1 (uix.core/as-react test-c)
-        el (h1 #js {:text "TEXT"})
+        ^js el (h1 #js {:text "TEXT"})
         props (.-props el)]
     (is (= (.-type el) "h1"))
     (is (= (.-children props) "TEXT"))))
