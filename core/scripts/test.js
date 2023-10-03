@@ -10,6 +10,8 @@ const puppeteer = require('puppeteer');
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
+  console.log("NEW PAGE");
+
   page.on("console", m => {
     if (m.type() === "error") {
       console.error(`${m.text()} in ${m.location().url}:${m.location().lineNumber}`);
@@ -18,10 +20,14 @@ const puppeteer = require('puppeteer');
     }
   });
 
+  console.log("await testsFailed");
+
   await page.exposeFunction("testsFailed", n => {
       failures = n;
     }
   );
+
+  console.log("await testsDone");
 
   await page.exposeFunction("testsDone", async () => {
       await page.close();
@@ -41,5 +47,6 @@ const puppeteer = require('puppeteer');
 })();
 
 setTimeout(() => {
+  console.log("EXITING");
   process.exit(1);
-}, 30000);
+}, 10000);
