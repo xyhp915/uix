@@ -2,12 +2,11 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.string :as str]
             [uix.core :refer [$ defui]]
-            #?@(:cljs [[fs :as fs]
-                       ["react-dom/server" :as dom.server]])
+            [uix.dom.server :as dom.server]
+            #?@(:cljs [[fs :as fs]])
             #?@(:clj [[clojure.java.shell :as shell]
                       [clojure.java.io :as io]
-                      [clj-diffmatchpatch :as diff]
-                      [uix.dom.server :as dom.server]])))
+                      [clj-diffmatchpatch :as diff]])))
 
 #?(:clj
    (defn render [el]
@@ -301,10 +300,10 @@
 #?(:cljs
    (defn -main [& args]
      (doseq [[name f] components]
-       (let [html (dom.server/renderToString ($ f))
+       (let [html (dom.server/render-to-string ($ f))
              path (str render-dir "/html/" name ".html")]
          (fs/writeFileSync path html))
-       (let [html (dom.server/renderToStaticMarkup ($ f))
+       (let [html (dom.server/render-to-static-markup ($ f))
              path (str render-dir "/markup/" name ".html")]
          (fs/writeFileSync path html)))))
 
