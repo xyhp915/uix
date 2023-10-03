@@ -274,15 +274,6 @@
                               (= :class k) nil
                               :else [k v])))
                     attrs)
-        attrs (case tag
-                "input" (reduce #(if (contains? attrs %2)
-                                   (assoc %1 %2 (get attrs %2))
-                                   %1)
-                                {}
-                                (-> [:type]
-                                    (into (remove #{:type :default-checked :default-value :value :checked} (keys attrs)))
-                                    (into [:default-checked :default-value :value :checked])))
-                attrs)
         attrs (cond-> attrs
                 (and tag-id (not (contains? attrs :id))) (assoc :id tag-id)
                 (and classes (not (contains? attrs :class))) (assoc :class classes))]
@@ -310,7 +301,7 @@
     :else (escape-html (str/trim (to-str value)))))
 
 (defn render-style-kv! [sb empty? k v]
-  (if v
+  (if (and v (not= v ""))
     (do
       (if empty?
         (append! sb " style=\"")
@@ -429,10 +420,10 @@
         select-value (get-value attrs)]
     (append! sb "<" tag)
 
+    (render-attrs! tag attrs sb)
+
     (when (and (= "option" tag) (= select-value *select-value*))
       (append! sb " selected=\"\""))
-
-    (render-attrs! tag attrs sb)
 
     (when (not= :state/static @*state)
       (vreset! *state :state/tag-open))
@@ -501,9 +492,6 @@
               children (seq (nth element 2 nil))]
           (binder #(-render-html children *state sb)))
         (identical? :<> tag) (render-fragment! element *state sb)
-        #_#_#_#_#_#_(identical? :# tag) (render-suspense! element)
-                (identical? :-> tag) (render-portal! element)
-            (identical? :> tag) (render-interop! element)
         (keyword? tag) (render-html-element! element *state sb)
         :else (render-component! element *state sb)))))
 
