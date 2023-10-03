@@ -5,14 +5,15 @@ const puppeteer = require('puppeteer');
 (async function run() {
   let failures = 0;
 
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({headless: "new"});
   const page = await browser.newPage();
 
-  page.on("console", m => {
+  page.on("console", async (m) => {
     if (m.type() === "error") {
       console.error(`${m.text()} in ${m.location().url}:${m.location().lineNumber}`);
     } else {
-      console.log(...m.args().map(a => a._remoteObject.value));
+      const values = await Promise.all(m.args().map(h => h.jsonValue()));
+      console.log(...values);
     }
   });
 
