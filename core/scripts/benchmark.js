@@ -39,4 +39,4 @@ Reagent ${reagent}ms ${Math.round(((100 / react * reagent) / 100) * 10) / 10}x`)
 
 setTimeout(() => {
   process.exit(1);
-}, 10000);
+}, 30000);

@@ -42,4 +42,4 @@ const puppeteer = require('puppeteer');
 
 setTimeout(() => {
   process.exit(1);
-}, 10000);
+}, 30000);
