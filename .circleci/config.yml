@@ -31,12 +31,6 @@ jobs:
     steps:
       - checkout
       - github-cli/setup
-      - run:
-          name: Install Headless Chrome dependencies
-          command: |
-            sudo apt-get update && sudo apt-get install -yq libxss1
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
 
       - restore_cache:
           keys:
