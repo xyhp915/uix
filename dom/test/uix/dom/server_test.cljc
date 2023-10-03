@@ -337,7 +337,7 @@
      (.mkdir (io/file render-dir))
      (.mkdir (io/file render-dir "html"))
      (.mkdir (io/file render-dir "markup"))
-     (exec "clojure" "-A:dev:test" "-m" "shadow.cljs.devtools.cli" "compile" "test")
+     (exec "clojure" "-A:dev:test" "-M" "-m" "shadow.cljs.devtools.cli" "compile" "test")
      (exec "node" "out/main.js")
      (doseq [[name f] components]
        (testing name

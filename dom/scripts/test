@@ -7,4 +7,4 @@ echo "Installing NPM deps..."
 yarn install --frozen-lockfile
 
 echo "Running Clojure tests..."
-clojure -A:dev:test -m uix.dom.test-runner
+clojure -A:dev:test -M -m uix.dom.test-runner
