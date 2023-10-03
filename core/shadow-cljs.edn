@@ -1,9 +1,9 @@
 {:deps true
  :dev-http {3000 "./"}
  :builds
- {:test {:target :browser
-         :output-dir "out"
-         :modules {:main {:entries [uix.test-runner]}}}
+ {:test {:target :node-script
+         :output-to "out/test.js"
+         :main uix.test-runner/-main}
 
   :benchmark {:target :node-script
               :output-to "out/benchmark.js"

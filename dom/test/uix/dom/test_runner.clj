@@ -3,8 +3,8 @@
             [uix.dom.server-test]))
 
 (defn -main [& args]
-  (let [{:keys [fail]} (run-tests
-                        'uix.dom.server-test)]
-    (if (pos? fail)
+  (let [{:keys [fail error]} (run-tests
+                              'uix.dom.server-test)]
+    (if (pos? (+ fail error))
       (System/exit 1)
       (System/exit 0))))

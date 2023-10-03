@@ -4,7 +4,7 @@
             ["react-dom/test-utils" :as rdt]
             [goog.object :as gobj]
             [clojure.test :refer [is]]
-            [uix.dom :as dom]))
+            [jsdom :refer [JSDOM]]))
 
 (defn as-string [el]
   (rserver/renderToStaticMarkup el))
@@ -26,11 +26,15 @@
     (set! js/console.error cc)
     (is (empty? @msgs))))
 
-(defn render [el]
-  (let [node (.createElement js/document "div")
-        _ (.append (.getElementById js/document "root") node)
-        root (dom/create-root node)]
-    (dom/render-root el root)))
+(defn setup-dom []
+  (let [dom (JSDOM. "<!DOCTYPE html><html><body></body></html>")]
+    (set! js/global.document (.. dom -window -document))
+    (set! js/global.window (.-window dom))
+    dom))
+
+(defn destroy-dom []
+  (set! js/global.document js/undefined)
+  (set! js/global.window js/undefined))
 
 (defn with-react-root
   ([el f]
