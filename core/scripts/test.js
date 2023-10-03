@@ -31,7 +31,11 @@ const puppeteer = require('puppeteer');
     }
   );
 
+  console.log("RUNNING TESTS");
+
   await page.goto(`file://${process.argv[2]}/index.html`);
+
+  console.log("BROWSER OPENED");
 
   setTimeout(() => {
     process.exit(1);

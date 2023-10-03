@@ -28,7 +28,11 @@ Reagent ${reagent}ms ${Math.round(((100 / react * reagent) / 100) * 10) / 10}x`)
     }
   );
 
+  console.log("RUNNING TESTS");
+
   await page.goto(`file://${process.argv[2]}/index.html`);
+
+  console.log("BROWSER OPENED");
 
   setTimeout(() => {
     process.exit(1);
