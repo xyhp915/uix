@@ -2,7 +2,8 @@
  :paths ["src" "resources"]
  :aliases {:dev {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}}
            :benchmark {:extra-paths ["benchmark"]
-                       :extra-deps {reagent/reagent {:mvn/version "1.2.0"}}}
+                       :extra-deps {reagent/reagent {:mvn/version "1.2.0"}
+                                    lilactown/helix {:mvn/version "0.1.10"}}}
 
            :test {:extra-paths ["test" "dev"]
                   :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
