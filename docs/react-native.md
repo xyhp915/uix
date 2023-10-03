@@ -103,7 +103,7 @@ keywords to RN components:
    (defmacro $ [tag & args]
      (if (and (keyword? tag) (not= :<> tag))
        (let [cname (dash->camel tag)]
-            `(uix.core/$ (rn-component ~cname) ~@args))
+         `(uix.core/$ (rn-component ~cname) ~@args))
        `(uix.core/$ ~tag ~@args))))
 ```
 
