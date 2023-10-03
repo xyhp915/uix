@@ -22,4 +22,4 @@ rm -rf out
 clojure -A:test:benchmark -M -m shadow.cljs.devtools.cli release benchmark
 
 echo "Running benchmark..."
-scripts/benchmark.js $(pwd)
+node out/benchmark.js

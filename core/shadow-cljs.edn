@@ -7,9 +7,9 @@
          :compiler-options {:output-feature-set :es2018}
          :release {:compiler-options {:infer-externs true
                                       :closure-defines {goog.DEBUG false}}}}
-  :benchmark {:target :browser
-              :output-dir "out"
-              :modules {:main {:entries [uix.benchmark]}}
+  :benchmark {:target :node-script
+              :output-to "out/benchmark.js"
+              :main uix.benchmark/-main
               :release {:compiler-options {:infer-externs true
                                            :closure-defines {goog.DEBUG false}}}}
   :linter-test {:target :browser
