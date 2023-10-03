@@ -262,3 +262,7 @@
              (uix.core/$ component argv))))]
     (set! (.-uix-component? ref-comp) true)
     ref-comp))
+
+;; SSR helpers
+(def client? (exists? js/document)) ;; cljs can run in a browser or Node.js
+(def server? (not client?))

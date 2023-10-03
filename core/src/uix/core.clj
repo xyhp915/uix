@@ -265,3 +265,7 @@
    (when (uix.lib/cljs-env? &env)
      (uix.linter/lint-exhaustive-deps! &env &form f deps))
    `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(vector->js-array deps))))
+
+;; SSR helpers
+(def client? false) ;; no JVM front-ends
+(def server? (not client?))
