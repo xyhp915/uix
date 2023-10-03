@@ -28,7 +28,7 @@
 ;; Components linting
 (defmethod linter/lint-component :component/kebab-case-name [_ form env]
   (let [[_ sym] form]
-    (when-not (re-matches #"[a-z-]+" (str sym))
+    (when-not (re-matches #"[0-9a-z-]+" (str sym))
       (linter/add-error! form :component/kebab-case-name (linter/form->loc sym)))))
 
 (defmethod ana/error-message :component/kebab-case-name [_ _]
