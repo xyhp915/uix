@@ -19,12 +19,6 @@ const puppeteer = require('puppeteer');
   });
 
   await page.exposeFunction("testsDone", async ([react, uix, reagent]) => {
-    console.log(
-      `
-React ${react}ms
-UIx ${uix}ms ${Math.round(((100 / react * uix) / 100) * 10) / 10}x
-Reagent ${reagent}ms ${Math.round(((100 / react * reagent) / 100) * 10) / 10}x`);
-
       await browser.close();
     }
   );
