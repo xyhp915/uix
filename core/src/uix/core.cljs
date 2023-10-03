@@ -231,7 +231,7 @@
         derive-state (fn [error]
                        #js {:argv (derive-error-state error)})
         render       (fn []
-                       (this-as this
+                       (this-as ^react/Component this
                                 (let [props     (.-props this)
                                       state     (.-state this)
                                       set-state (fn [new-value]
