@@ -16,20 +16,24 @@ const puppeteer = require('puppeteer');
     }
   });
 
-  await page.exposeFunction("testsFailed", n => {
-      failures = n;
-    }
-  );
-
-  await page.exposeFunction("testsDone", async () => {
-      await page.close();
-      await browser.close();
-
-      if (failures > 0) {
-        process.exit(1);
+  return new Promise(async (resolve, reject) => {
+    await page.exposeFunction("testsFailed", n => {
+        failures = n;
       }
-    }
-  );
+    );
 
-  await page.goto(`file://${process.argv[2]}/index.html`);
+    await page.exposeFunction("testsDone", async () => {
+        await page.close();
+        await browser.close();
+
+        if (failures > 0) {
+          reject();
+        } else {
+          resolve();
+        }
+      }
+    );
+
+    await page.goto(`file://${process.argv[2]}/index.html`);
+  });
 })();
