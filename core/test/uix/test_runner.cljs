@@ -11,6 +11,7 @@
   (println (:fail m) "failures," (:error m) "errors.")
   (when (pos? (:fail m))
     (js/testsFailed (:fail m)))
+  (prn "TESTS_DONE")
   (js/testsDone))
 
 (cljs.test/run-tests

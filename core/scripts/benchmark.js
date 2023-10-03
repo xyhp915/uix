@@ -18,6 +18,7 @@ const puppeteer = require('puppeteer');
   });
 
   await page.exposeFunction("testsDone", async ([react, uix, reagent]) => {
+    console.log("testsDone")
     console.log(
       `
 React ${react}ms
