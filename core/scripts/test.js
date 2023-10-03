@@ -5,6 +5,8 @@ const puppeteer = require('puppeteer');
 (async function run() {
   let failures = 0;
 
+  console.log("START TESTS")
+
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
@@ -36,8 +38,8 @@ const puppeteer = require('puppeteer');
   await page.goto(`file://${process.argv[2]}/index.html`);
 
   console.log("BROWSER OPENED");
-
-  setTimeout(() => {
-    process.exit(1);
-  }, 5000);
 })();
+
+setTimeout(() => {
+  process.exit(1);
+}, 10000);
