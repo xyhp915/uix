@@ -6,8 +6,10 @@
             [uix.hooks-test]))
 
 (defn -main [& args]
-  (run-tests
-   'uix.core-test
-   'uix.aot-test
-   'uix.hooks-test
-   'uix.linter-test))
+  (let [{:keys [fail]} (run-tests
+                        'uix.core-test
+                        'uix.aot-test
+                        'uix.hooks-test
+                        'uix.linter-test)]
+    (when (pos? fail)
+      (System/exit 1))))

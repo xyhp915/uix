@@ -22,6 +22,7 @@ const puppeteer = require('puppeteer');
   );
 
   await page.exposeFunction("testsDone", async () => {
+      await page.close();
       await browser.close();
 
       if (failures > 0) {
