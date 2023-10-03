@@ -434,9 +434,6 @@
 
     (render-attrs! tag attrs sb)
 
-    (when (= :state/root @*state)
-      (append! sb " data-reactroot=\"\""))
-
     (when (not= :state/static @*state)
       (vreset! *state :state/tag-open))
 
