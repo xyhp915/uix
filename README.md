@@ -73,6 +73,8 @@ yarn add react@18.2.0 react-dom@18.2.0
 - [Utilities](https://pitch-io.github.io/uix/docs/utilities.html)
 - [Examples](/core/dev/uix/examples.cljs)
 - [Internals](https://pitch-io.github.io/uix/docs/internals.html)
+- Other render targets
+  - [React Three Fiber](/docs/react-three-fiber.md)
 
 ## Testing
 
