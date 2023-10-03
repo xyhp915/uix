@@ -3,15 +3,12 @@
  :builds
  {:test {:target :browser
          :output-dir "out"
-         :modules {:main {:entries [uix.test-runner]}}
-         :compiler-options {:output-feature-set :es2018}
-         :release {:compiler-options {:infer-externs true
-                                      :closure-defines {goog.DEBUG false}}}}
+         :modules {:main {:entries [uix.test-runner]}}}
+
   :benchmark {:target :node-script
               :output-to "out/benchmark.js"
-              :main uix.benchmark/-main
-              :release {:compiler-options {:infer-externs true
-                                           :closure-defines {goog.DEBUG false}}}}
+              :main uix.benchmark/-main}
+
   :linter-test {:target :browser
                 :output-dir "out"
                 :modules {:main {:entries [uix.linter-test]}}}
