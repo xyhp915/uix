@@ -263,6 +263,10 @@
     (set! (.-uix-component? ref-comp) true)
     ref-comp))
 
+(def suspense react/Suspense)
+(def strict-mode react/StrictMode)
+(def profiler react/Profiler)
+
 ;; SSR helpers
 (def client? (exists? js/document)) ;; cljs can run in a browser or Node.js
 (def server? (not client?))
