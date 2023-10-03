@@ -65,6 +65,56 @@ echo 'import "./app/index.js";' > index.js
             [uix.core :refer [$ defui]]))
 
 (defui root []
+  ($ rn/View {:style {:flex 1
+                      :align-items :center
+                      :justify-content :center}} 
+    ($ rn/Text {:style {:font-size 32
+                        :font-weight "500"
+                        :text-align :center}}
+      "Hello! 👋")))
+
+(defn start []
+  (.registerComponent rn/AppRegistry "MyApp" (constantly root)))
+```
+
+## RN elements as keywords
+
+If you prefer keyword elements in RN, you can wrap `$` macro to resolve 
+keywords to RN components:
+
+```clojure
+;; src/app/uix.cljc
+(ns app.uix
+  #?(:cljs (:require-macros [app.uix]))
+  (:require [uix.core]
+            [uix.compiler.attributes :as attrs]
+            #?(:cljs [react-native])))
+
+(defn dash->camel [k]
+  (let [name #?(:cljs (attrs/dash-to-camel (name k))
+                :clj (name (attrs/camel-case-dom k)))]
+    (str (.toUpperCase ^String (subs name 0 1)) (subs name 1))))
+
+#?(:cljs
+   (defn rn-component [cname]
+     (aget react-native cname)))
+
+#?(:clj
+   (defmacro $ [tag & args]
+     (if (and (keyword? tag) (not= :<> tag))
+       (let [cname (dash->camel tag)]
+            `(uix.core/$ (rn-component ~cname) ~@args))
+       `(uix.core/$ ~tag ~@args))))
+```
+
+Now you can write UI like this:
+
+```clojure
+(ns app.core
+    (:require [uix.core :refer [defui]]
+              [app.uix :refer [$]]))
+
+(defui root []
   ($ :view {:style {:flex 1
                     :align-items :center
                     :justify-content :center}} 
@@ -72,7 +122,4 @@ echo 'import "./app/index.js";' > index.js
                       :font-weight "500"
                       :text-align :center}}
       "Hello! 👋")))
-
-(defn start []
-  (.registerComponent rn/AppRegistry "MyApp" (constantly root)))
 ```
