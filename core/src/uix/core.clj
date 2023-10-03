@@ -29,6 +29,7 @@
            (assert (or (map? clj-props#)
                        (nil? clj-props#))
                    (str "UIx component expects a map of props, but instead got " clj-props#))
+           (use-check-memo-re-render clj-props#)
            (f#))
          (f#)))))
 

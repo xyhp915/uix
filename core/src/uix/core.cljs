@@ -1,12 +1,15 @@
 (ns uix.core
   "Public API"
   (:require-macros [uix.core])
-  (:require [goog.object :as gobj]
+  (:require [clojure.string :as str]
+            [goog.object :as gobj]
             [react]
             [uix.hooks.alpha :as hooks]
             [uix.compiler.aot]
             [uix.lib :refer [doseq-loop map->js]]
-            [cljs-bean.core :as bean]))
+            [cljs-bean.core :as bean]
+            [clojure.data]
+            [goog.functions :as gfn]))
 
 (def ^:dynamic *current-component*)
 
@@ -270,3 +273,71 @@
 ;; SSR helpers
 (def client? (exists? js/document)) ;; cljs can run in a browser or Node.js
 (def server? (not client?))
+
+;; wasteful updates debugger
+(defn- ^js get-current-fiber []
+  (when (exists? js/__REACT_DEVTOOLS_GLOBAL_HOOK__)
+    (when-let [renderer (.get (.-renderers js/__REACT_DEVTOOLS_GLOBAL_HOOK__) 1)]
+      (.getCurrentFiber renderer))))
+
+(defn- pr-str-type [v]
+  (cond
+    (nil? v) "nil"
+    (string? v) "string"
+    (number? v) "number"
+    (fn? v) "function"
+    (boolean? v) "boolean"
+    (keyword? v) "keyword"
+    (symbol? v) "symbol"
+    (vector? v) "vector"
+    (map? v) "map"
+    (set? v) "set"
+    (coll? v) "coll"
+    :else (type v)))
+
+(defn suggest-fix [types]
+  (cond
+    (types "function") "Memoize the function"
+    :else "Is frequent update expected? If yes, then memoizing this component is useless"))
+
+(defn- report [props-history last-fiber threshold timeout]
+  (when (>= (count @props-history) threshold)
+    (let [history @props-history
+          diffs (vec (for [[before after] history]
+                       (second (clojure.data/diff before after))))]
+      (js/console.warn "Memoized component" (.. @last-fiber -type -displayName) "was updated" (count history) "times in the last" timeout "ms")
+      (js/console.log "A table of props that have changed between updates:")
+      (->> diffs
+           (mapcat keys)
+           frequencies
+           (map (fn [[k v]]
+                  (let [types (->> diffs
+                                   (map #(pr-str-type (get % k)))
+                                   set)]
+                    [k {"# of updates" v
+                        "suggestion" (suggest-fix types)}])))
+           (into {})
+           clj->js
+           (js/console.table))
+      (reset! props-history #js []))))
+
+(defn use-check-memo-re-render [props]
+  (let [timeout js/globalThis.__UIX_DEBUG_TIMEOUT__
+        threshold js/globalThis.__UIX_DEBUG_THRESHOLD__
+        last-fiber (use-ref nil)
+        props-ref (use-ref props)
+        props-history (use-ref #js [])
+        report (react/useMemo (fn []
+                                (gfn/throttle #(report props-history last-fiber threshold timeout) timeout))
+                              #js [timeout threshold])]
+    (when (and timeout threshold)
+      (when-let [fiber (get-current-fiber)]
+        (when-let [parent-fiber (.-return fiber)]
+          (when-let [parent-type (.-type parent-fiber)]
+            (when (= (aget parent-type "$$typeof")
+                     (js/Symbol.for "react.memo"))
+              (when (not= @props-ref props)
+                (reset! last-fiber fiber)
+                (.push @props-history [@props-ref props])
+                (report)
+                (reset! props-ref props)))))))))
