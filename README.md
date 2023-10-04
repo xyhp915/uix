@@ -27,7 +27,7 @@ yarn add react@18.2.0 react-dom@18.2.0
 
 ### How to start a new project with UIx
 
-- Run `npx create-uix-app my-app` to scaffold a new project
+- Run `npx create-uix-app@latest my-app` to scaffold a new project
 - Clone starter template manually from [pitch-io/uix-starter](https://github.com/pitch-io/uix-starter)
 
 ## Usage
