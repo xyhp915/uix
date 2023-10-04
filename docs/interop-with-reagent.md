@@ -26,13 +26,13 @@ When using a UIx component in Reagent (or anywhere else) you can continue to use
 
 ## Syncing with ratoms and re-frame
 
-External data sources can be consumed in hooks-based components via `useSyncExternalStoreWithSelector` from the `"use-sync-external-store"` package (in React v18 the function is a part of the public API so there is no need to install the package). This part is only concerned about making the UI components reactive on external data sources. How the state is updated doesn't change.
+External data sources can be consumed in hooks-based components via `useSyncExternalStoreWithSelector` from the `"use-sync-external-store"` package. This part is only concerned about making the UI components reactive on external data sources. How the state is updated doesn't change.
 
 ### Implementation
 
 ```clojure
 (ns app.hooks
-  (:require ["use-sync-external-store/shim/with-selector" :refer [useSyncExternalStoreWithSelector]]
+  (:require ["use-sync-external-store/with-selector" :refer [useSyncExternalStoreWithSelector]]
             [re-frame.core :as rf]
             [reagent.impl.component :as impl.component]
             [reagent.ratom :as ratom]
