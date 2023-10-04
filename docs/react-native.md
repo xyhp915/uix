@@ -56,6 +56,7 @@ echo 'import "./app/index.js";' > index.js
 ```
 
 An example of forwarded cljs compiler error
+
 <img src="errors_forwarding.jpg" width="200" />
 
 5. Add some UI code
