@@ -13,7 +13,7 @@ echo 'import "./app/index.js";' > index.js
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.60"}
         com.pitch/uix.core {:mvn/version "0.10.0"}
-        thheller/shadow-cljs {:mvn/version "2.19.8"}}
+        thheller/shadow-cljs {:mvn/version "2.25.8"}}
  :paths ["src" "dev"]}
 ```
 
@@ -23,7 +23,7 @@ echo 'import "./app/index.js";' > index.js
 {:deps true
  :builds {:app
           {:target :react-native
-           :init-fn app.core/init
+           :init-fn app.core/start
            :output-dir "app"
            :compiler-options {:source-map-path "app/"
                               :source-map-include-sources-content true
@@ -51,11 +51,12 @@ echo 'import "./app/index.js";' > index.js
 ;; Forwards cljs build errors to React Native's error view
 (defn build-notify [{:keys [type report]}]
   (when (= :build-failure type)
-    (let [lines (str/split-lines report)
-          err (js/Error. (nth lines 8))]
-      (js/console.error err))))
+    (js/console.error (js/Error. report))))
 
 ```
+
+An example of forwarded cljs compiler error
+<img src="errors_forwarding.jpg" width="200" />
 
 5. Add some UI code
 ```clojure
@@ -76,6 +77,24 @@ echo 'import "./app/index.js";' > index.js
 (defn start []
   (.registerComponent rn/AppRegistry "MyApp" (constantly root)))
 ```
+
+6. Run the project
+```sh
+# start cljs build
+clojure -M -m shadow.cljs.devtools.cli watch app
+
+# start RN's Metro bundler
+yarn start
+
+# start ios (or android) simulator, or connect a real device
+yarn ios
+```
+
+7. Disable RN's own Fast Refresh integration
+
+Bring up the developer menu in the simulator (Cmd+D) and disable Fast Refresh.
+
+<img src="disable_fast_refresh.jpg" width="200" />
 
 ## RN elements as keywords
 
