@@ -1,7 +1,8 @@
 (ns uix.dev
   (:require [clojure.string :as str]
             [uix.linter]
-            [uix.lib]))
+            [uix.lib])
+  (:import (cljs.tagged_literals JSValue)))
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
 
@@ -24,6 +25,9 @@
      (cond
        (and (symbol? x) (re-matches #"^p\d*__\d+#$" (str x)))
        (symbol (str/replace (str x) #"__\d+#$" ""))
+
+       (= (type x) JSValue)
+       (.-val x)
 
        :else x))
    form))
