@@ -1,6 +1,9 @@
 # Hooks linter
 
-UIx has a built-in linter that will help you to use React Hooks correctly. The linter is built into `defui` and the default `uix.core/*` hooks, and implements a set of rules from React's official [ESLint plugin](https://reactjs.org/docs/hooks-rules.html).
+UIx has a built-in linter that will help you to use React Hooks correctly. 
+The linter is built into `defui`, `defhook` and the default `uix.core/*` hooks, 
+and 
+implements a set of rules from React's official [ESLint plugin](https://reactjs.org/docs/hooks-rules.html).
 
 While in the original ESLint plugin there are rules that can be considered as suggestions and thus reported as warnings, most of the rules implemented in UIx should always be followed as breaking them will lead to bugs in your UI. For this reason in UIx a broken rule will fail to build so that it's impossible to build a project with problematic behaviour in UI components.
 

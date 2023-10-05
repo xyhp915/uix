@@ -114,11 +114,11 @@ In other words, React will never complain about the return value in UIx's effect
     (map inc [1 2 3])) ;; return value is a collection, nothing wrong here either
   [])
 
-  (uix/use-effect
-    (fn []
-      (map inc)) ;; return value is a function (transducer),
-    [])          ;; it's gonna be executed as a cleanup function,
-                 ;; is that intended?
+(uix/use-effect
+  (fn []
+    (map inc)) ;; return value is a function (transducer),
+  [])          ;; it's gonna be executed as a cleanup function,
+             ;; is that intended?
 ```
 
 ## Differences from `use-callback` and `use-memo` hooks
@@ -141,3 +141,21 @@ Note that unlike `r/atom` in Reagent, a ref in UIx and React is not a state prim
         (js/console.log (.-clientWidth @ref))))
     ($ :div {:ref ref})))
 ```
+
+## Creating custom hooks
+
+While custom hooks can be defined as normal functions via `defn`, it's recommended to use `uix.core/defhook` macro when creating custom hooks.
+
+```clojure
+(defhook use-event-listener [target type handler]
+  (uix/use-effect
+    (fn []
+      (.addEventListener target type handler)
+      #(.removeEventListener target type handler))
+    [target type handler]))
+```
+
+Here are some benefits of using `defhook`:
+1. Enforced naming convention: hooks names must start with `use-`. The macro performs compile time check.
+2. Enables hooks linting: the macro runs [built-in linter](/docs/code-linting.md) on the body of a custom hook, making sure that hooks are used correctly.
+3. (Future improvement) Optional linter rule to make sure that all hooks in application code are created via `defhook`.
