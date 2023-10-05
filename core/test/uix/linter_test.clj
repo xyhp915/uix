@@ -291,7 +291,11 @@
 
     (testing "#114, should report when an incorrect value is provided as element type"
       (is (str/includes? out-str "Incorrect element type. UIx elements can be one of the following types"))
-      (is (str/includes? out-str "($ {:hello \"world\"})")))))
+      (is (str/includes? out-str "($ {:hello \"world\"})")))
+
+    (testing "should lint uix.core/defhook"
+      (is (str/includes? out-str (str :uix.linter/missing-deps)))
+      (is (str/includes? out-str "React Hook has missing dependencies: [hook-hook]")))))
 
 ;; === Subscribe call in JVM ===
 

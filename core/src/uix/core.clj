@@ -53,7 +53,7 @@
            (f#))
          (f#)))))
 
-(defn parse-sig [form name fdecl]
+(defn parse-defui-sig [form name fdecl]
   (let [[fname fdecl] (uix.lib/parse-sig name fdecl)]
     (uix.lib/assert!
      (= 1 (count fdecl))
@@ -74,7 +74,7 @@
   "Creates UIx component. Similar to defn, but doesn't support multi arity.
   A component should have a single argument of props."
   [sym & fdecl]
-  (let [[fname args fdecl] (parse-sig `defui sym fdecl)]
+  (let [[fname args fdecl] (parse-defui-sig `defui sym fdecl)]
     (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
@@ -96,7 +96,7 @@
   (let [[sym fdecl] (if (symbol? (first fdecl))
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
-        [fname args body] (parse-sig `fn sym fdecl)]
+        [fname args body] (parse-defui-sig `fn sym fdecl)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})]

@@ -27,12 +27,12 @@
 
 (defn render-root
   "Renders React root into the DOM node."
-  [element root]
+  [element ^js/ReactDOMRoot root]
   (.render root element))
 
 (defn unmount-root
   "Remove a mounted React root from the DOM and clean up its event handlers and state."
-  [root]
+  [^js/ReactDOMRoot root]
   (.unmount root))
 
 (defn render

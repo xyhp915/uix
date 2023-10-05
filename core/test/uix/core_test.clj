@@ -5,9 +5,24 @@
 
 (deftest test-parse-sig
   (is (thrown-with-msg? AssertionError #"uix.core\/defui doesn't support multi-arity"
-                        (uix.core/parse-sig 'uix.core/defui 'component-name '(([props]) ([props x])))))
+                        (uix.core/parse-defui-sig 'uix.core/defui 'component-name '(([props]) ([props x])))))
   (is (thrown-with-msg? AssertionError #"uix.core\/defui is a single argument component"
-                        (uix.core/parse-sig 'uix.core/defui 'component-name '([props x])))))
+                        (uix.core/parse-defui-sig 'uix.core/defui 'component-name '([props x])))))
+
+(deftest parse-defhook-sig
+  (is (thrown-with-msg? AssertionError #"uix.core\/defhook should be single-arity function"
+                        (uix.core/parse-defhook-sig 'use-hook '(([x]) ([x y])))))
+  (is (thrown-with-msg? AssertionError #"React Hook name should start with `use-`, found `hook` instead."
+                        (uix.core/parse-defhook-sig 'hook '([x])))))
+
+(deftest test-defhook
+  (uix.core/defhook use-hook
+    "simple hook"
+    [x]
+    {:pre [(number? x)]}
+    x)
+  (is (:uix/hook (meta #'use-hook)))
+  (is (= "simple hook" (:doc (meta #'use-hook)))))
 
 (deftest test-vector->js-array
   (is (= '(uix.core/jsfy-deps (cljs.core/array 1 2 3)) (uix.core/vector->js-array [1 2 3])))

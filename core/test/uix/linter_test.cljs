@@ -1,5 +1,5 @@
 (ns uix.linter-test
-  (:require [uix.core :refer [defui $]]))
+  (:require [uix.core :as uix :refer [defui $ defhook]]))
 
 (defui test-missing-deps [{:keys [x]}]
   (uix.core/use-effect (fn [] x) []))
@@ -107,3 +107,9 @@
   ($ :div
      {}
      ($ {:hello "world"})))
+
+(defhook use-hook [hook-hook]
+  (uix/use-effect
+   (fn []
+     (prn hook-hook))
+   []))
