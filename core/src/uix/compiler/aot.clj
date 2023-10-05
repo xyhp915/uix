@@ -75,7 +75,8 @@
     (cond
       (= :<> tag) :fragment
       (keyword? tag) :element
-      (symbol? tag) :component)))
+      (symbol? tag) :component
+      (list? tag) :component)))
 
 (defmethod compile-element* :default [[tag] _]
   (let [env (select-keys (meta tag) [:line :column])]
