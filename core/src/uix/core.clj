@@ -2,6 +2,7 @@
   "Public API"
   (:refer-clojure :exclude [fn])
   (:require [clojure.core :as core]
+            [clojure.string :as str]
             [uix.compiler.aot]
             [uix.source]
             [cljs.core]
@@ -53,20 +54,7 @@
          (f#)))))
 
 (defn parse-sig [form name fdecl]
-  (let [[fdecl m] (if (string? (first fdecl))
-                    [(next fdecl) {:doc (first fdecl)}]
-                    [fdecl {}])
-        [fdecl m] (if (map? (first fdecl))
-                    [(next fdecl) (conj m (first fdecl))]
-                    [fdecl m])
-        fdecl (if (vector? (first fdecl))
-                (list fdecl)
-                fdecl)
-        [fdecl m] (if (map? (last fdecl))
-                    [(butlast fdecl) (conj m (last fdecl))]
-                    [fdecl m])
-        m (conj {:arglists (list 'quote (#'cljs.core/sigs fdecl))} m)
-        m (conj (if (meta name) (meta name) {}) m)]
+  (let [[fname fdecl] (uix.lib/parse-sig name fdecl)]
     (uix.lib/assert!
      (= 1 (count fdecl))
      (str form " doesn't support multi-arity.\n"
@@ -77,7 +65,7 @@
        (>= 1 (count args))
        (str form " is a single argument component taking a map of props, found: " args "\n"
             "If you meant to retrieve `children`, they are under `:children` field in props map."))
-      [(with-meta name m) args fdecl])))
+      [fname args fdecl])))
 
 (defmacro
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
@@ -138,6 +126,29 @@
    (uix.linter/lint-element* &form &env)
    (uix.compiler.aot/compile-element (into [tag props] children) {:env &env})))
 
+(defn parse-defhook-sig [sym fdecl]
+  (let [[fname fdecl] (uix.lib/parse-sig sym fdecl)]
+    (uix.lib/assert! (str/starts-with? (name fname) "use-")
+                     (str "React Hook name should start with `use-`, found `" (name fname) "` instead."))
+    (uix.lib/assert!
+     (= 1 (count fdecl))
+     "uix.core/defhook should be single-arity function")
+    [fname fdecl]))
+
+(defmacro
+  ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
+                [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])}
+  defhook
+  "Like `defn`, but creates React hook with additional validation,
+  the name should start with `use-`
+  (defhook use-in-viewport []
+    ...)"
+  [sym & fdecl]
+  (let [[fname fdecl] (parse-defhook-sig sym fdecl)
+        fname (vary-meta fname assoc :uix/hook true)]
+    (uix.linter/lint! sym fdecl &form &env)
+    `(defn ~fname ~@fdecl)))
+
 ;; === Error boundary ===
 
 (defn create-error-boundary
@@ -145,7 +156,7 @@
 
   display-name       — the name of the component to be displayed in stack trace
   derive-error-state — maps error object to component's state that is used in render-fn
-  did-catch          — 2 arg function for side-effects, logging etc.
+  did-catch          — 2 arg function for side effeects, logging etc.
   receives the exception and additional component info as args
   render-fn          — takes state value returned from derive-error-state and a vector
   of arguments passed into error boundary"
