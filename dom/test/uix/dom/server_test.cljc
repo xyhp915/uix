@@ -1,7 +1,7 @@
 (ns uix.dom.server-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.string :as str]
-            [uix.core :refer [$ defui]]
+            [uix.core :as uix :refer [$ defui]]
             [uix.dom.server :as dom.server]
             #?@(:cljs [[fs :as fs]])
             #?@(:clj [[clojure.java.shell :as shell]
@@ -413,3 +413,20 @@
    (deftest nil-dangerously-set-inner-html
      (is (= (render ($ username {:username nil})) "<p></p>"))
      (is (thrown? Exception (render ($ bad-username {:foo 1}))))))
+
+#?(:clj
+   (do
+     (deftest test-suspense
+       (is (= (render ($ uix/suspense {:fallback ($ :div 1)}
+                         ($ :div 1)))
+              "<div>1</div>")))
+
+     (deftest test-strict-mode
+       (is (= (render ($ uix/strict-mode
+                         ($ :div 1)))
+              "<div>1</div>")))
+
+     (deftest test-profiler
+       (is (= (render ($ uix/profiler
+                         ($ :div 1)))
+              "<div>1</div>")))))
