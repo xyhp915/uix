@@ -1,5 +1,7 @@
 # Using React Native with UIx
 
+Follow the steps below or just run `npx create-uix-app@latest {{app-name}} --react-native` in existing React Native project.
+
 1. Create RN project
 ```sh
 npx react-native init MyApp
