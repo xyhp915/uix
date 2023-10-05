@@ -113,7 +113,10 @@
     ($ :div
        {}
        ($ (.-Provider ctx))
-       ($ (keyword "lol")))))
+       ($ (keyword "lol"))
+       ($ :div)
+       ($ :div)
+       ($ :div))))
 
 (defhook use-hook [hook-hook]
   (uix/use-effect
