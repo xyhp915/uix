@@ -62,6 +62,7 @@ yarn add react@18.2.0 react-dom@18.2.0
 - [Hooks](https://pitch-io.github.io/uix/docs/hooks.html)
 - [State](https://pitch-io.github.io/uix/docs/state.html)
 - [Effects](https://pitch-io.github.io/uix/docs/effects.html)
+- [Props validation](https://pitch-io.github.io/uix/docs/props-validation.html)
 - [Interop with React](https://pitch-io.github.io/uix/docs/interop-with-react.html)
 - [Interop with Reagent](https://pitch-io.github.io/uix/docs/interop-with-reagent.html)
 - [Code-splitting and React.lazy](https://pitch-io.github.io/uix/docs/code-splitting.html)
