@@ -105,6 +105,7 @@ cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 - [Cognician](https://info.cognician.com/)
 - [Multiply](https://multiply.co/)
 - [ClojureScript Studio](https://www.clojurescript.studio/)
+- [Ogres, virtual tabletop](https://ogres.app/)
 
 ## Thanks to
 
