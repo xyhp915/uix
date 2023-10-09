@@ -85,14 +85,10 @@
     (form->element-type tag)))
 
 (defmethod compile-element* :default [[tag] _]
-  (let [env (select-keys (meta tag) [:line :column])]
-    (ana/warning ::incorrect-element-type env {})))
-
-(defmethod ana/error-message ::incorrect-element-type [_ _]
-  (str "Incorrect element type. UIx elements can be one of the following types:\n"
-       "React Fragment: :<>\n"
-       "Primitive element: keyword\n"
-       "Component element: symbol"))
+  (throw (AssertionError. (str "Incorrect element type. UIx elements can be one of the following types:\n"
+                               "React Fragment: :<>\n"
+                               "Primitive element: keyword\n"
+                               "Component element: symbol"))))
 
 (defmethod compile-element* :element [v {:keys [env]}]
   (let [[tag attrs & children] (normalize-element env v)

@@ -51,3 +51,10 @@
 (deftest test-120
   (is (= :component (stub-120 (inc 1))))
   (is (= :component (stub-120 `(inc 1)))))
+
+(deftest test-114
+  (testing "#114, should report when an incorrect value is provided as element type"
+    (is (thrown-with-msg? AssertionError #"Incorrect element type. UIx elements can be one of the following types"
+                          (aot/compile-element* nil nil)))
+    (is (thrown-with-msg? AssertionError #"Incorrect element type. UIx elements can be one of the following types"
+                          (aot/compile-element* [{:hello "world"}] nil)))))

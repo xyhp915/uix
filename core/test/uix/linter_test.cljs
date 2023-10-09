@@ -103,21 +103,6 @@
           (->> {:key (str "foo-" i)}
                ($ :span))))))
 
-(defui test-114 []
-  ($ :div
-     {}
-     ($ {:hello "world"})))
-
-(defui test-114-2 []
-  (let [ctx #js {}]
-    ($ :div
-       {}
-       ($ (.-Provider ctx))
-       ($ (keyword "lol"))
-       ($ :div)
-       ($ :div)
-       ($ :div))))
-
 (defhook use-hook [hook-hook]
   (uix/use-effect
    (fn []
