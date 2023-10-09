@@ -3,6 +3,7 @@
 Follow the steps below or just run `npx create-uix-app@latest {{app-name}} --react-native` in existing React Native project.
 
 1. Create RN project
+
 ```sh
 npx react-native init MyApp
 cd MyApp
@@ -10,16 +11,18 @@ echo 'import "./app/index.js";' > index.js
 ```
 
 2. Add Clojure deps
+
 ```clojure
 ;; deps.edn
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.60"}
-        com.pitch/uix.core {:mvn/version "1.0.0"}
+        com.pitch/uix.core {:mvn/version "1.0.1"}
         thheller/shadow-cljs {:mvn/version "2.25.8"}}
  :paths ["src" "dev"]}
 ```
 
 3. Add build config
+
 ```clojure
 ;; shadow-cljs.edn
 {:deps true
@@ -35,6 +38,7 @@ echo 'import "./app/index.js";' > index.js
 ```
 
 4. Setup dev tooling
+
 ```clojure
 ;; dev/app/preload.cljs
 (ns app.preload
@@ -62,6 +66,7 @@ An example of forwarded cljs compiler error
 <img src="errors_forwarding.jpg" width="200" />
 
 5. Add some UI code
+
 ```clojure
 ;; src/app/core.cljs
 (ns app.core
@@ -71,7 +76,7 @@ An example of forwarded cljs compiler error
 (defui root []
   ($ rn/View {:style {:flex 1
                       :align-items :center
-                      :justify-content :center}} 
+                      :justify-content :center}}
     ($ rn/Text {:style {:font-size 32
                         :font-weight "500"
                         :text-align :center}}
@@ -82,6 +87,7 @@ An example of forwarded cljs compiler error
 ```
 
 6. Run the project
+
 ```sh
 # start cljs build
 clojure -M -m shadow.cljs.devtools.cli watch app
@@ -101,7 +107,7 @@ Bring up the developer menu in the simulator (Cmd+D) and disable Fast Refresh.
 
 ## RN elements as keywords
 
-If you prefer keyword elements in RN, you can wrap `$` macro to resolve 
+If you prefer keyword elements in RN, you can wrap `$` macro to resolve
 keywords to RN components:
 
 ```clojure
@@ -139,7 +145,7 @@ Now you can write UI like this:
 (defui root []
   ($ :view {:style {:flex 1
                     :align-items :center
-                    :justify-content :center}} 
+                    :justify-content :center}}
     ($ :text {:style {:font-size 32
                       :font-weight "500"
                       :text-align :center}}

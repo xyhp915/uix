@@ -1,15 +1,23 @@
 # CHANGELOG
 
+## 1.0.1
+
+### Improvements
+
+- Fixed `$` elements not being emitted when `$` is wrapped in a macro #121
+
 ## 1.0.0
 
 ### Improvements
+
 - Missing key linter: check in a threading macro #100
 - Better error message when an incorrect value is supplied to `$` in place of a component #114
-- Fix memory leak in `use-susbcribe` hook #109
+- Fix memory leak in `use-subscribe` hook #109
 - Fix fast-refresh breaking 7c39a4e, 2a4504b
 - Fixed minor differences in SSR output between JS and JVM renderers
 
 ### New
+
 - cljs ns `uix.dom.server` wrapping `react-dom/server`
 - `uix.core/client?` and `uix.core/server?` helpers
 - `suspense`, `strict-mode` and `profiler` components
