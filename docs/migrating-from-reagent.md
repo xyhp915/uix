@@ -1,6 +1,6 @@
 # Migrating from Reagent
 
-This document describes how to migrate Reagent components to UIx, including syntactical differences and how various patterns in Reagent translate to UIx. UIx doesn't provide any abstractions on top of React, thus it is recommended to make yourself familiar with React in general.
+This document describes how to migrate Reagent components to UIx, including syntactical differences and how various patterns in Reagent translate to UIx. UIx doesn't provide any abstractions on top of React, thus it is recommended to make yourself familiar with React in general. Also make sure to check out [this slide deck](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f).
 
 ## Element syntax
 

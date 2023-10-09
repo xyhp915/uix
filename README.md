@@ -71,6 +71,7 @@ yarn add react@18.2.0 react-dom@18.2.0
 - [Hot reloading](https://pitch-io.github.io/uix/docs/hot-reloading.html)
 - [React DevTools](https://pitch-io.github.io/uix/docs/react-devtools.html)
 - [Code linting](https://pitch-io.github.io/uix/docs/code-linting.html)
+- [Differences from Reagent](https://pitch-io.github.io/uix/docs/differences-from-reagent.html)
 - [Utilities](https://pitch-io.github.io/uix/docs/utilities.html)
 - [Examples](/core/dev/uix/examples.cljs)
 - [Internals](https://pitch-io.github.io/uix/docs/internals.html)
