@@ -44,3 +44,10 @@
            '(uix.compiler.alpha/component-element x (cljs.core/array {}) (cljs.core/array 1 2))))
     (is (= (aot/compile-element '[x {:x 1 :ref 2} 1 2] nil)
            '(uix.compiler.alpha/component-element x (cljs.core/array {:x 1 :ref 2}) (cljs.core/array 1 2))))))
+
+(defmacro stub-120 [x]
+  (aot/form->element-type x))
+
+(deftest test-120
+  (is (= :component (stub-120 (inc 1))))
+  (is (= :component (stub-120 `(inc 1)))))
