@@ -69,14 +69,20 @@
     (into [(first v) {}] (rest v))
     v))
 
+(defn form->element-type [tag]
+  (cond
+    (= :<> tag) :fragment
+    (keyword? tag) :element
+
+    (or (symbol? tag)
+        (list? tag)
+        (instance? clojure.lang.Cons tag))
+    :component))
+
 (defmulti compile-element*
   "Compiles UIx elements into React.createElement"
   (fn [[tag] _]
-    (cond
-      (= :<> tag) :fragment
-      (keyword? tag) :element
-      (symbol? tag) :component
-      (list? tag) :component)))
+    (form->element-type tag)))
 
 (defmethod compile-element* :default [[tag] _]
   (let [env (select-keys (meta tag) [:line :column])]
