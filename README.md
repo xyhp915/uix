@@ -100,11 +100,12 @@ cd core && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 ```
 
-## Who's using UIx2?
+## Who's using UIx?
 
 - [Pitch](https://pitch.com/)
 - [Cognician](https://info.cognician.com/)
 - [Multiply](https://multiply.co/)
+- [Totcal](https://totcal.com/)
 - [ClojureScript Studio](https://www.clojurescript.studio/)
 - [Ogres, virtual tabletop](https://ogres.app/)
 
