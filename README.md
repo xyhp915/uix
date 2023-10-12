@@ -103,6 +103,7 @@ cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 ## Who's using UIx?
 
 - [Pitch](https://pitch.com/)
+- [Pitch iOS app](https://apps.apple.com/us/app/pitch-collaborate-on-decks/id1551335606?platform=iphone)
 - [Cognician](https://info.cognician.com/)
 - [Multiply](https://multiply.co/)
 - [Totcal](https://totcal.com/)
