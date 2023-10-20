@@ -15,12 +15,12 @@
   (if (or (map? attrs) (nil? attrs))
     `(cljs.core/array
       ~(cond-> attrs
+         ;; merge parsed id and class with attrs map
+         :always (attrs/set-id-class tag-id-class)
          ;; interpret :style if it's not map literal
          (and (some? (:style attrs))
               (not (map? (:style attrs))))
          (assoc :style `(uix.compiler.attributes/convert-props ~(:style attrs) (cljs.core/array) true))
-         ;; merge parsed id and class with attrs map
-         :always (attrs/set-id-class tag-id-class)
          ;; camel-casify the map
          :always (attrs/compile-attrs {:custom-element? (last tag-id-class)})
          ;; emit JS object literal

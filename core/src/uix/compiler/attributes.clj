@@ -24,18 +24,24 @@
   "Takes attributes map and parsed tag triplet,
   and returns attributes merged with class names and id"
   [props [_ id class]]
-  (let [props-class (get props :class)]
-    (cond-> props
-            ;; Only use ID from tag keyword if no :id in props already
-      (and (some? id) (nil? (get props :id)))
-      (assoc :id id)
+  (let [props-class (get props :class)
+        id? (and (some? id) (nil? (get props :id)))
+        class? (or class props-class)]
+    (into
+     (cond-> nil
+              ;; Only use ID from tag keyword if no :id in props already
+       id?
+       (assoc :id id)
 
-              ;; Merge classes
-      (or class props-class)
-      (assoc :class (cond
-                      (vector? props-class) `(class-names ~class ~@props-class)
-                      props-class `(class-names ~class ~props-class)
-                      :else class)))))
+                ;; Merge classes
+       class?
+       (assoc :class (cond
+                       (vector? props-class) `(class-names ~class ~@props-class)
+                       props-class `(class-names ~class ~props-class)
+                       :else class)))
+     (cond-> props
+       id? (dissoc :id)
+       class? (dissoc :class)))))
 
 (defn camel-case-dom
   "Turns kebab-case keyword into camel-case keyword,

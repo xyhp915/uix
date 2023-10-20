@@ -274,9 +274,12 @@
                               (= :class k) nil
                               :else [k v])))
                     attrs)
-        attrs (cond-> attrs
-                (and tag-id (not (contains? attrs :id))) (assoc :id tag-id)
-                (and classes (not (contains? attrs :class))) (assoc :class classes))]
+        attrs (into
+               (cond-> {}
+                 tag-id (assoc :id tag-id)
+                 (contains? attrs :id) (assoc :id (:id attrs))
+                 classes (assoc :class classes))
+               (dissoc attrs :id :class))]
     [tag attrs children]))
 
 ;;; render attributes
