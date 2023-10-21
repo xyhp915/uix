@@ -269,7 +269,6 @@
         attrs (into {}
                     (keep (fn [[k v]]
                             (cond
-                              (and (= :id k) tag-id) [k tag-id]
                               (and (= :class k) classes) [k classes]
                               (= :class k) nil
                               :else [k v])))

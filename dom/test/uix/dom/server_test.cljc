@@ -25,7 +25,7 @@
 #?(:clj
    (deftest test-46
      (is (= (render ($ :div#id "hi")) "<div id=\"id\">hi</div>"))
-     (is (= (render ($ :div#id {:id 1} "hi")) "<div id=\"id\">hi</div>"))
+     (is (= (render ($ :div#id {:id 1} "hi")) "<div id=\"1\">hi</div>"))
      (is (= (render ($ :div {:id 1} "hi")) "<div id=\"1\">hi</div>"))
 
      (is (= (render ($ :div.a.b "hi")) "<div class=\"a b\">hi</div>"))
