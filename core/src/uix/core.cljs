@@ -139,6 +139,12 @@
   [context]
   (hooks/use-context context))
 
+(defn use-debug
+  ([v]
+   (hooks/use-debug v))
+  ([v fmt]
+   (hooks/use-debug v fmt)))
+
 (defn use-deferred-value
   "Accepts a value and returns a new copy of the value that will defer to more urgent updates.
   If the current render is the result of an urgent update, like user input,
