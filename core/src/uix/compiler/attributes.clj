@@ -26,22 +26,24 @@
   [props [_ id class]]
   (let [props-class (get props :class)
         id? (and (some? id) (nil? (get props :id)))
-        class? (or class props-class)]
-    (into
-     (cond-> nil
-              ;; Only use ID from tag keyword if no :id in props already
-       id?
-       (assoc :id id)
+        class? (or class props-class)
+        attrs (into
+               (cond-> {}
+                        ;; Only use ID from tag keyword if no :id in props already
+                 id?
+                 (assoc :id id)
 
-                ;; Merge classes
-       class?
-       (assoc :class (cond
-                       (vector? props-class) `(class-names ~class ~@props-class)
-                       props-class `(class-names ~class ~props-class)
-                       :else class)))
-     (cond-> props
-       id? (dissoc :id)
-       class? (dissoc :class)))))
+                          ;; Merge classes
+                 class?
+                 (assoc :class (cond
+                                 (vector? props-class) `(class-names ~class ~@props-class)
+                                 props-class `(class-names ~class ~props-class)
+                                 :else class)))
+               (cond-> props
+                 id? (dissoc :id)
+                 class? (dissoc :class)))]
+    (when (seq attrs)
+      attrs)))
 
 (defn camel-case-dom
   "Turns kebab-case keyword into camel-case keyword,
