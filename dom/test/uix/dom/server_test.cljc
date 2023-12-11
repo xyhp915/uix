@@ -430,3 +430,16 @@
        (is (= (render ($ uix/profiler
                          ($ :div 1)))
               "<div>1</div>")))))
+
+#?(:clj
+   (do
+     (defui div [{:keys [children]}]
+       ($ :div children))
+
+     (deftest test-124
+       (is (= (render ($ div ($ :span) ($ :span)))
+              "<div><span></span><span></span></div>")))
+
+     (deftest test-vector-children
+       (is (= (render ($ :div [($ :span) ($ :span)]))
+              "<div><span></span><span></span></div>")))))
