@@ -500,7 +500,10 @@
 (extend-protocol HtmlRenderer
   IPersistentVector
   (-render-html [this *state sb]
-    (render-element! this *state sb))
+    (if (vector? (first this))
+      (doseq [element this]
+        (-render-html element *state sb))
+      (render-element! this *state sb)))
 
   ISeq
   (-render-html [this *state sb]
