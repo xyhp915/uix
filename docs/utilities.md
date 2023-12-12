@@ -17,3 +17,10 @@ Sometimes you might need to print a component's source as a string. The most com
 (uix.dom/render ($ :pre (uix.core/source button))
                 (js/document.getElementById "root"))
 ```
+
+## Transforming HTML and Hiccup to UIx
+`uix.dev` ns exposes two functions:
+- `uix.dev/from-hiccup` takes a vector of Hiccup and returns UIx element
+- `uix.dev/from-html` takes a string of HTML and returns a collection of UIx elements
+
+Some example are available [in the source](https://github.com/pitch-io/uix/blob/master/core/src/uix/dev.clj#L73-L87).
