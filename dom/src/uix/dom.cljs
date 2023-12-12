@@ -1,5 +1,6 @@
 (ns uix.dom
   "Public API"
+  (:require-macros [uix.dom.linter])
   (:require ["react-dom/client" :as rdom-client]
             [react-dom :as rdom]))
 

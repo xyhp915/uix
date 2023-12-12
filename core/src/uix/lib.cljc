@@ -1,7 +1,8 @@
 (ns uix.lib
   #?(:cljs (:require-macros [uix.lib :refer [doseq-loop]]))
   #?(:cljs (:require [goog.object :as gobj]))
-  #?(:clj (:require [clojure.walk]
+  #?(:clj (:require [cljs.analyzer :as ana]
+                    [clojure.walk]
                     [cljs.core])))
 
 #?(:clj
@@ -60,3 +61,33 @@
            m (conj {:arglists (list 'quote (#'cljs.core/sigs fdecl))} m)
            m (conj (if (meta name) (meta name) {}) m)]
        [(with-meta name m) fdecl])))
+
+#?(:clj
+   (do
+     (defn- uix-element?
+       "Returns true when `form` is `(uix.core/$ ...)`"
+       [env form]
+       (and (list? form)
+            (symbol? (first form))
+            (->> (first form) (ana/resolve-var env) :name (= 'uix.core/$))))
+
+     (def elements-list-fns
+       '#{for map mapv filter filterv remove keep keep-indexed})
+
+     (defn- elements-list?
+       "Returns true when `v` is form commonly used to render a list of elements
+       `(map ...)`, `(for ...)`, etc"
+       [v]
+       (and (list? v)
+            (symbol? (first v))
+            (elements-list-fns (first v))))
+
+     (defn normalize-element
+       "When the second item in the element `v` is either UIx element or `elements-list?`,
+  returns normalized element with empty map at props position
+  and child element shifted into children position"
+       [env v]
+       (if (or (uix-element? env (second v))
+               (elements-list? (second v)))
+         (into [(first v) {}] (rest v))
+         v))))
