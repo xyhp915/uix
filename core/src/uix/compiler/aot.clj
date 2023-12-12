@@ -2,7 +2,6 @@
   "Compiler code that translates HyperScript into React calls at compile-time."
   (:require [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]
-            [cljs.analyzer :as ana]
             [uix.lib]))
 
 (defmulti compile-attrs
@@ -41,34 +40,6 @@
 (defn- input-component? [x]
   (contains? #{"input" "textarea"} x))
 
-(defn- uix-element?
-  "Returns true when `form` is `(uix.core/$ ...)`"
-  [env form]
-  (and (list? form)
-       (symbol? (first form))
-       (->> (first form) (ana/resolve-var env) :name (= 'uix.core/$))))
-
-(def elements-list-fns
-  '#{for map mapv filter filterv remove keep keep-indexed})
-
-(defn- elements-list?
-  "Returns true when `v` is form commonly used to render a list of elements
-  `(map ...)`, `(for ...)`, etc"
-  [v]
-  (and (list? v)
-       (symbol? (first v))
-       (elements-list-fns (first v))))
-
-(defn- normalize-element
-  "When the second item in the element `v` is either UIx element or `elements-list?`,
-  returns normalized element with empty map at props position
-  and child element shifted into children position"
-  [env v]
-  (if (or (uix-element? env (second v))
-          (elements-list? (second v)))
-    (into [(first v) {}] (rest v))
-    v))
-
 (defn form->element-type [tag]
   (cond
     (= :<> tag) :fragment
@@ -91,7 +62,7 @@
                                "Component element: symbol"))))
 
 (defmethod compile-element* :element [v {:keys [env]}]
-  (let [[tag attrs & children] (normalize-element env v)
+  (let [[tag attrs & children] (uix.lib/normalize-element env v)
         tag-id-class (attrs/parse-tag tag)
         attrs-children (compile-attrs :element attrs {:tag-id-class tag-id-class})
         tag-str (first tag-id-class)
@@ -101,7 +72,7 @@
     ret))
 
 (defmethod compile-element* :component [v {:keys [env]}]
-  (let [[tag props & children] (normalize-element env v)
+  (let [[tag props & children] (uix.lib/normalize-element env v)
         tag (vary-meta tag assoc :tag 'js)
         props-children (compile-attrs :component props nil)]
     `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))

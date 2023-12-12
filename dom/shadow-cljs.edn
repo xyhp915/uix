@@ -3,4 +3,8 @@
  {:test {:target :node-script
          :main uix.dom.server-test/-main
          :output-dir "out"
-         :output-to "out/main.js"}}}
+         :output-to "out/main.js"}
+
+  :linter-test {:target :browser
+                :output-dir "out"
+                :modules {:main {:entries [uix.dom.linter-test]}}}}}
