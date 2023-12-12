@@ -1,7 +1,8 @@
 (ns uix.dev
   (:require [clojure.string :as str]
             [uix.linter]
-            [uix.lib])
+            [uix.lib]
+            [hickory.core :as h])
   (:import (cljs.tagged_literals JSValue)))
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
@@ -42,3 +43,45 @@
          (sig# ~var-sym ~(str/join (rewrite-forms (uix.lib/find-form uix.linter/hook-call? body))) nil nil)
          (js/window.uix.dev.register! ~var-sym (.-displayName ~var-sym))
          (set! (.-fast-refresh-signature ~var-sym) sig#)))))
+
+(defn hiccup->uix [form]
+  (cond
+    (seq? form)
+    (mapv hiccup->uix form)
+
+    (vector? form)
+    (let [form (cond
+                 (= :> (first form))
+                 (rest form)
+
+                 :else form)
+          [tag attrs & children] form
+          [attrs children] (cond
+                             (map? attrs) [attrs children]
+                             (> (count form) 1) [nil (into [attrs] children)]
+                             :else [nil children])
+          attrs (cond-> attrs
+                  (contains? (meta form) :key)
+                  (assoc :key (:key (meta form))))
+          children (map hiccup->uix children)]
+      (if attrs
+        `(~'$ ~tag ~attrs ~@children)
+        `(~'$ ~tag ~@children)))
+
+    :else form))
+
+(comment
+  (hiccup->uix
+   [:div
+    [:div {:class "foo"} "bar"]
+    [:> 'js-component]
+    [:<> [:button "hello"] [:span "world"]]
+    ^{:key "hello"} [:span "world"]]))
+
+(defn html->uix [html-str]
+  (map (comp hiccup->uix h/as-hiccup)
+       (h/parse-fragment html-str)))
+
+(comment
+  (html->uix
+   "<p class=\"c-fDhfVa c-fDhfVa-dkirSI-spaced-true c-fDhfVa-jFCKZD-family-default c-fDhfVa-grGuE-size-3 c-fDhfVa-hYBDYy-variant-default c-fDhfVa-kHnRXL-weight-2\">Finally, one last scene, just for fun! I ported to React Three Fiber a Three.js demo from <a href=\"http://barradeau.com/blog/?p=621\" class=\"c-iNkjEl c-iNkjEl-dNnDWN-underline-true c-iNkjEl-igJWTOZ-css\">an article</a> written by <a href=\"https://twitter.com/nicoptere\" class=\"c-iNkjEl c-iNkjEl-hGYKvZ-discreet-true c-iNkjEl-goIlEV-favicon-true c-iNkjEl-idwngVA-css\">@nicoptere</a> that does a pretty good job at deep diving into the FBO technique.</p>"))
