@@ -2,6 +2,8 @@
 
 [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?hl=en) is a browser extension that can be used to inspect live UI tree, component props and profile performance in DevTools.
 
+As an alternative, there's [cljs-react-devtools](https://github.com/roman01la/cljs-react-devtools/), which is similar to React DevTools, but targets ClojureScript wrappers specifically to make sure that Clojure data structures are inspectable, as well as Reagent reactions and re-frame subscriptions.
+
 ## UIx specifics
 
 - Jump to component definition button [2] works as expected, unlike in Reagent
