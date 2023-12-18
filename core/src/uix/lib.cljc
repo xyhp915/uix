@@ -67,9 +67,12 @@
      (defn- uix-element?
        "Returns true when `form` is `(uix.core/$ ...)`"
        [env form]
-       (and (list? form)
-            (symbol? (first form))
-            (->> (first form) (ana/resolve-var env) :name (= 'uix.core/$))))
+       (let [resolve-fn (if (uix.lib/cljs-env? env)
+                          ana/resolve-var
+                          resolve)]
+         (and (list? form)
+              (symbol? (first form))
+              (->> (first form) (resolve-fn env) :name (= 'uix.core/$)))))
 
      (def elements-list-fns
        '#{for map mapv filter filterv remove keep keep-indexed})
