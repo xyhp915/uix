@@ -189,10 +189,10 @@
    (hooks/use-sync-external-store subscribe get-snapshot get-server-snapshot)))
 
 (defn as-react
-  "Interop with React components. Takes UIx component function
+  "Interop with React components. Takes a function that returns UIx component
   and returns same component wrapped into interop layer."
   [f]
-  #(f #js {:argv (bean/bean %)}))
+  #(f (bean/bean %)))
 
 (defn- stringify-clojure-primitives [v]
   (cond
