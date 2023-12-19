@@ -132,14 +132,12 @@
 
 (deftest test-as-react
   (uix.core/defui test-c [props]
-    (is (map? props))
-    (is (= "TEXT" (:text props)))
     ($ :h1 (:text props)))
-  (let [h1 (uix.core/as-react test-c)
-        ^js el (h1 #js {:text "TEXT"})
-        props (.-props el)]
-    (is (= (.-type el) "h1"))
-    (is (= (.-children props) "TEXT"))))
+  (let [test-c-react (uix.core/as-react #($ test-c %))
+        el (test-c-react #js {:text "TEXT"})
+        props (.. ^js el -props -argv)]
+    (is (= (.-type el) test-c))
+    (is (= (:text props) "TEXT"))))
 
 (defui test-source-component []
   "HELLO")
