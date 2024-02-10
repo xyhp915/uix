@@ -23,6 +23,18 @@
        (is (= (render ($ :div {:class [1 :a "b"]})) "<div class=\"1 a b\"></div>")))))
 
 #?(:clj
+   (deftest test-class-name-attr
+     (is (= (render ($ :div {:class "a"})) "<div class=\"a\"></div>"))
+     (is (= (render ($ :div {:class-name "a"})) "<div class=\"a\"></div>"))
+     (is (= (render ($ :div {:className "a"})) "<div class=\"a\"></div>"))))
+
+#?(:clj
+   (deftest test-for-attr
+     (is (= (render ($ :div {:for "a"})) "<div for=\"a\"></div>"))
+     (is (= (render ($ :div {:html-for "a"})) "<div for=\"a\"></div>"))
+     (is (= (render ($ :div {:htmlFor "a"})) "<div for=\"a\"></div>"))))
+
+#?(:clj
    (deftest test-46
      (is (= (render ($ :div#id "hi")) "<div id=\"id\">hi</div>"))
      (is (= (render ($ :div#id {:id 1} "hi")) "<div id=\"1\">hi</div>"))
