@@ -353,28 +353,28 @@
 
 (defn render-attr! [tag key value sb]
   (let [attr (normalize-attr-key key)]
-    (cond
-      (= "id" attr) (when value (append! sb " id=\"" value "\""))
-      (= "type" attr) (when value (append! sb " type=\"" value "\""))
-      (= "style" attr) (render-style! value sb)
-      (= "key" attr) :nop
-      (= "ref" attr) :nop
-      (= "class" attr) (render-classes! value sb)
-      (and (= "value" attr)
-           (or (= "select" tag)
-               (= "textarea" tag))) :nop
-      (.startsWith attr "aria-") (render-attr-str! sb attr value)
-      (not value) :nop
+    (case attr
+      "id" (when value (append! sb " id=\"" value "\""))
+      "type" (when value (append! sb " type=\"" value "\""))
+      "style" (render-style! value sb)
+      ("key" "ref" "dangerouslySetInnerHTML") :nop
+      ("class" "className" "class-name") (render-classes! value sb)
+      ("for" "html-for" "htmlFor") (render-attr-str! sb "for" value)
+      (cond
+        (and (= "value" attr)
+             (or (= "select" tag)
+                 (= "textarea" tag))) :nop
+        (.startsWith attr "aria-") (render-attr-str! sb attr value)
+        (not value) :nop
 
-      (and (true? value)
-           (not (contains? booleanish-string attr)))
-      (append! sb " " attr "=\"\"")
+        (and (true? value)
+             (not (contains? booleanish-string attr)))
+        (append! sb " " attr "=\"\"")
 
-      (.startsWith attr "on") (if (string? value)
-                                (render-attr-str! sb attr value)
-                                :nop)
-      (= "dangerouslySetInnerHTML" attr) :nop
-      :else (render-attr-str! sb attr value))))
+        (.startsWith attr "on") (if (string? value)
+                                  (render-attr-str! sb attr value)
+                                  :nop)
+        :else (render-attr-str! sb attr value)))))
 
 (defn render-attrs! [tag attrs sb]
   (reduce-kv (fn [_ k v] (render-attr! tag k v sb)) nil attrs))
