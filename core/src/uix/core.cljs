@@ -213,12 +213,23 @@
             coll)
     coll))
 
-(defn lazy
-  "Like React.lazy, but supposed to be used with UIx components"
-  [f]
-  (let [lazy-component (react/lazy #(.then (f) (fn [component] #js {:default component})))]
+(defn- lazy-shadow-reloadable
+  "Special case for traditional hot-reloading via shadow-cljs,
+  when UI tree is rendered from the root after evert hot-reload"
+  [f loadable]
+  (let [lazy-component (react/lazy #(.then (f) (fn [_] #js {:default (fn [props]
+                                                                       (uix.core/$ @loadable (glue-args props)))})))]
     (set! (.-uix-component? lazy-component) true)
     lazy-component))
+
+(defn lazy
+  "Like React.lazy, but supposed to be used with UIx components"
+  ([f]
+   (let [lazy-component (react/lazy #(.then (f) (fn [component] #js {:default component})))]
+     (set! (.-uix-component? lazy-component) true)
+     lazy-component))
+  ([f loadable]
+   (lazy-shadow-reloadable f loadable)))
 
 (defn create-error-boundary
   "Creates React's error boundary component

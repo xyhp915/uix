@@ -28,7 +28,7 @@ Similarly to React, with UIx you can use `uix.core/lazy` that will take care of 
     ($ :div
       ($ :button {:on-click #(set-show-modal! true)})
       ;; wrap the "lazy" `modal` with React's `Suspense` component and provide a fallback UI
-      ($ react/Suspense {:fallback ($ :div "Loading...")}
+      ($ uix.core/suspense {:fallback ($ :div "Loading...")}
         (when show-modal?
           ;; when rendered, React will load the module while displaying the fallback
           ;; and then render the component referenced from the module
@@ -48,3 +48,12 @@ For the above to compile correctly you'd have to update build config in `shadow-
 If you are not familiar with ClojureScript's `:modules` configuration, make sure to read [documentation about this compiler option](https://clojurescript.org/reference/compiler-options#modules).
 
 Also check out [React's documentation page on Code-splitting and React.lazy](https://reactjs.org/docs/code-splitting.html) for more examples.
+
+## When not using react-refresh
+
+If you are using shadow-cljs and doing traditional hot-reloading aka re-render from the root, then the above setup is not going to work. However it can be easily fixed. The only change required is to provide shadow's `loadable` as the second argument to `uix.core/lazy`.
+
+```clojure
+(def modal (uix.core/lazy #(shadow.lazy/load loadable-modal)
+                          loadable-modal))
+```
