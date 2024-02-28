@@ -13,8 +13,10 @@
                                uix.dom/uix.dom {:local/root "../dom"}
                                clj-diffmatchpatch/clj-diffmatchpatch {:mvn/version "0.0.9.3"}}}
 
-           :release {:extra-deps {appliedscience/deps-library {:mvn/version "0.3.4"}}
-                     :main-opts ["-m" "deps-library.release"]}
+           :release {:extra-paths ["dev"]
+                     :extra-deps {appliedscience/deps-library {:mvn/version "0.3.4"}
+                                  org.apache.maven/maven-model {:mvn/version "3.6.3"}}
+                     :main-opts ["-m" "release"]}
 
            :examples {:extra-paths ["dev"]
                       :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
