@@ -166,6 +166,15 @@ UIx will check for missing `:key` attribute when a UIx element is rendered as a 
   ($ item {:title "hello" :x x :key x})) ;; no error
 ```
 
+# DOM attributes
+
+When possible, UIx will verify DOM attributes at compile time.
+
+```clojure
+($ :div {:autoplay true})
+;; WARNING: Invalid DOM property :autoplay. Did you mean :auto-play?
+```
+
 ## Config
 
 UIx's linter can be provided with an external configuration that should live in the file `.uix/config.edn` at the root of your project.
