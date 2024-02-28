@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## 1.1.0
+
+### Improvements
+
+- The order of DOM attributes in JVM SSR should match JS SSR bf971d
+- JVM SSR: dynamic id should overwrite static id 929c26
+- Fixed props passing in `as-react` #134
+- JVM SSR: `class`, `class-name` and `className` should be rendered as `class`; `for`, `html-for` and `htmlFor` should render as `for` #137
+
+### New
+
+- Added `use-debug` hook to `uix/core.cljs` 27b4b9
+- Added a linter for DOM attributes #126
+- Utilities for html and hiccup to uix conversion #127
+- Support the optional key argument for `create-portal` #138
+- Fix Reagent-style hot-reloading not working with `uix.corel/lazy` and code-splitting in shadow-cljs #139
+
 ## 1.0.1
 
 ### Improvements
