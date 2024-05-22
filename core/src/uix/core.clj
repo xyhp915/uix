@@ -86,8 +86,9 @@
            (set! (.-uix-component? ~var-sym) true)
            (set! (.-displayName ~var-sym) ~(str var-sym))
            ~(uix.dev/fast-refresh-signature var-sym body)))
-      `(defn ~fname ~args
-         ~@fdecl))))
+      `(defn ~fname [& args#]
+         (let [~args args#]
+           ~@fdecl)))))
 
 (defmacro fn
   "Creates anonymous UIx component. Similar to fn, but doesn't support multi arity.
@@ -106,8 +107,9 @@
            (set! (.-uix-component? ~var-sym) true)
            (set! (.-displayName ~var-sym) ~(str var-sym))
            ~var-sym))
-      `(core/fn ~fname ~args
-         ~@fdecl))))
+      `(core/fn ~fname [& args#]
+         (let [~args args#]
+           ~@fdecl)))))
 
 (defmacro source
   "Returns source string of UIx component"

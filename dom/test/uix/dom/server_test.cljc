@@ -56,6 +56,19 @@
        (:x props))
      (is (= "hello" (render ($ test-defui-comp-1 {:x "hello" :key "k" :ref 1} "child" "more"))))))
 
+#?(:clj
+   (deftest test-no-args-component
+     (testing "no args defui"
+       (uix.core/defui args-not-required-component [{:keys [children]}]
+         ($ :h1 children))
+       (is (= "<h1></h1>"
+              (render (uix.core/$ args-not-required-component)))))
+     (testing "no args fn"
+       (is (= "<h1></h1>"
+              (render (uix.core/$ (uix.core/fn [{:keys [children]}]
+                                    ($ :h1 children)))))))))
+
+
 ;; Adapted from https://github.com/tonsky/rum/blob/gh-pages/test/rum/test/server_render.cljc
 
 (defui comp-simple []
