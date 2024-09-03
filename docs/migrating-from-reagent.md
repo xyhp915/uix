@@ -164,5 +164,6 @@ If you need to render a reagent component inside a UIX component:
 ```clojure
 [reagent.core :as r]
 
-(r/as-element [:div "hello"])
+($ :div
+  (r/as-element [:div "hello"]))
 ```
