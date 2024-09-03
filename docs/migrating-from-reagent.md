@@ -156,3 +156,13 @@ In Reagent it's common to have shared state in the form of a global var that hol
     ($ (.-Provider state-context) {:value [n set-n!]}
       ($ child-component))))
 ```
+
+## Rendering a reagent component inside a UIX component
+
+If you need to render a reagent component inside a UIX component:
+
+```
+[reagent.core :as r]
+
+(r/as-element [:div "hello"])
+```
