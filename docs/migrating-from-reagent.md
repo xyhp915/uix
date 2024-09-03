@@ -161,7 +161,7 @@ In Reagent it's common to have shared state in the form of a global var that hol
 
 If you need to render a reagent component inside a UIX component:
 
-```
+```clojure
 [reagent.core :as r]
 
 (r/as-element [:div "hello"])
