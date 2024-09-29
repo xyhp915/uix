@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 1.1.1
+
+### Improvements
+
+- add defhook to lint as defn in clj-kondo config 53a7cc
+
+## Fixes
+
+- make args optional in clj components 806691
+
 ## 1.1.0
 
 ### Improvements
