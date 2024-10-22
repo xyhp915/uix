@@ -297,6 +297,14 @@
       :aria-disabled "true"
       :aria-checked "false"}))
 
+
+(defui comp-152 []
+  ($ :div
+     {:data-hidden true
+      :data-readonly false
+      :data-disabled "true"
+      :data-checked "false"}))
+
 (def components
   {"simple" comp-simple
    "tag" comp-tag
@@ -318,7 +326,8 @@
    "html" comp-html
    "inputs" comp-inputs
    "svg" comp-svg
-   "aria" comp-aria})
+   "aria" comp-aria
+   "comp-152" comp-152})
 
 (def render-dir "server_render_test")
 
