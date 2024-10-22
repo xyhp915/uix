@@ -365,6 +365,7 @@
              (or (= "select" tag)
                  (= "textarea" tag))) :nop
         (.startsWith attr "aria-") (render-attr-str! sb attr value)
+        (.startsWith attr "data-") (render-attr-str! sb attr value)
         (not value) :nop
 
         (and (true? value)
