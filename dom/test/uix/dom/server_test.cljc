@@ -297,6 +297,11 @@
       :aria-disabled "true"
       :aria-checked "false"}))
 
+(defui comp-151 []
+  ($ :<>
+    ($ :div {:children "hello"})
+    ($ :div {:children "world"} "yo")
+    ($ :div {:children "world"} "hey ho")))
 
 (defui comp-152 []
   ($ :div
@@ -327,6 +332,7 @@
    "inputs" comp-inputs
    "svg" comp-svg
    "aria" comp-aria
+   "comp-151" comp-151
    "comp-152" comp-152})
 
 (def render-dir "server_render_test")
