@@ -53,3 +53,14 @@
 (def clj-fn-component (uix.core/fn [props] props))
 (deftest test-fn
   (is (= {:x 1} (clj-fn-component {:x 1}))))
+
+(deftest test-clone-element
+  (uix.core/defui test-clone-element-comp [])
+  (let [el1 (uix.core/clone-element (uix.core/$ test-clone-element-comp {:title 0 :key 1 :ref 2} "child")
+                                    {:data-id 3}
+                                    "child2")
+        el2 (uix.core/clone-element (uix.core/$ :div {:title 0 :key 1 :ref 2} "child")
+                                    {:data-id 3}
+                                    "child2")]
+    (is (= el1 [test-clone-element-comp {:title 0 :key 1 :ref 2 :data-id 3 :children ["child2"]}]))
+    (is (= el2 [:div {:title 0 :key 1 :ref 2 :data-id 3 :children ["child2"]}]))))
