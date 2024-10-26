@@ -208,18 +208,15 @@
   ([subscribe get-snapshot get-server-snapshot]
    (hooks/use-sync-external-store subscribe get-snapshot get-server-snapshot)))
 
-(defn vector->js-array [coll]
-  (cond
-    (vector? coll) `(jsfy-deps (cljs.core/array ~@coll))
-    (some? coll) `(jsfy-deps ~coll)
-    :else coll))
+(defn ->js-deps [coll]
+  `(cljs.core/array (uix.hooks.alpha/use-clj-deps ~coll)))
 
 (defn- make-hook-with-deps [sym env form f deps]
   (when (uix.lib/cljs-env? env)
     (uix.linter/lint-exhaustive-deps! env form f deps))
   (if deps
     (if (uix.lib/cljs-env? env)
-      `(~sym ~f ~(vector->js-array deps))
+      `(~sym ~f ~(->js-deps deps))
       `(~sym ~f ~deps))
     `(~sym ~f)))
 
@@ -277,7 +274,7 @@
   ([ref f deps]
    (when (uix.lib/cljs-env? &env)
      (uix.linter/lint-exhaustive-deps! &env &form f deps))
-   `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(vector->js-array deps))))
+   `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(->js-deps deps))))
 
 (defui suspense [{:keys [children]}]
   children)

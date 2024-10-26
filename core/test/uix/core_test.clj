@@ -25,9 +25,8 @@
   (is (= "simple hook" (:doc (meta #'use-hook)))))
 
 (deftest test-vector->js-array
-  (is (= '(uix.core/jsfy-deps (cljs.core/array 1 2 3)) (uix.core/vector->js-array [1 2 3])))
-  (is (= '(uix.core/jsfy-deps x) (uix.core/vector->js-array 'x)))
-  (is (nil? (uix.core/vector->js-array nil))))
+  (is (= '(cljs.core/array (uix.hooks.alpha/use-clj-deps [1 2 3]))
+         (uix.core/->js-deps [1 2 3]))))
 
 (deftest test-$
   (testing "in cljs env"

@@ -194,25 +194,6 @@
   [f]
   #(f (bean/bean %)))
 
-(defn- stringify-clojure-primitives [v]
-  (cond
-    ;; fast direct lookup for a string value
-    ;; already stored on the instance of the known type
-    (keyword? v) (.-fqn v)
-    (uuid? v) (.-uuid v)
-    (symbol? v) (.-str v)
-    :else v))
-
-(defn jsfy-deps [coll]
-  (if (or (js/Array.isArray coll)
-          (vector? coll))
-    (reduce (fn [arr v]
-              (.push arr (stringify-clojure-primitives v))
-              arr)
-            #js []
-            coll)
-    coll))
-
 (defn- lazy-shadow-reloadable
   "Special case for traditional hot-reloading via shadow-cljs,
   when UI tree is rendered from the root after evert hot-reload"
