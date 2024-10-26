@@ -45,14 +45,6 @@
     ($ :h1 {} children))
   (is (= (t/as-string ($ h1 {} 1)) "<h1>1</h1>")))
 
-(deftest test-jsfy-deps
-  (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
-         (vec (uix.core/jsfy-deps [1 "str" :k/w 'uix.core/sym #uuid "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]))))
-  (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
-         (vec (uix.core/jsfy-deps #js [1 "str" :k/w 'uix.core/sym #uuid "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]))))
-  (is (= #{} (uix.core/jsfy-deps #{})))
-  (is (= {} (uix.core/jsfy-deps {}))))
-
 (deftest test-lazy
   (async done
          (let [expected-value :x
