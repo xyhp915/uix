@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## NEXT
+
+### New
+
+- `^:memo` tag for `defui` to create memoized components in-place
+- `uix.core/clone-element` helper for cloning UIx elements
+- React Hooks with deps are using now Clojure's equality check to detect whether deps were updated
+
 ## 1.1.1
 
 ### Improvements

@@ -293,6 +293,10 @@
 (defui profiler [{:keys [children]}]
   children)
 
+(defn clone-element [[type oprops :as element] props & children]
+  ($ type (cond-> (if (map? oprops) (merge oprops props) props)
+                  (seq children) (assoc :children children))))
+
 ;; SSR helpers
 (def client? false) ;; no JVM front-ends
 (def server? (not client?))

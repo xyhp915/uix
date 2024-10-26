@@ -291,5 +291,30 @@
     (is (= (.-current ref) 6))
     (is (= state (:state @state)))))
 
+(deftest test-clone-element
+  (testing "cloning component element"
+    (uix.core/defui test-clone-element-comp [])
+    (let [el (uix.core/clone-element ($ test-clone-element-comp {:title 0 :key 1 :ref 2} "child")
+                                     {:data-id 3}
+                                     "child2")]
+      (is (= test-clone-element-comp (.-type el)))
+      (is (= "1" (.-key el)))
+      (is (= {:title 0 :ref 2 :data-id 3 :children ["child2"]}
+             (.. el -props -argv)))))
+  (testing "cloning primitive element"
+    (let [el1 (uix.core/clone-element ($ :div {:title 0 :key 1 :ref 2} "child")
+                                      {:data-id 3}
+                                      "child2")
+          el2 (uix.core/clone-element (react/createElement "div" #js {:title 0 :key 1 :ref 2} "child")
+                                      {:data-id 3}
+                                      "child2")]
+      (doseq [^js el [el1 el2]]
+        (is (= "div" (.-type el)))
+        (is (= "1" (.-key el)))
+        (is (= 2 (.-ref el)))
+        (is (= 0 (.. el -props -title)))
+        (is (= 3 (aget (.. el -props) "data-id")))
+        (is (= "child2" (aget (.. el -props -children) 0)))))))
+
 (defn -main []
   (run-tests))
