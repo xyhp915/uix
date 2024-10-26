@@ -77,15 +77,23 @@
   (let [[fname args fdecl] (parse-defui-sig `defui sym fdecl)]
     (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
-      (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh var-sym fdecl)]
+      (let [memo? (-> sym meta :memo)
+            memo-sym (gensym fname)
+            memo-fname (if memo?
+                         (with-meta memo-sym (meta fname))
+                         fname)
+            var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
+            memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
+            body (uix.dev/with-fast-refresh memo-var-sym fdecl)]
         `(do
            ~(if (empty? args)
-              (no-args-component fname var-sym body)
-              (with-args-component fname var-sym args body))
-           (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
-           ~(uix.dev/fast-refresh-signature var-sym body)))
+              (no-args-component memo-fname memo-var-sym body)
+              (with-args-component memo-fname memo-var-sym args body))
+           (set! (.-uix-component? ~memo-var-sym) true)
+           (set! (.-displayName ~memo-var-sym) ~(str var-sym))
+           ~(uix.dev/fast-refresh-signature memo-var-sym body)
+           ~(when memo?
+              `(def ~fname (uix.core/memo ~memo-sym)))))
       `(defn ~fname [& args#]
          (let [~args args#]
            ~@fdecl)))))

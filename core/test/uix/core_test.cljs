@@ -30,12 +30,19 @@
   (t/as-string ($ test-use-ref-comp)))
 
 (deftest test-memoize
-  (uix.core/defui test-memoize-comp [{:keys [x]}]
-    (is (= 1 x))
-    ($ :h1 x))
-  (let [f (uix.core/memo test-memoize-comp)]
-    (is (t/react-element-of-type? f "react.memo"))
-    (is (= "<h1>1</h1>" (t/as-string ($ f {:x 1}))))))
+  (testing "manual memo"
+    (uix.core/defui test-memoize-comp [{:keys [x]}]
+      (is (= 1 x))
+      ($ :h1 x))
+    (let [f (uix.core/memo test-memoize-comp)]
+      (is (t/react-element-of-type? f "react.memo"))
+      (is (= "<h1>1</h1>" (t/as-string ($ f {:x 1}))))))
+  (testing "^:memo"
+    (uix.core/defui ^:memo test-memoize-meta-comp [{:keys [x]}]
+      (is (= 1 x))
+      ($ :h1 x))
+    (is (t/react-element-of-type? test-memoize-meta-comp "react.memo"))
+    (is (= "<h1>1</h1>" (t/as-string ($ test-memoize-meta-comp {:x 1}))))))
 
 (deftest test-html
   (is (t/react-element-of-type? ($ :h1 1) "react.element")))
