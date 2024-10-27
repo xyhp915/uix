@@ -165,3 +165,20 @@ Sometimes you want to create a class-based React component, for example an error
 ($ error-boundary {:on-error js/console.error}
   ($ some-ui-that-can-error))
 ```
+
+## Memoized components
+
+Sometimes it's important to reduce number of updates in a component trigerred by its parent. Normally in React and UIx this can be done via `react/memo` function.
+
+```clojure
+(defui component [props] ...)
+
+(def component-memo
+  (uix/memo component))
+```
+
+Instead of creating two components, there's a shortcut in UIx which makes things a bit cleaner.
+
+```clojure
+(defui ^:memo component [props] ...)
+```

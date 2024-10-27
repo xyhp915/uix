@@ -49,8 +49,9 @@ The compiler is not strict and makes a set of tradeoffs to provide flexibility f
 UIx wraps all React's default hooks and adds an extra layer to hide differences between JS and Clojure world, to make sure that writing is a bit less annoying:
 
 1. Compiles vector of deps into JS array
-2. Runs a linter to check for invalid usages of deps
-3. Handles React's requirement to return either a function or `js/undefined` from a hook in a way that `nil` becomes acceptable return value as well
+1. Applies Clojure's equality by value to deps
+1. Runs a linter to check for invalid usages of deps
+1. Handles React's requirement to return either a function or `js/undefined` from a hook in a way that `nil` becomes acceptable return value as well
 
 ### Linter
 

@@ -35,39 +35,7 @@ When the same dependency has a different value between component updates, the ho
   [x]) ;; x = 2, `x` has changed, rerun the hook
 ```
 
-This works as expected for primitive values that map to identical constructs in JS like numbers and strings, but what about Clojure's maps and vectors that can be compared by value?
-
-TL;DR: As a rule of thumb, you should prefer to use only primitives as dependencies inside of a hook.
-
-In React, comparison is done by identity, not value, and in JS, while two primitives with the same value have the same identity, two objects with the same value do not. Since a Clojure map is compiled into a JS object, even if two maps has the same value, they will never have the same identity, meaning that React will always see them as different. In other words, comparison in React is done using JS's `===` or `Object.is`, not Clojure's `=`.
-
-Thus it's important to think about what type of values you are passing as dependencies of a hook. This principle applies to JS as well, as objects and arrays are still compared by reference.
-
-```clojure
-;; 1st update
-(let [a {:x 1}]
-  (uix/use-effect
-    (fn [] (prn a)) ;; executed
-    [a])))
-
-;; 2nd update
-(let [a {:x 1}]
-  (uix/use-effect
-    (fn [] (prn a)) ;; executed as well, since `a` is a new map that was created during render
-    [a])))
-
-;; 3rd update
-(let [a {:x 1}]
-  (uix/use-effect
-    (fn [] (prn a)) ;; same, still executed for the same reason
-    [a])))
-```
-
-### What about other ClojureScript primitives?
-
-In addition to JavaScript primitives like `Number` or `String`, ClojureScript has keywords, symbols, and UUIDs that are represented as JS objects when compiled into JS and thus fall into the same trap with equality checks.
-
-To make things more idiomatic and less cumbersome in Clojure, UIx automatically stringifies those three types when passed in the dependency vector.
+This works as you'd expect in UIx for both primitive values and compound data structures, by leveraging Clojure's equality by value, unlike in JS where values are compared by reference.
 
 ## Return value in effect hooks
 
