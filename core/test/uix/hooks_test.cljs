@@ -33,7 +33,15 @@
 
 (deftest test-use-state
   (let [[v f] (render-hook #(uix/use-state 0))]
-    (is (zero? v))))
+    (is (zero? v)))
+  (testing "swap! like updater"
+    (let [result (rtl/renderHook #(uix/use-state {:n 0}))
+          rerender (.-rerender result)
+          result (.-result result)
+          f (second (.-current result))]
+      (f update :n inc)
+      (rerender)
+      (is (= {:n 1} (first (.-current result)))))))
 
 (deftest test-use-effect
   (let [v (render-hook (fn []
