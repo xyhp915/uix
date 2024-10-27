@@ -4,7 +4,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 
 > "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
 
-- API compatibility: React v18.2.0
+- API compatibility: React v18.3.1
 - UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
 - Discuss at #uix on [Clojurians Slack](http://clojurians.net)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
@@ -17,7 +17,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 ## Installation
 
 ```
-yarn add react@18.2.0 react-dom@18.2.0
+yarn add react@18.3.1 react-dom@18.3.1
 ```
 
 ```clj
