@@ -12,11 +12,11 @@
   but using Clojure's value equality here"
   [updater]
   (react/useCallback
-   (fn [v]
+   (fn [v & args]
      (updater
       (fn [cv]
         (if (fn? v)
-          (choose-value (v cv) cv)
+          (choose-value (apply v cv args) cv)
           (choose-value v cv)))))
    #js [updater]))
 

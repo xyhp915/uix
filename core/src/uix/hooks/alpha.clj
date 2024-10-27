@@ -8,7 +8,7 @@
 
 ;; == State hook ==
 (defn use-state [value]
-  [value #(no-op "set-state" %1)])
+  [value #(no-op "set-state" %&)])
 
 (defn use-reducer
   ([f value]
