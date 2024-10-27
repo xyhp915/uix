@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.2.0-rc2
+
+### New
+
+- `set-state` in `use-state` hook behaves like `cljs.core/swap!` when passing updater function
+
 ## 1.2.0-rc1
 
 ### New
