@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## NEXT
+## 1.2.0-rc1
 
 ### New
 
