@@ -110,6 +110,7 @@ cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 - [ClojureScript Studio](https://www.clojurescript.studio/)
 - [Ogres, virtual tabletop](https://ogres.app/)
 - [ShipClojure](https://www.shipclojure.com/)
+- [Metosin](https://www.metosin.fi/en)
 
 ## Thanks to
 
