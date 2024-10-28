@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.2.0-rc3
+
+### New
+
+- add `uix.re-frame` with `use-subscribe` hook
+
 ## 1.2.0-rc2
 
 ### New
