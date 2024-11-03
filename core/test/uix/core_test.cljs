@@ -316,5 +316,16 @@
         (is (= 3 (aget (.. el -props) "data-id")))
         (is (= "child2" (aget (.. el -props -children) 0)))))))
 
+(deftest test-component-fn-name
+  (testing "defui name"
+    (defui component-fn-name [])
+    (is (= "uix.core-test/component-fn-name"
+           (.-name component-fn-name))))
+  (testing "fn name"
+    (let [f1 (uix.core/fn component-fn-name [])
+          f2 (uix.core/fn [])]
+      (is (= "component-fn-name" (.-name f1)))
+      (is (str/starts-with? (.-name f2) "uix-fn")))))
+
 (defn -main []
   (run-tests))

@@ -67,6 +67,11 @@
             "If you meant to retrieve `children`, they are under `:children` field in props map."))
       [fname args fdecl])))
 
+(defn- set-display-name [f name]
+  `(do
+     (set! (.-displayName ~f) ~name)
+     (js/Object.defineProperty ~f "name" (cljs.core/js-obj "value" ~name))))
+
 (defmacro
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
                 [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])}
@@ -90,7 +95,7 @@
               (no-args-component memo-fname memo-var-sym body)
               (with-args-component memo-fname memo-var-sym args body))
            (set! (.-uix-component? ~memo-var-sym) true)
-           (set! (.-displayName ~memo-var-sym) ~(str var-sym))
+           ~(set-display-name memo-var-sym (str var-sym))
            ~(uix.dev/fast-refresh-signature memo-var-sym body)
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
@@ -113,7 +118,7 @@
                            (no-args-fn-component fname var-sym body)
                            (with-args-fn-component fname var-sym args body))]
            (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
+           ~(set-display-name var-sym (str var-sym))
            ~var-sym))
       `(core/fn ~fname [& args#]
          (let [~args args#]
