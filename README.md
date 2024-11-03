@@ -77,6 +77,7 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 - Other render targets
   - [React Native](/docs/react-native.md)
   - [React Three Fiber](/docs/react-three-fiber.md)
+- [Getting help from ChatGPT](/docs/chat-gpt.md)
 
 ## Testing
 
