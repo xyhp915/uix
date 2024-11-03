@@ -16,7 +16,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 ## Installation
 
 ```
-yarn add react@18.3.1 react-dom@18.3.1
+npm install react@18.3.1 react-dom@18.3.1 --save-dev
 ```
 
 ```clj
