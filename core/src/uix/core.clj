@@ -21,17 +21,19 @@
          (f#)))))
 
 (defn- with-args-component [sym var-sym args body]
-  `(defn ~sym [props#]
-     (let [clj-props# (glue-args props#)
-           ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym]
-           (assert (or (map? clj-props#)
-                       (nil? clj-props#))
-                   (str "UIx component expects a map of props, but instead got " clj-props#))
-           (f#))
-         (f#)))))
+  (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+    `(defn ~sym [props#]
+       (let [clj-props# (glue-args props#)
+             ~args (cljs.core/array clj-props#)
+             ~(or rest-sym `_#) (dissoc clj-props# ~@dissoc-ks)
+             f# (core/fn [] ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym]
+             (assert (or (map? clj-props#)
+                         (nil? clj-props#))
+                     (str "UIx component expects a map of props, but instead got " clj-props#))
+             (f#))
+           (f#))))))
 
 (defn- no-args-fn-component [sym var-sym body]
   `(core/fn ~sym []
@@ -41,17 +43,19 @@
          (f#)))))
 
 (defn- with-args-fn-component [sym var-sym args body]
-  `(core/fn ~sym [props#]
-     (let [clj-props# (glue-args props#)
-           ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym]
-           (assert (or (map? clj-props#)
-                       (nil? clj-props#))
-                   (str "UIx component expects a map of props, but instead got " clj-props#))
-           (f#))
-         (f#)))))
+  (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+    `(core/fn ~sym [props#]
+       (let [clj-props# (glue-args props#)
+             ~args (cljs.core/array clj-props#)
+             ~(or rest-sym `_#) (dissoc clj-props# ~@dissoc-ks)
+             f# (core/fn [] ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym]
+             (assert (or (map? clj-props#)
+                         (nil? clj-props#))
+                     (str "UIx component expects a map of props, but instead got " clj-props#))
+             (f#))
+           (f#))))))
 
 (defn parse-defui-sig [form name fdecl]
   (let [[fname fdecl] (uix.lib/parse-sig name fdecl)]
@@ -94,9 +98,11 @@
            ~(uix.dev/fast-refresh-signature memo-var-sym body)
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
-      `(defn ~fname [& args#]
-         (let [~args args#]
-           ~@fdecl)))))
+      (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+        `(defn ~fname [& args#]
+           (let [~args args#
+                 ~(or rest-sym `_#) (dissoc (first args#) ~@dissoc-ks)]
+             ~@fdecl))))))
 
 (defmacro fn
   "Creates anonymous UIx component. Similar to fn, but doesn't support multi arity.
@@ -115,9 +121,11 @@
            (set! (.-uix-component? ~var-sym) true)
            (set! (.-displayName ~var-sym) ~(str var-sym))
            ~var-sym))
-      `(core/fn ~fname [& args#]
-         (let [~args args#]
-           ~@fdecl)))))
+      (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+        `(core/fn ~fname [& args#]
+           (let [~args args#
+                 ~(or rest-sym `_#) (dissoc (first args#) ~@dissoc-ks)]
+             ~@fdecl))))))
 
 (defmacro source
   "Returns source string of UIx component"

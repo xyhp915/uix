@@ -316,5 +316,17 @@
         (is (= 3 (aget (.. el -props) "data-id")))
         (is (= "child2" (aget (.. el -props -children) 0)))))))
 
+(deftest test-rest-props
+  (testing "defui should return rest props"
+    (uix.core/defui rest-component [{:keys [a b] props :&}]
+      [props a b])
+    (is (= [{:c 3} 1 2] (rest-component #js {:argv {:a 1 :b 2 :c 3}})))
+    (is (= [{} 1 2] (rest-component #js {:argv {:a 1 :b 2}}))))
+  (testing "fn should return rest props"
+    (let [f (uix.core/fn rest-component [{:keys [a b] props :&}]
+              [props a b])]
+      (is (= [{:c 3} 1 2] (f #js {:argv {:a 1 :b 2 :c 3}})))
+      (is (= [{} 1 2] (f #js {:argv {:a 1 :b 2}}))))))
+
 (defn -main []
   (run-tests))
