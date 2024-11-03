@@ -108,3 +108,7 @@
    (fn []
      (prn hook-hook))
    []))
+
+($ :div {:width 100 :& {:on-click prn}})
+
+($ :div {:& {:on-click prn}})

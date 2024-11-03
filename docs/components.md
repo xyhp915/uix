@@ -165,3 +165,43 @@ Sometimes you want to create a class-based React component, for example an error
 ($ error-boundary {:on-error js/console.error}
   ($ some-ui-that-can-error))
 ```
+
+## Props transferring via rest and spread syntax
+
+One thing that is sometimes useful in React/JavaScript, but doesn't exist in Clojure is object spread and rest syntax for Clojure maps (see [object spread in JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)). It's often used for props transferring, to extract a subset of props and pass the rest to underlying components.
+
+```javascript
+function Button({ style, ...props }) {
+  return (
+    <div style={style}>
+      <MaterialButton {...props} />
+    </div>
+  );
+}
+```
+
+In Clojure you'd have to `dissoc` keys manually, which is more verbose and can be frustrating for folks coming from JavaScript.
+
+```clojure
+(defui button [{:keys [style] :as props}]
+  ($ :div {:style style}
+    ($ MaterialButton
+      (merge {:theme "light"}
+             (dissoc props :style)))))
+```
+
+For this specific reason UIx adds syntatic sugar in `defui` and `$` macros to support the pattern.
+
+```clojure
+(defui button [{:keys [style] props :&}]
+  ($ :div {:style style}
+    ($ MaterialButton {:theme "light" :& props})))
+```
+
+### Props rest syntax
+
+When destructing props in `uix.core/defui` or `uix.core/fn` all keys that are not mentioned in destructing form will be stored in a map assigned to `:&` keyword. The syntax is composable with all other means of destructuring maps in Clojure, except that `:&` exists only at top level, it won't work for nested maps.
+
+### Props spread syntax
+
+To spread or splice a map into props use `:&` key. This also works only at top level of the map literal and only a single spread is allowed: `{:width 100 :& props1 :& props 2}` is not valid Clojure map because of duplicate keys.

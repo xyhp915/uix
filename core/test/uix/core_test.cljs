@@ -328,5 +328,50 @@
       (is (= [{:c 3} 1 2] (f #js {:argv {:a 1 :b 2 :c 3}})))
       (is (= [{} 1 2] (f #js {:argv {:a 1 :b 2}}))))))
 
+(deftest test-spread-props
+  (testing "primitive element"
+    (testing "static"
+      (let [props {:width 100 :style {:color :blue}}
+            el (uix.core/$ :div {:on-click prn :& props} "child")]
+        (is (= "div" (.-type el)))
+        (is (= prn (.. el -props -onClick)))
+        (is (= 100 (.. el -props -width)))
+        (is (= "blue" (.. el -props -style -color)))))
+    (testing "dynamic"
+      (let [tag :div
+            props {:width 100 :style {:color :blue}}
+            el (uix.core/$ tag {:on-click prn :& props} "child")]
+        (is (= "div" (.-type el)))
+        (is (= prn (.. el -props -onClick)))
+        (is (= 100 (.. el -props -width)))
+        (is (= "blue" (.. el -props -style -color))))))
+  (testing "component element"
+    (testing "static"
+      (defui spread-props-comp [])
+      (let [props {:width 100 :style {:color :blue}}
+            el (uix.core/$ spread-props-comp {:on-click prn :& props} "child")
+            props (.. el -props -argv)]
+        (is (= spread-props-comp (.-type el)))
+        (is (= prn (:on-click props)))
+        (is (= 100 (:width props)))
+        (is (= :blue (-> props :style :color)))))
+    (testing "dynamic"
+      (let [static-comp spread-props-comp
+            props {:width 100 :style {:color :blue}}
+            el (uix.core/$ static-comp {:on-click prn :& props} "child")
+            props (.. el -props -argv)]
+        (is (= static-comp (.-type el)))
+        (is (= prn (:on-click props)))
+        (is (= 100 (:width props)))
+        (is (= :blue (-> props :style :color))))))
+  (testing "js interop component element"
+    (defn spread-props-js-comp [])
+    (let [props {:width 100 :style {:color :blue}}
+          el (uix.core/$ spread-props-js-comp {:on-click prn :& props} "child")]
+      (is (= spread-props-js-comp (.-type el)))
+      (is (= prn (.. el -props -onClick)))
+      (is (= 100 (.. el -props -width)))
+      (is (= "blue" (.. el -props -style -color))))))
+
 (defn -main []
   (run-tests))

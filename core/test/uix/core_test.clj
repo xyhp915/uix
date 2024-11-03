@@ -96,3 +96,10 @@
               [props a b])]
       (is (= [{:c 3} 1 2] (f {:a 1 :b 2 :c 3})))
       (is (= [{} 1 2] (f {:a 1 :b 2}))))))
+
+(deftest test-spread-props
+  (let [props {:width 100}]
+    (is (= [:div {:on-click prn :width 100} "child"]
+           (uix/$ :div {:on-click prn :& props} "child")))
+    (is (= [identity {:on-click prn :width 100} "child"]
+           (uix/$ identity {:on-click prn :& props} "child")))))

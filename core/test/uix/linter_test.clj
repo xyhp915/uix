@@ -291,7 +291,15 @@
 
     (testing "should lint uix.core/defhook"
       (is (str/includes? out-str (str :uix.linter/missing-deps)))
-      (is (str/includes? out-str "React Hook has missing dependencies: [hook-hook]")))))
+      (is (str/includes? out-str "React Hook has missing dependencies: [hook-hook]")))
+
+    (testing "should fail on non-ref spread"
+      (is (str/includes? out-str (str :uix.linter/element-non-ref-spread)))
+      (is (str/includes? out-str "Spread syntax can be used only with references to props values. Spreading map literal doesn't make sense, inline it into props map instead.")))
+
+    (testing "should fail on unnecessary spread"
+      (is (str/includes? out-str (str :uix.linter/element-unnecessary-spread)))
+      (is (str/includes? out-str "Spreading props into empty map literal doesn't make sense, instead pass props symbol itself.")))))
 
 ;; === Subscribe call in JVM ===
 
