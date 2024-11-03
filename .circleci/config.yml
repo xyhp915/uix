@@ -39,10 +39,10 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-npm-deps-{{ checksum "core/yarn.lock" }}-{{ checksum "dom/yarn.lock" }}
+            - v1-npm-deps-{{ checksum "core/package-lock.json" }}-{{ checksum "dom/package-lock.json" }}
             - v1-npm-deps-
 
-      - run: cd core && yarn install --frozen-lockfile
+      - run: cd core && npm ci
 
       # removing gitconfig because it forces uix repo checkout via SSH
       # which fails when pulling in dependencies, default clone HTTPS works
@@ -76,8 +76,8 @@ jobs:
 
       - save_cache:
           paths:
-            - ~/.cache/yarn
-          key: v1-npm-deps-{{ checksum "core/yarn.lock" }}-{{ checksum "dom/yarn.lock" }}
+            - ~/.cache/npm
+          key: v1-npm-deps-{{ checksum "core/package-lock.json" }}-{{ checksum "dom/package-lock.json" }}
 
 workflows:
   version: 2
