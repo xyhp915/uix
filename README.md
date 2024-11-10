@@ -8,6 +8,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 - Discuss at #uix on [Clojurians Slack](http://clojurians.net)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
 - [Talk about UIx at London Clojurians meetup](https://www.youtube.com/watch?v=4vgrLHsD0-I)
+- ["The State of Frontend" by Alexander Davis](https://www.youtube.com/watch?v=fT28NeZtaAg)
 
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
