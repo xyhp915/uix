@@ -1,12 +1,15 @@
 (ns uix.linter
-  (:require [clojure.walk]
+  (:require [cljs.env :as env]
+            [clojure.walk]
             [cljs.analyzer :as ana]
             [clojure.string :as str]
             [clojure.pprint :as pp]
             [cljs.analyzer.api :as ana-api]
             [uix.lib]
             [clojure.java.io :as io]
-            [clojure.edn])
+            [clojure.edn]
+            [cljs.spec.alpha]
+            [clojure.spec.alpha])
   (:import (cljs.tagged_literals JSValue)
            (java.io Writer)))
 
@@ -523,7 +526,56 @@
     (run-linters! lint-hook-with-deps form env)
     (report-errors! env)))
 
+(defn- keys-spec? [spec]
+  (contains? #{'cljs.spec.alpha/keys
+               'clojure.spec.alpha/keys}
+             (first spec)))
+
+(defn- comp-spec->keys [comp-spec]
+  (let [specs (->> comp-spec
+                   (map (comp
+                          #(if (clojure.spec.alpha/spec? %)
+                             (clojure.spec.alpha/form %)
+                             %)
+                          (merge @@#'cljs.spec.alpha/registry-ref
+                                 @@#'clojure.spec.alpha/registry-ref))))]
+    (doseq [spec (remove keys-spec? specs)]
+      (assert (keys-spec? spec) (str "Only s/keys specs can be used to validate component props")))
+    (->> specs
+         (filter keys-spec?)
+         (mapcat (comp #(apply concat %)
+                       (fn [[req-un req]]
+                         [(map (comp keyword name) req-un)
+                          req])
+                       (juxt :req-un :req)
+                       #(apply array-map %)
+                       rest)))))
+
+(defn- list-missing-props-keys [tag attrs children env]
+  (let [ns (-> env :ns :name)
+        props-cond (get-in @env/*compiler* [::ana/namespaces ns :uix/specs tag])]
+    (when props-cond
+      (let [missing-keys (->> (comp-spec->keys props-cond)
+                              (remove #(if (= :children %)
+                                         (or (contains? attrs %)
+                                             (seq children))
+                                         (contains? attrs %))))]
+        (when (seq missing-keys)
+          (ana/warning ::missing-props-keys (merge env (uix.linter/form->loc (or attrs tag))) {:missing-keys (vec missing-keys)}))))))
+
+
+(defmethod ana/error-message ::missing-props-keys [_ {:keys [missing-keys]}]
+  (str "Required keys are missing in props: " (str/join ", " missing-keys)))
+
+(defmethod lint-element ::missing-props-keys [type form env]
+  (let [v (rest form)
+        [tag attrs & children :as v] (uix.lib/normalize-element env v)]
+    (when (and (uix.lib/cljs-env? env)
+               (symbol? tag)
+               (or (map? attrs) (== 1 (count v))))
+      (list-missing-props-keys tag attrs children env))))
+
 (defn lint-element* [form env]
   (binding [*component-context* (atom {:errors []})]
-    (uix.linter/run-linters! uix.linter/lint-element form env)
+    (run-linters! lint-element form env)
     (report-errors! env)))

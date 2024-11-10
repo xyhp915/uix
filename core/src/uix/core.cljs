@@ -6,7 +6,8 @@
             [uix.hooks.alpha :as hooks]
             [uix.compiler.aot]
             [uix.lib :refer [doseq-loop map->js]]
-            [cljs-bean.core :as bean]))
+            [cljs-bean.core :as bean]
+            [preo.core]))
 
 (def ^:dynamic *current-component*)
 

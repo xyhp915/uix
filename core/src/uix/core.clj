@@ -1,7 +1,9 @@
 (ns uix.core
   "Public API"
   (:refer-clojure :exclude [fn])
-  (:require [clojure.core :as core]
+  (:require [cljs.env :as env]
+            [cljs.analyzer :as ana]
+            [clojure.core :as core]
             [clojure.string :as str]
             [uix.compiler.aot]
             [uix.source]
@@ -20,18 +22,27 @@
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
-(defn- with-args-component [sym var-sym args body]
-  `(defn ~sym [props#]
-     (let [clj-props# (glue-args props#)
-           ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym]
-           (assert (or (map? clj-props#)
-                       (nil? clj-props#))
-                   (str "UIx component expects a map of props, but instead got " clj-props#))
-           (f#))
-         (f#)))))
+(defn- with-props-cond [props-cond props-sym]
+  (when props-cond
+    `{:pre ~(mapv (core/fn [spec]
+                    `(preo.core/arg! ~spec ~props-sym))
+                  props-cond)}))
+
+(defn- with-args-component [sym var-sym args body props-cond]
+  (let [props-sym (gensym "props")]
+    `(defn ~sym [props#]
+       (let [~props-sym (glue-args props#)
+             ~args (cljs.core/array ~props-sym)
+             f# (core/fn []
+                  ~(with-props-cond props-cond props-sym)
+                  ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym]
+             (assert (or (map? ~props-sym)
+                         (nil? ~props-sym))
+                     (str "UIx component expects a map of props, but instead got " ~props-sym))
+             (f#))
+           (f#))))))
 
 (defn- no-args-fn-component [sym var-sym body]
   `(core/fn ~sym []
@@ -40,18 +51,21 @@
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
-(defn- with-args-fn-component [sym var-sym args body]
-  `(core/fn ~sym [props#]
-     (let [clj-props# (glue-args props#)
-           ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
-       (if ~goog-debug
-         (binding [*current-component* ~var-sym]
-           (assert (or (map? clj-props#)
-                       (nil? clj-props#))
-                   (str "UIx component expects a map of props, but instead got " clj-props#))
-           (f#))
-         (f#)))))
+(defn- with-args-fn-component [sym var-sym args body props-cond]
+  (let [props-sym (gensym "props")]
+    `(core/fn ~sym [props#]
+       (let [~props-sym (glue-args props#)
+             ~args (cljs.core/array ~props-sym)
+             f# (core/fn []
+                  ~(with-props-cond props-cond props-sym)
+                  ~@body)]
+         (if ~goog-debug
+           (binding [*current-component* ~var-sym]
+             (assert (or (map? ~props-sym)
+                         (nil? ~props-sym))
+                     (str "UIx component expects a map of props, but instead got " ~props-sym))
+             (f#))
+           (f#))))))
 
 (defn parse-defui-sig [form name fdecl]
   (let [[fname fdecl] (uix.lib/parse-sig name fdecl)]
@@ -60,12 +74,15 @@
      (str form " doesn't support multi-arity.\n"
           "If you meant to make props an optional argument, you can safely skip it and have a single-arity component.\n
                  It's safe to destructure the props value even if it's `nil`."))
-    (let [[args & fdecl] (first fdecl)]
+    (let [[args & fdecl] (first fdecl)
+          [fdecl props-cond] (if (map? (first fdecl))
+                               [(rest fdecl) (:props (first fdecl))]
+                               [fdecl nil])]
       (uix.lib/assert!
        (>= 1 (count args))
        (str form " is a single argument component taking a map of props, found: " args "\n"
             "If you meant to retrieve `children`, they are under `:children` field in props map."))
-      [fname args fdecl])))
+      [fname args fdecl props-cond])))
 
 (defn- set-display-name [f name]
   `(do
@@ -79,7 +96,8 @@
   "Creates UIx component. Similar to defn, but doesn't support multi arity.
   A component should have a single argument of props."
   [sym & fdecl]
-  (let [[fname args fdecl] (parse-defui-sig `defui sym fdecl)]
+  (let [ns (-> &env :ns :name)
+        [fname args fdecl props-cond] (parse-defui-sig `defui sym fdecl)]
     (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [memo? (-> sym meta :memo)
@@ -87,21 +105,29 @@
             memo-fname (if memo?
                          (with-meta memo-sym (meta fname))
                          fname)
-            var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
-            memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
+            var-sym (-> (str ns "/" fname) symbol (with-meta {:tag 'js}))
+            memo-var-sym (-> (str ns "/" memo-fname) symbol (with-meta {:tag 'js}))
             body (uix.dev/with-fast-refresh memo-var-sym fdecl)]
+        (when props-cond
+          (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
         `(do
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
-              (with-args-component memo-fname memo-var-sym args body))
+              (with-args-component memo-fname memo-var-sym args body props-cond))
            (set! (.-uix-component? ~memo-var-sym) true)
            ~(set-display-name memo-var-sym (str var-sym))
            ~(uix.dev/fast-refresh-signature memo-var-sym body)
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
-      `(defn ~fname [& args#]
-         (let [~args args#]
-           ~@fdecl)))))
+      (let [props-sym (gensym "props")]
+        `(defn ~fname [& args#]
+           ~(when props-cond
+              `{:pre ~(mapv (core/fn [spec]
+                              `(preo.core/arg! ~spec ~props-sym))
+                            props-cond)})
+           (let [~args args#
+                 ~props-sym (first args#)]
+             ~@fdecl))))))
 
 (defmacro fn
   "Creates anonymous UIx component. Similar to fn, but doesn't support multi arity.
@@ -110,19 +136,27 @@
   (let [[sym fdecl] (if (symbol? (first fdecl))
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
-        [fname args body] (parse-defui-sig `fn sym fdecl)]
+        [fname args body props-cond] (parse-defui-sig `fn sym fdecl)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
-      (let [var-sym (with-meta sym {:tag 'js})]
+      (let [var-sym (with-meta sym {:tag 'js})
+            ns (-> &env :ns :name)]
+        (when props-cond
+          (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
         `(let [~var-sym ~(if (empty? args)
                            (no-args-fn-component fname var-sym body)
-                           (with-args-fn-component fname var-sym args body))]
+                           (with-args-fn-component fname var-sym args body props-cond))]
            (set! (.-uix-component? ~var-sym) true)
            ~(set-display-name var-sym (str var-sym))
            ~var-sym))
-      `(core/fn ~fname [& args#]
-         (let [~args args#]
-           ~@fdecl)))))
+      (let [props-sym (gensym "props")]
+        `(core/fn ~fname [& args#]
+           ~(when props-cond
+              `{:pre ~(mapv (core/fn [spec]
+                              `(preo.core/arg! ~spec ~props-sym))
+                            props-cond)})
+           (let [~args args#]
+             ~@fdecl))))))
 
 (defmacro source
   "Returns source string of UIx component"
