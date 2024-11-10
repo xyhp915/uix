@@ -29,6 +29,7 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 
 - Run `npx create-uix-app@latest my-app` to scaffold a new project
 - Clone starter template manually from [pitch-io/uix-starter](https://github.com/pitch-io/uix-starter)
+- Use fullstack starter project from Metosin [metosin/example-project](https://github.com/metosin/example-project)
 
 ## Usage
 
