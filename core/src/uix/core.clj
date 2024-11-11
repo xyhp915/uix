@@ -1,6 +1,6 @@
 (ns uix.core
   "Public API"
-  (:refer-clojure :exclude [fn])
+  (:refer-clojure :exclude [fn use])
   (:require [clojure.core :as core]
             [clojure.string :as str]
             [uix.compiler.aot]
@@ -206,8 +206,11 @@
   ([v fmt]
    (hooks/use-debug v fmt)))
 
-(defn use-deferred-value [v]
-  (hooks/use-deferred-value v))
+(defn use-deferred-value
+  ([v]
+   (hooks/use-deferred-value v))
+  ([v initial]
+   (hooks/use-deferred-value v initial)))
 
 (defn use-transition []
   (hooks/use-transition))
@@ -224,6 +227,15 @@
 (defn use-optimistic [state update-fn]
   (hooks/use-optimistic state update-fn))
 
+(defn use-action-state
+  ([f state]
+   (hooks/use-action-state f state))
+  ([f state permalink]
+   (hooks/use-action-state f state permalink)))
+
+(defn use [resource]
+  (hooks/use resource))
+
 (defn ->js-deps [coll]
   `(cljs.core/array (uix.hooks.alpha/use-clj-deps ~coll)))
 
@@ -239,7 +251,7 @@
 (defmacro use-effect
   "Takes a function to be executed in an effect and optional vector of dependencies.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useeffect"
+  See: https://react.dev/reference/react/useEffect"
   ([f]
    (make-hook-with-deps 'uix.hooks.alpha/use-effect &env &form f nil))
   ([f deps]
@@ -248,7 +260,7 @@
 (defmacro use-layout-effect
   "Takes a function to be executed in a layout effect and optional vector of dependencies.
 
-  See: https://reactjs.org/docs/hooks-reference.html#uselayouteffect"
+  See: https://react.dev/reference/react/useLayoutEffect"
   ([f]
    (make-hook-with-deps 'uix.hooks.alpha/use-layout-effect &env &form f nil))
   ([f deps]
@@ -259,7 +271,7 @@
   and optional vector of dependencies. Use this to inject styles into the DOM
   before reading layout in `useLayoutEffect`.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useinsertioneffect"
+  See: https://react.dev/reference/react/useInsertionEffect"
   ([f]
    (make-hook-with-deps 'uix.hooks.alpha/use-insertion-effect &env &form f nil))
   ([f deps]
@@ -268,21 +280,21 @@
 (defmacro use-memo
   "Takes function f and required vector of dependencies, and returns memoized result of f.
 
-   See: https://reactjs.org/docs/hooks-reference.html#usememo"
+   See: https://react.dev/reference/react/useMemo"
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-memo &env &form f deps))
 
 (defmacro use-callback
   "Takes function f and required vector of dependencies, and returns memoized f.
 
-  See: https://reactjs.org/docs/hooks-reference.html#usecallback"
+  See: https://react.dev/reference/react/useCallback"
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-callback &env &form f deps))
 
 (defmacro use-imperative-handle
   "Customizes the instance value that is exposed to parent components when using ref.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useimperativehandle"
+  See: https://react.dev/reference/react/useImperativeHandle"
   ([ref f]
    (when (uix.lib/cljs-env? &env)
      (uix.linter/lint-exhaustive-deps! &env &form f nil))

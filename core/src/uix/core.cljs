@@ -1,5 +1,6 @@
 (ns uix.core
   "Public API"
+  (:refer-clojure :exclude [use])
   (:require-macros [uix.core])
   (:require [goog.object :as gobj]
             [react]
@@ -84,7 +85,7 @@
   "Takes initial value or a function that computes it and returns a stateful value,
   and a function to update it.
 
-  See: https://reactjs.org/docs/hooks-reference.html#usestate"
+  See: https://react.dev/reference/react/useState"
   [value]
   (hooks/use-state value))
 
@@ -92,7 +93,7 @@
   "An alternative to `use-state`. Accepts a reducer of type (state, action) => new-state,
   and returns the current state paired with a dispatch method.
 
-  See: https://reactjs.org/docs/hooks-reference.html#usereducer"
+  See: https://react.dev/reference/react/useReducer"
   ([f value]
    (hooks/use-reducer f value))
   ([f value init-state]
@@ -150,27 +151,29 @@
   If the current render is the result of an urgent update, like user input,
   React will return the previous value and then render the new value after the urgent render has completed.
 
-  See: https://reactjs.org/docs/hooks-reference.html#usedeferredvalue"
-  [v]
-  (hooks/use-deferred-value v))
+  See: https://react.dev/reference/react/useDeferredValue"
+  ([v]
+   (hooks/use-deferred-value v))
+  ([v initial]
+   (hooks/use-deferred-value v initial)))
 
 (defn use-transition
   "Returns a stateful value for the pending state of the transition, and a function to start it.
 
-  See: https://reactjs.org/docs/hooks-reference.html#usetransition"
+  See: https://react.dev/reference/react/useTransition"
   []
   (hooks/use-transition))
 
 (defn start-transition
   "Marks updates in `f` as transitions
-  See: https://reactjs.org/docs/react-api.html#starttransition"
+  See: https://react.dev/reference/react/startTransition"
   [f]
   (react/startTransition f))
 
 (defn use-id
   "Returns unique ID that is stable across the server and client, while avoiding hydration mismatches.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useid"
+  See: https://react.dev/reference/react/useId"
   []
   (hooks/use-id))
 
@@ -182,7 +185,7 @@
   get-snapshot: function that returns the current value of the store
   get-server-snapshot: function that returns the snapshot used during server rendering
 
-  See: https://reactjs.org/docs/hooks-reference.html#usesyncexternalstore"
+  See: https://react.dev/reference/react/useSyncExternalStore"
   ([subscribe get-snapshot]
    (hooks/use-sync-external-store subscribe get-snapshot))
   ([subscribe get-snapshot get-server-snapshot]
@@ -201,6 +204,31 @@
   See: https://react.dev/reference/react/useOptimistic"
   [state update-fn]
   (hooks/use-optimistic state update-fn))
+
+(defn use-action-state
+  "Allows you to update state based on the result of a form action
+
+  f: the function to be called when the form is submitted or button pressed
+  state: the value you want the state to be initially
+  permalink: a string containing the unique page URL that this form modifies
+
+  Returns a triplet of [state, form-action, pending?]
+  state: current form state
+  form-action: a new action that you can pass as the `action` prop to your form component or `form-action` prop to any button component within the form
+  pending?: a boolean indicating whether the form is currently pending
+
+  See: https://react.dev/reference/react/useActionState"
+  ([f state]
+   (hooks/use-action-state f state))
+  ([f state permalink]
+   (hooks/use-action-state f state permalink)))
+
+(defn use
+  "Lets you read the value of a resource like a Promise or context.
+
+  See: https://react.dev/reference/react/use"
+  [resource]
+  (hooks/use resource))
 
 (defn as-react
   "Interop with React components. Takes a function that returns UIx component

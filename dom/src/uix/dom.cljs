@@ -9,17 +9,19 @@
 (defn create-root
   "Create a React root for the supplied container and return the root.
 
-  See: https://reactjs.org/docs/react-dom-client.html#createroot"
+  See: https://react.dev/reference/react-dom/client/createRoot"
   ([node]
    (rdom-client/createRoot node))
-  ([node {:keys [on-recoverable-error identifier-prefix] :as options}]
+  ([node {:keys [on-recoverable-error identifier-prefix on-caught-error on-uncaught-error]}]
    (rdom-client/createRoot node #js {:onRecoverableError on-recoverable-error
-                                     :identifierPrefix identifier-prefix})))
+                                     :identifierPrefix identifier-prefix
+                                     :onCaughtError on-caught-error
+                                     :onUncaughtError on-uncaught-error})))
 
 (defn hydrate-root
   "Same as `create-root`, but is used to hydrate a container whose HTML contents were rendered by ReactDOMServer.
 
-  See: https://reactjs.org/docs/react-dom-client.html#hydrateroot"
+  See: https://react.dev/reference/react-dom/client/hydrateRoot"
   ([container element]
    (rdom-client/hydrateRoot container element))
   ([container element {:keys [on-recoverable-error identifier-prefix] :as options}]
@@ -50,7 +52,7 @@
   "Force React to flush any updates inside the provided callback synchronously.
   This ensures that the DOM is updated immediately.
 
-  See: https://reactjs.org/docs/react-dom.html#flushsync"
+  See: https://react.dev/reference/react-dom/flushSync"
   [callback]
   (rdom/flushSync callback))
 
@@ -65,7 +67,7 @@
 (defn find-dom-node
   "If this component has been mounted into the DOM, this returns the corresponding native browser DOM element.
 
-  See: https://reactjs.org/docs/react-dom.html#finddomnode"
+  See: https://react.dev/reference/react-dom/findDOMNode"
   [component]
   (rdom/findDOMNode component))
 
@@ -73,7 +75,7 @@
   "Creates a portal. Portals provide a way to render children into a DOM node
   that exists outside the hierarchy of the DOM component.
 
-  See: https://reactjs.org/docs/react-dom.html#createportal"
+  See: https://react.dev/reference/react-dom/createPortal"
   ([child node]
    (rdom/createPortal child node))
   ([child node key]
@@ -81,26 +83,66 @@
 
 ;; hooks
 
-(defn use-form-state
-  "Allows you to update state based on the result of a form action
-
-  f: the function to be called when the form is submitted or button pressed
-  state: the value you want the state to be initially
-  permalink: a string containing the unique page URL that this form modifies
-
-  Returns a tuple of [state, form-action]
-  state: current form state
-  form-action: a new action that you can pass as the `action` prop to your form component or `form-action` prop to any button component within the form
-
-  See: https://react.dev/reference/react-dom/hooks/useFormState"
-  ([f state]
-   (rdom/useFormState f state))
-  ([f state permalink]
-   (rdom/useFormState f state permalink)))
-
 (defn use-form-status
   "Gives you status information of the last form submission
 
   See: https://react.dev/reference/react-dom/hooks/useFormStatus"
   []
   (rdom/useFormStatus))
+
+;; resources preloading
+
+(defn prefetch-dns
+  "Lets you eagerly look up the IP of a server that you expect to load resources from.
+  See: https://react.dev/reference/react-dom/prefetchDNS"
+  [url]
+  (rdom/prefetchDNS url))
+
+(defn preconnect
+  "Lets you eagerly connect to a server that you expect to load resources from.
+  See: https://react.dev/reference/react-dom/preconnect"
+  [url]
+  (rdom/preconnect url))
+
+(defn preload
+  "Lets you eagerly fetch a resource such as a stylesheet, font, or external script that you expect to use.
+  See: https://react.dev/reference/react-dom/preload"
+  [url {:keys [as cross-origin referrer-policy integrity type nonce fetch-priority image-src-set image-sizes]}]
+  (rdom/preload url #js {:as as
+                         :crossOrigin cross-origin
+                         :referrerPolicy referrer-policy
+                         :integrity integrity
+                         :type type
+                         :nonce nonce
+                         :fetchPriority fetch-priority
+                         :imageSrcSet image-src-set
+                         :imageSizes image-sizes}))
+
+(defn preload-module
+  "Lets you eagerly fetch an ESM module that you expect to use.
+  See: https://react.dev/reference/react-dom/preloadModule"
+  [url {:keys [as cross-origin integrity nonce]}]
+  (rdom/preloadModule url #js {:as as
+                               :crossOrigin cross-origin
+                               :integrity integrity
+                               :nonce nonce}))
+
+(defn preinit
+  "Lets you eagerly fetch and evaluate a stylesheet or external script.
+  See: https://react.dev/reference/react-dom/preinit"
+  [url {:keys [as precedence cross-origin integrity nonce fetch-priority]}]
+  (rdom/preinit url #js {:as as
+                         :precedence precedence
+                         :crossOrigin cross-origin
+                         :integrity integrity
+                         :nonce nonce
+                         :fetchPriority fetch-priority}))
+
+(defn preinit-module
+  "Lets you eagerly fetch and evaluate an ESM module.
+  See: https://react.dev/reference/react-dom/preinitModule"
+  [url {:keys [as cross-origin integrity nonce]}]
+  (rdom/preinitModule url #js {:as as
+                               :crossOrigin cross-origin
+                               :integrity integrity
+                               :nonce nonce}))

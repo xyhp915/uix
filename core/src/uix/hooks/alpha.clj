@@ -1,5 +1,6 @@
 (ns uix.hooks.alpha
   "React Hooks ported to JVM for SSR"
+  (:refer-clojure :exclude [use])
   (:import (clojure.lang IDeref)
            (java.util UUID)))
 
@@ -63,8 +64,11 @@
   ([v])
   ([v fmt]))
 
-(defn use-deferred-value [v]
-  v)
+(defn use-deferred-value
+  ([v]
+   v)
+  ([v initial]
+   initial))
 
 (defn use-transition []
   [false #(no-op "start-transition")])
@@ -83,3 +87,13 @@
 
 (defn use-optimistic [state update-fn]
   [state #(no-op "use-optimistic" %1)])
+
+(defn use-action-state
+  ([f state]
+   (use-action-state f state nil))
+  ([f state permalink]
+   [state #(no-op "use-action-state" %1) false]))
+
+(defn use [resource]
+  ;; TODO: figure out what resources can be consumed on JVM
+  resource)
