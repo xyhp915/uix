@@ -2,7 +2,8 @@
   "Compiler code that translates HyperScript into React calls at compile-time."
   (:require [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]
-            [uix.lib]))
+            [uix.lib])
+  (:import (clojure.lang IMapEntry IMeta IRecord MapEntry)))
 
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,
@@ -87,3 +88,54 @@
   (if (uix.lib/cljs-env? env)
     (compile-element* v opts)
     v))
+
+;; ========== forms rewriter ==========
+
+(defn- form-name [form]
+  (when (and (seq? form) (symbol? (first form)))
+    (first form)))
+
+(defmulti compile-form form-name)
+
+(defmethod compile-form :default [form]
+  form)
+
+(defmethod compile-form 'for
+  [[_ bindings & body :as form]]
+  (if (== 2 (count bindings))
+    (let [[k v] bindings]
+      `(map (fn [~k] ~@body) ~v))
+    form))
+
+(defn maybe-with-meta [from to]
+  (if (instance? IMeta from)
+    (with-meta to (meta from))
+    to))
+
+(defn walk
+  "Like clojure.walk/postwalk, but preserves metadata"
+  [inner outer form]
+  (let [m (meta form)]
+    (cond
+      (list? form)
+      (outer (maybe-with-meta form (apply list (map inner form))))
+
+      (instance? IMapEntry form)
+      (outer (MapEntry/create (inner (key form)) (inner (val form))))
+
+      (seq? form)
+      (outer (maybe-with-meta form (doall (map inner form))))
+
+      (instance? IRecord form)
+      (outer (maybe-with-meta form (reduce (fn [r x] (conj r (inner x))) form form)))
+
+      (coll? form)
+      (outer (maybe-with-meta form (into (empty form) (map inner form))))
+
+      :else (outer form))))
+
+(defn postwalk [f form]
+  (walk (partial postwalk f) f form))
+
+(defn rewrite-forms [body]
+  (postwalk compile-form body))
