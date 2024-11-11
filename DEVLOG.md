@@ -49,3 +49,28 @@ For [hot-reloading setup with react-refresh](https://github.com/pitch-io/uix/blo
 React API exposes [`cloneElement` function](https://react.dev/reference/react/cloneElement) which is mainly used in UI libraries to decorate elements with additional props. Now there's `uix/clone-element` function for UIx components.
 
 Fixed two issues in JVM server renderer: [#151](https://github.com/pitch-io/uix/issues/151), [#152](https://github.com/pitch-io/uix/issues/152)
+
+### Other
+
+#### CSS-in-CLJS
+
+Based on my experience from [previous attempts](https://github.com/clj-commons/cljss) at creating CSS-in-CLJS library that I can be happy with, I put together [uix.css](https://github.com/roman01la/uix.css)
+
+The library is similar to UIx in how it is making use of compile time optimisations. Dynamic values are inserted via CSS Variables API at runtime. Checkout [documenetation](https://github.com/roman01la/uix.css) to learn more about the library.
+
+```clojure
+(ns my.app
+  (:require [uix.core :as uix :refer [defui $]]
+            [uix.css :refer [css]]
+            [uix.css.adapter.uix]))
+
+(defn button []
+  ($ :button {:style (css {:font-size "14px"
+                           :background "#151e2c"})}))
+```
+
+#### Open sourcing ClojureScript Studio
+
+Some time ago I built ClojureScript Studio, coding environment similar to CodeSandbox. Now it is open sourced, and I think it can serve as a reference for folks interested in learning how UIx looks in mid-sized projects. And you can also learn how to build in-browser dev environment that runs on bootstrapped ClojureScript.
+
+Checkout the project on [GitHub](https://github.com/roman01la/clojurescript-studio).
