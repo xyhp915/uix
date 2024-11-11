@@ -252,10 +252,18 @@
                      (inc i)))))
         (if (nil? sb) s (str sb))))))
 
+(defn- normalize-children
+  "Elements at children position take precedence over elements in :children attribute"
+  [props children]
+  (let [children (if (seq children) children (:children props))]
+    [(dissoc props :children)
+     (when children
+       (if (coll? children) children [children]))]))
+
 (defn normalize-element [[first second & rest]]
   (let [[tag tag-id tag-classes] (uix.attrs/parse-tag first)
         [attrs children] (if (map? second)
-                           [second rest]
+                           (normalize-children second rest)
                            [nil (cons second rest)])
         attrs-classes (if (vector? (:class attrs))
                         (let [c (filter some? (:class attrs))]
@@ -365,6 +373,7 @@
              (or (= "select" tag)
                  (= "textarea" tag))) :nop
         (.startsWith attr "aria-") (render-attr-str! sb attr value)
+        (.startsWith attr "data-") (render-attr-str! sb attr value)
         (not value) :nop
 
         (and (true? value)

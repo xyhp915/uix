@@ -8,7 +8,7 @@ While a UIx component tree can be reloaded in a traditional way, by re-rendering
 
 1. Make sure you have [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi) installed for your browser
 
-2. Install the package `yarn add react-refresh --dev`
+2. Install the package `npm install react-refresh --save-dev`
 
 3. Create a dev-only namespace that will be responsible for managning hot-reloading
 

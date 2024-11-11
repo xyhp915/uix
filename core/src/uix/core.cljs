@@ -208,25 +208,6 @@
   [f]
   #(f (bean/bean %)))
 
-(defn- stringify-clojure-primitives [v]
-  (cond
-    ;; fast direct lookup for a string value
-    ;; already stored on the instance of the known type
-    (keyword? v) (.-fqn v)
-    (uuid? v) (.-uuid v)
-    (symbol? v) (.-str v)
-    :else v))
-
-(defn jsfy-deps [coll]
-  (if (or (js/Array.isArray coll)
-          (vector? coll))
-    (reduce (fn [arr v]
-              (.push arr (stringify-clojure-primitives v))
-              arr)
-            #js []
-            coll)
-    coll))
-
 (defn- lazy-shadow-reloadable
   "Special case for traditional hot-reloading via shadow-cljs,
   when UI tree is rendered from the root after evert hot-reload"
@@ -293,6 +274,30 @@
              (uix.core/$ component argv))))]
     (set! (.-uix-component? ref-comp) true)
     ref-comp))
+
+(defn clone-element [^js element props & children]
+  (let [type (.-type element)
+        okey (.-key element)
+        oref (.-ref element)
+        update-children #(when %
+                           (map (fn [^js el]
+                                  (when (some-> el .-_store)
+                                    (set! (.. el -_store -validated) true))
+                                  el)
+                                %))
+        children (update-children children)
+        props (update props :children update-children)]
+    (if (or (string? type) (not (.-uix-component? type)))
+      (let [oprops (.-props element)
+            nel (uix.core/$ type (cond-> props (seq children) (assoc :children (into-array children))))
+            nprops (js/Object.assign #js {}  oprops #js {:key okey :ref oref} (.-props nel))]
+        (uix.core/$ type nprops))
+      (let [oprops (.. element -props -argv)]
+        (uix.core/$ type
+          (cond-> oprops
+                  okey (assoc :key okey)
+                  :always (merge props)
+                  (seq children) (assoc :children children)))))))
 
 (def suspense react/Suspense)
 (def strict-mode react/StrictMode)

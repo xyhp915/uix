@@ -30,12 +30,19 @@
   (t/as-string ($ test-use-ref-comp)))
 
 (deftest test-memoize
-  (uix.core/defui test-memoize-comp [{:keys [x]}]
-    (is (= 1 x))
-    ($ :h1 x))
-  (let [f (uix.core/memo test-memoize-comp)]
-    (is (t/react-element-of-type? f "react.memo"))
-    (is (= "<h1>1</h1>" (t/as-string ($ f {:x 1}))))))
+  (testing "manual memo"
+    (uix.core/defui test-memoize-comp [{:keys [x]}]
+      (is (= 1 x))
+      ($ :h1 x))
+    (let [f (uix.core/memo test-memoize-comp)]
+      (is (t/react-element-of-type? f "react.memo"))
+      (is (= "<h1>1</h1>" (t/as-string ($ f {:x 1}))))))
+  (testing "^:memo"
+    (uix.core/defui ^:memo test-memoize-meta-comp [{:keys [x]}]
+      (is (= 1 x))
+      ($ :h1 x))
+    (is (t/react-element-of-type? test-memoize-meta-comp "react.memo"))
+    (is (= "<h1>1</h1>" (t/as-string ($ test-memoize-meta-comp {:x 1}))))))
 
 (deftest test-html
   (is (t/react-element-of-type? ($ :h1 1) "react.element")))
@@ -44,14 +51,6 @@
   (defui h1 [{:keys [children]}]
     ($ :h1 {} children))
   (is (= (t/as-string ($ h1 {} 1)) "<h1>1</h1>")))
-
-(deftest test-jsfy-deps
-  (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
-         (vec (uix.core/jsfy-deps [1 "str" :k/w 'uix.core/sym #uuid "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]))))
-  (is (= [1 "str" "k/w" "uix.core/sym" "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]
-         (vec (uix.core/jsfy-deps #js [1 "str" :k/w 'uix.core/sym #uuid "b53887c9-4910-4d4e-aad9-f3487e6e97f5" nil [] {} #{}]))))
-  (is (= #{} (uix.core/jsfy-deps #{})))
-  (is (= {} (uix.core/jsfy-deps {}))))
 
 (deftest test-lazy
   (async done
@@ -291,6 +290,42 @@
     (is (= (.-p o) 8))
     (is (= (.-current ref) 6))
     (is (= state (:state @state)))))
+
+(deftest test-clone-element
+  (testing "cloning component element"
+    (uix.core/defui test-clone-element-comp [])
+    (let [el (uix.core/clone-element ($ test-clone-element-comp {:title 0 :key 1 :ref 2} "child")
+                                     {:data-id 3}
+                                     "child2")]
+      (is (= test-clone-element-comp (.-type el)))
+      (is (= "1" (.-key el)))
+      (is (= {:title 0 :ref 2 :data-id 3 :children ["child2"]}
+             (.. el -props -argv)))))
+  (testing "cloning primitive element"
+    (let [el1 (uix.core/clone-element ($ :div {:title 0 :key 1 :ref 2} "child")
+                                      {:data-id 3}
+                                      "child2")
+          el2 (uix.core/clone-element (react/createElement "div" #js {:title 0 :key 1 :ref 2} "child")
+                                      {:data-id 3}
+                                      "child2")]
+      (doseq [^js el [el1 el2]]
+        (is (= "div" (.-type el)))
+        (is (= "1" (.-key el)))
+        (is (= 2 (.-ref el)))
+        (is (= 0 (.. el -props -title)))
+        (is (= 3 (aget (.. el -props) "data-id")))
+        (is (= "child2" (aget (.. el -props -children) 0)))))))
+
+(deftest test-component-fn-name
+  (testing "defui name"
+    (defui component-fn-name [])
+    (is (= "uix.core-test/component-fn-name"
+           (.-name component-fn-name))))
+  (testing "fn name"
+    (let [f1 (uix.core/fn component-fn-name [])
+          f2 (uix.core/fn [])]
+      (is (= "component-fn-name" (.-name f1)))
+      (is (str/starts-with? (.-name f2) "uix-fn")))))
 
 (defn -main []
   (run-tests))

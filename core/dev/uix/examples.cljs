@@ -40,26 +40,24 @@
                        :selected? grid?
                        :on-press #(set-state (update state :grid? not))}))))
 
-(def canvas-grid
-  (uix/memo
-    (uix/fn [{:keys [width height size color]}]
-      (let [wn (Math/ceil (/ width size))
-            hn (Math/ceil (/ height size))]
-        ($ :<>
-          (for [widx (range wn)]
-            ($ :line {:key widx
-                      :x1 (* size widx)
-                      :x2 (* size widx)
-                      :y1 0
-                      :y2 height
-                      :stroke color}))
-          (for [hidx (range hn)]
-            ($ :line {:key hidx
-                      :y1 (* size hidx)
-                      :y2 (* size hidx)
-                      :x1 0
-                      :x2 width
-                      :stroke color})))))))
+(defui ^:memo canvas-grid [{:keys [width height size color]}]
+  (let [wn (Math/ceil (/ width size))
+        hn (Math/ceil (/ height size))]
+    ($ :<>
+      (for [widx (range wn)]
+        ($ :line {:key widx
+                  :x1 (* size widx)
+                  :x2 (* size widx)
+                  :y1 0
+                  :y2 height
+                  :stroke color}))
+      (for [hidx (range hn)]
+        ($ :line {:key hidx
+                  :y1 (* size hidx)
+                  :y2 (* size hidx)
+                  :x1 0
+                  :x2 width
+                  :stroke color})))))
 
 (defui cursor [{:keys [mx my r color]}]
   (let [mx (+ mx (/ r 2))
@@ -110,63 +108,57 @@
       (update :width * size)
       (update :height * size)))
 
-(def objects-layer
-  (uix/memo
-    (uix/fn [{:keys [objects size on-select]}]
-      (for [{:keys [id] :as object} objects]
-        (let [idx (.indexOf objects object)
-              object (-> (map-object object size)
-                         (assoc :key id :on-mouse-down #(on-select idx)))]
-          (case (:type object)
-            :rect ($ rect object)
-            :circle ($ circle object)
-            :text ($ text object)))))))
+(defui ^:memo objects-layer [{:keys [objects size on-select]}]
+  (for [{:keys [id] :as object} objects]
+    (let [idx (.indexOf objects object)
+          object (-> (map-object object size)
+                     (assoc :key id :on-mouse-down #(on-select idx)))]
+      (case (:type object)
+        :rect ($ rect object)
+        :circle ($ circle object)
+        :text ($ text object)))))
 
-(def edit-layer
-  (uix/memo
-    (uix/fn [{:keys [mx my on-object-changed on-select idx selected size]}]
-      (let [[active? set-active] (uix/use-state false)
-            selected? (some? selected)
-            on-move (uix/use-callback
-                      (fn [x y]
-                        (on-object-changed idx (assoc selected :x x :y y)))
-                      [idx selected on-object-changed])
-            on-resize (fn [object idx width height]
-                        (on-object-changed idx (assoc object :width width :height height)))]
+(defui ^:memo edit-layer [{:keys [mx my on-object-changed on-select idx selected size]}]
+  (let [[active? set-active] (uix/use-state false)
+        selected? (some? selected)
+        on-move (uix/use-callback
+                  (fn [x y]
+                    (on-object-changed idx (assoc selected :x x :y y)))
+                  [idx selected on-object-changed])
+        on-resize (fn [object idx width height]
+                    (on-object-changed idx (assoc object :width width :height height)))]
 
-        (uix/use-effect
-          #(when active?
-             (on-move mx my))
-          [selected? active? mx my on-move])
+    (uix/use-effect
+      #(when active?
+         (on-move mx my))
+      [selected? active? mx my on-move])
 
-        (uix/use-effect
-          #(when selected?
-             (set-active true))
-          [selected?])
+    (uix/use-effect
+      #(when selected?
+         (set-active true))
+      [selected?])
 
-        (when selected
-          ($ rect
-            (-> (map-object selected size)
-                (assoc
-                  :on-mouse-down #(set-active true)
-                  :on-mouse-up #(set-active false)
-                  :stroke-width 1
-                  :stroke-color "#0000ff"
-                  :fill-color :transparent))))))))
-
-(def background-layer
-  (uix/memo
-    (uix/fn [{:keys [width height on-mouse-down]}]
+    (when selected
       ($ rect
-        {:on-mouse-down #(on-mouse-down)
-         :x 0
-         :y 0
-         :width width
-         :height height
-         :fill-color :transparent
-         :stroke-color :none}))))
+        (-> (map-object selected size)
+            (assoc
+              :on-mouse-down #(set-active true)
+              :on-mouse-up #(set-active false)
+              :stroke-width 1
+              :stroke-color "#0000ff"
+              :fill-color :transparent))))))
 
-(defui canvas [{:keys [state on-object-changed on-object-select]}]
+(defui ^:memo background-layer [{:keys [width height on-mouse-down]}]
+  ($ rect
+    {:on-mouse-down #(on-mouse-down)
+     :x 0
+     :y 0
+     :width width
+     :height height
+     :fill-color :transparent
+     :stroke-color :none}))
+
+(defui ^:memo canvas [{:keys [state on-object-changed on-object-select]}]
   (let [{:keys [grid? canvas]} state
         [[width height] set-size] (uix/use-state [0 0])
         [[ox oy] set-offset] (uix/use-state [0 0])
@@ -226,7 +218,7 @@
    :stroke-color "#ff0000"
    :fill-color "#00ff00"})
 
-(defui app []
+(defui ^:memo app []
   (let [[state set-state] (uix/use-state {:grid? true
                                           :canvas {:selected nil
                                                    :objects []}})

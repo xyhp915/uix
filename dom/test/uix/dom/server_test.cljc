@@ -56,6 +56,19 @@
        (:x props))
      (is (= "hello" (render ($ test-defui-comp-1 {:x "hello" :key "k" :ref 1} "child" "more"))))))
 
+#?(:clj
+   (deftest test-no-args-component
+     (testing "no args defui"
+       (uix.core/defui args-not-required-component [{:keys [children]}]
+         ($ :h1 children))
+       (is (= "<h1></h1>"
+              (render (uix.core/$ args-not-required-component)))))
+     (testing "no args fn"
+       (is (= "<h1></h1>"
+              (render (uix.core/$ (uix.core/fn [{:keys [children]}]
+                                    ($ :h1 children)))))))))
+
+
 ;; Adapted from https://github.com/tonsky/rum/blob/gh-pages/test/rum/test/server_render.cljc
 
 (defui comp-simple []
@@ -284,6 +297,19 @@
       :aria-disabled "true"
       :aria-checked "false"}))
 
+(defui comp-151 []
+  ($ :<>
+    ($ :div {:children "hello"})
+    ($ :div {:children "world"} "yo")
+    ($ :div {:children "world"} "hey ho")))
+
+(defui comp-152 []
+  ($ :div
+     {:data-hidden true
+      :data-readonly false
+      :data-disabled "true"
+      :data-checked "false"}))
+
 (def components
   {"simple" comp-simple
    "tag" comp-tag
@@ -305,7 +331,9 @@
    "html" comp-html
    "inputs" comp-inputs
    "svg" comp-svg
-   "aria" comp-aria})
+   "aria" comp-aria
+   "comp-151" comp-151
+   "comp-152" comp-152})
 
 (def render-dir "server_render_test")
 

@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## 1.2.0-rc3
+
+### New
+
+- add `uix.re-frame` with `use-subscribe` hook
+
+## 1.2.0-rc2
+
+### New
+
+- `set-state` in `use-state` hook behaves like `cljs.core/swap!` when passing updater function
+
+## 1.2.0-rc1
+
+### New
+
+- `^:memo` tag for `defui` to create memoized components in-place
+- `uix.core/clone-element` helper for cloning UIx elements
+- React Hooks with deps are using now Clojure's equality check to detect whether deps were updated
+
+## 1.1.1
+
+### Improvements
+
+- add defhook to lint as defn in clj-kondo config 53a7cc
+
+## Fixes
+
+- make args optional in clj components 806691
+
 ## 1.1.0
 
 ### Improvements

@@ -4,11 +4,11 @@ _Idiomatic ClojureScript interface to modern React.js_
 
 > "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
 
-- API compatibility: React v18.2.0
-- UIx v1 is in [roman01la/uix](https://github.com/roman01la/uix) repo
+- API compatibility: React v18.3.1
 - Discuss at #uix on [Clojurians Slack](http://clojurians.net)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
-- Try it out live in [ClojureScript Studio](https://www.clojurescript.studio/)
+- [Talk about UIx at London Clojurians meetup](https://www.youtube.com/watch?v=4vgrLHsD0-I)
+- ["The State of Frontend" by Alexander Davis](https://www.youtube.com/watch?v=fT28NeZtaAg)
 
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
@@ -17,18 +17,19 @@ _Idiomatic ClojureScript interface to modern React.js_
 ## Installation
 
 ```
-yarn add react@18.2.0 react-dom@18.2.0
+npm install react@18.3.1 react-dom@18.3.1 --save-dev
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "1.1.0"}
-        com.pitch/uix.dom {:mvn/version "1.1.0"}}}
+{:deps {com.pitch/uix.core {:mvn/version "1.1.1"}
+        com.pitch/uix.dom {:mvn/version "1.1.1"}}}
 ```
 
 ### How to start a new project with UIx
 
 - Run `npx create-uix-app@latest my-app` to scaffold a new project
 - Clone starter template manually from [pitch-io/uix-starter](https://github.com/pitch-io/uix-starter)
+- Use fullstack starter project from Metosin [metosin/example-project](https://github.com/metosin/example-project)
 
 ## Usage
 
@@ -78,6 +79,7 @@ yarn add react@18.2.0 react-dom@18.2.0
 - Other render targets
   - [React Native](/docs/react-native.md)
   - [React Three Fiber](/docs/react-three-fiber.md)
+- [Getting help from ChatGPT](/docs/chat-gpt.md)
 
 ## Testing
 
@@ -109,6 +111,8 @@ cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
 - [Totcal](https://totcal.com/)
 - [ClojureScript Studio](https://www.clojurescript.studio/)
 - [Ogres, virtual tabletop](https://ogres.app/)
+- [ShipClojure](https://www.shipclojure.com/)
+- [Metosin](https://www.metosin.fi/en)
 
 ## Thanks to
 

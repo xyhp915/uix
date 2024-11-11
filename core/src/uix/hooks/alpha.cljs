@@ -2,26 +2,21 @@
   "Wrappers for React Hooks"
   (:require [react :as r]))
 
-(defn- clojure-primitive? [v]
-  (or (keyword? v)
-      (uuid? v)
-      (symbol? v)))
-
 (defn- choose-value [nv cv]
-  (if (and (clojure-primitive? nv) (= nv cv))
+  (if (= nv cv)
     cv
     nv))
 
-(defn- use-clojure-primitive-aware-updater
-  "Replicates React's behaviour when updating state with identical primitive JS type,
-  but for keywords, UUIDs and symbols that are in fact non-primitives"
+(defn- use-clojure-aware-updater
+  "Replicates React's behaviour when updating state with identical JS value,
+  but using Clojure's value equality here"
   [updater]
   (react/useCallback
-   (fn [v]
+   (fn [v & args]
      (updater
       (fn [cv]
         (if (fn? v)
-          (choose-value (v cv) cv)
+          (choose-value (apply v cv args) cv)
           (choose-value v cv)))))
    #js [updater]))
 
@@ -29,10 +24,10 @@
 
 (defn use-state [value]
   (let [[state set-state] (r/useState value)
-        set-state (use-clojure-primitive-aware-updater set-state)]
+        set-state (use-clojure-aware-updater set-state)]
     #js [state set-state]))
 
-(defn- clojure-primitive-aware-reducer-updater
+(defn- clojure-aware-reducer-updater
   "Same as `use-clojure-primitive-aware-updater` but for `use-reducer`"
   [f]
   (fn [state action]
@@ -40,10 +35,10 @@
 
 (defn use-reducer
   ([f value]
-   (let [updater (clojure-primitive-aware-reducer-updater f)]
+   (let [updater (clojure-aware-reducer-updater f)]
      (r/useReducer updater value)))
   ([f value init-state]
-   (let [updater (clojure-primitive-aware-reducer-updater f)]
+   (let [updater (clojure-aware-reducer-updater f)]
      (r/useReducer updater value init-state))))
 
 ;; == Ref hook
@@ -55,6 +50,12 @@
 (defn with-return-value-check [f]
   #(let [ret (f)]
      (if (fn? ret) ret js/undefined)))
+
+(defn use-clj-deps [deps]
+  (let [ref (r/useRef deps)]
+    (when (not= (.-current ref) deps)
+      (set! (.-current ref) deps))
+    (.-current ref)))
 
 (defn use-effect
   ([setup-fn]

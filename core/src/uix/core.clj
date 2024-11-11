@@ -67,6 +67,11 @@
             "If you meant to retrieve `children`, they are under `:children` field in props map."))
       [fname args fdecl])))
 
+(defn- set-display-name [f name]
+  `(do
+     (set! (.-displayName ~f) ~name)
+     (js/Object.defineProperty ~f "name" (cljs.core/js-obj "value" ~name))))
+
 (defmacro
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
                 [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])}
@@ -77,17 +82,26 @@
   (let [[fname args fdecl] (parse-defui-sig `defui sym fdecl)]
     (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
-      (let [var-sym (-> (str (-> &env :ns :name) "/" sym) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh var-sym fdecl)]
+      (let [memo? (-> sym meta :memo)
+            memo-sym (gensym fname)
+            memo-fname (if memo?
+                         (with-meta memo-sym (meta fname))
+                         fname)
+            var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
+            memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
+            body (uix.dev/with-fast-refresh memo-var-sym fdecl)]
         `(do
            ~(if (empty? args)
-              (no-args-component fname var-sym body)
-              (with-args-component fname var-sym args body))
-           (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
-           ~(uix.dev/fast-refresh-signature var-sym body)))
-      `(defn ~fname ~args
-         ~@fdecl))))
+              (no-args-component memo-fname memo-var-sym body)
+              (with-args-component memo-fname memo-var-sym args body))
+           (set! (.-uix-component? ~memo-var-sym) true)
+           ~(set-display-name memo-var-sym (str var-sym))
+           ~(uix.dev/fast-refresh-signature memo-var-sym body)
+           ~(when memo?
+              `(def ~fname (uix.core/memo ~memo-sym)))))
+      `(defn ~fname [& args#]
+         (let [~args args#]
+           ~@fdecl)))))
 
 (defmacro fn
   "Creates anonymous UIx component. Similar to fn, but doesn't support multi arity.
@@ -104,10 +118,11 @@
                            (no-args-fn-component fname var-sym body)
                            (with-args-fn-component fname var-sym args body))]
            (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
+           ~(set-display-name var-sym (str var-sym))
            ~var-sym))
-      `(core/fn ~fname ~args
-         ~@fdecl))))
+      `(core/fn ~fname [& args#]
+         (let [~args args#]
+           ~@fdecl)))))
 
 (defmacro source
   "Returns source string of UIx component"
@@ -209,18 +224,15 @@
 (defn use-optimistic [state update-fn]
   (hooks/use-optimistic state update-fn))
 
-(defn vector->js-array [coll]
-  (cond
-    (vector? coll) `(jsfy-deps (cljs.core/array ~@coll))
-    (some? coll) `(jsfy-deps ~coll)
-    :else coll))
+(defn ->js-deps [coll]
+  `(cljs.core/array (uix.hooks.alpha/use-clj-deps ~coll)))
 
 (defn- make-hook-with-deps [sym env form f deps]
   (when (uix.lib/cljs-env? env)
     (uix.linter/lint-exhaustive-deps! env form f deps))
   (if deps
     (if (uix.lib/cljs-env? env)
-      `(~sym ~f ~(vector->js-array deps))
+      `(~sym ~f ~(->js-deps deps))
       `(~sym ~f ~deps))
     `(~sym ~f)))
 
@@ -278,7 +290,7 @@
   ([ref f deps]
    (when (uix.lib/cljs-env? &env)
      (uix.linter/lint-exhaustive-deps! &env &form f deps))
-   `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(vector->js-array deps))))
+   `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(->js-deps deps))))
 
 (defui suspense [{:keys [children]}]
   children)
@@ -288,6 +300,10 @@
 
 (defui profiler [{:keys [children]}]
   children)
+
+(defn clone-element [[type oprops :as element] props & children]
+  ($ type (cond-> (if (map? oprops) (merge oprops props) props)
+                  (seq children) (assoc :children children))))
 
 ;; SSR helpers
 (def client? false) ;; no JVM front-ends
