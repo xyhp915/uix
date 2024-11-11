@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UIx Devlog</title>
+    <link rel="shortcut icon"
+          href="data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle r='8' cx='8' cy='8' fill='%23c1f3f9'%3E%3C/circle%3E%3C/svg%3E"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Geist:wght@100..900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
+    <link rel="stylesheet" href="/main.css">
+</head>
+<body>
+
+<main><h1 id="uix_devlog">UIx Devlog</h1><h2 id="october%2C_2024">October, 2024</h2><p>Over the last couple of years using UIx, I've collected a list of things I'd like to improve further in the library, and now this October when I left my full-time job, I was finally able to pick up the work.</p><p>There are two major annoyances that I wanted to fix for a long time.</p><h3 id="react.memo">React.memo</h3><p>Functional components in React can be optimised with memoisation using <code>React.memo</code> API, however this requires writing more code which feels cumbersome:</p><pre><code class="language-clojure">&#40;defui component &#91;props&#93; ...&#41;
+
+&#40;def component-memo &#40;uix/memo component&#41;&#41;
+</code></pre><p>Also now I have to come up with a name for memoised component, since it's a seprate var. I never was in a situation where I wanted both normal and memoised components, so it was obvious to me that the problem should be fixed at the level of <code>defui</code> macro.</p><p>In UIx v.1.2.0 you can tag <code>defui</code> with <code>:memo</code> meta, this will emit React component already wrapped with <code>React.memo</code>.</p><pre><code class="language-clojure">&#40;defui &#94;:memo component &#91;props&#93; ...&#41;
+</code></pre><h3 id="clojure%27s_equality_check_in_hooks_deps">Clojure's equality check in hooks deps</h3><p>Memoising components with <code>React.memo</code> is easy because it takes comparator function as the second argument, which means we can use <code>clojure.core/=</code> to compare props. Unfortunately this is not an option with React Hooks. In React hooks with dependencies array, like <code>useEffect</code>, <code>useCallback</code> and others use <code>Object.is</code> under the hood, which is the same as <code>===</code> in JS, and there's no way to redefine that. This means that supplying non <code>identical?</code> Clojure values to deps array, like immutable map or a vector, will re-run the hook. I observed that in most cases deps values are primitive types, which means that the problem is not relevant, but still sometimes a hook might depend on immutable compound value and there's no way to avoid it.</p><p>I'm glad that this problem is finally fixed and since 1.2.0 all React hooks in UIx will compare deps with <code>clojure.core/=</code>.</p><h3 id="swap-like_%3Ccode%3Eset-state%3C%2Fcode%3E">swap-like <code>set-state</code></h3><p>Not a major improvement, but I really like the signature of <code>clojure.core/swap!</code> function. <code>set-state</code> returned from <code>useState</code> hook take updater function as well, but doesn't support supplying additional arguments. Now UIx wraps state updater to support that.</p><pre><code class="language-clojure">&#40;let &#91;&#91;state set-state&#93; &#40;uix/use-state {:n 0}&#41;&#93;
+  &#40;$ :button {:on-click #&#40;set-state update :n inc&#41;}
+    &quot;+&quot;&#41;&#41;
+</code></pre><h3 id="minor_improvements">Minor improvements</h3><p>For convenience <code>use-subscribe</code> hook was moved from <a href='https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame'>docs</a> into <code>uix.re-frame</code> namespace. If you are using UIx with re-frame, you don't have to keep track of updates in docs anymore.</p><p>For <a href='https://github.com/pitch-io/uix/blob/master/docs/hot-reloading.md'>hot-reloading setup with react-refresh</a> I have preload namespace that I carry between projects. Now there's <code>uix.preload</code> that you can put in <code>:preloads</code> config to enable hot-reloading with react-refresh.</p><p>React API exposes <a href='https://react.dev/reference/react/cloneElement'><code>cloneElement</code> function</a> which is mainly used in UI libraries to decorate elements with additional props. Now there's <code>uix/clone-element</code> function for UIx components.</p><p>Fixed two issues in JVM server renderer: <a href='https://github.com/pitch-io/uix/issues/151'>#151</a>, <a href='https://github.com/pitch-io/uix/issues/152'>#152</a></p><h3 id="other">Other</h3><h4 id="css-in-cljs">CSS-in-CLJS</h4><p>Based on my experience from <a href='https://github.com/clj-commons/cljss'>previous attempts</a> at creating CSS-in-CLJS library that I can be happy with, I put together <a href='https://github.com/roman01la/uix.css'>uix.css</a></p><p>The library is similar to UIx in how it is making use of compile time optimisations. Dynamic values are inserted via CSS Variables API at runtime. Checkout <a href='https://github.com/roman01la/uix.css'>documenetation</a> to learn more about the library.</p><pre><code class="language-clojure">&#40;ns my.app
+  &#40;:require &#91;uix.core :as uix :refer &#91;defui $&#93;&#93;
+            &#91;uix.css :refer &#91;css&#93;&#93;
+            &#91;uix.css.adapter.uix&#93;&#41;&#41;
+
+&#40;defn button &#91;&#93;
+  &#40;$ :button {:style &#40;css {:font-size &quot;14px&quot;
+                           :background &quot;#151e2c&quot;}&#41;}&#41;&#41;
+</code></pre><h4 id="open_sourcing_clojurescript_studio">Open sourcing ClojureScript Studio</h4><p>Some time ago I built ClojureScript Studio, coding environment similar to CodeSandbox. Now it is open sourced, and I think it can serve as a reference for folks interested in learning how UIx looks in mid-sized projects. And you can also learn how to build in-browser dev environment that runs on bootstrapped ClojureScript.</p><p>Checkout the project on <a href='https://github.com/roman01la/clojurescript-studio'>GitHub</a>.</p></main>
+<ul id='minimap'><li class='indent-2'><a href="#october%2C_2024">October, 2024</a></li><li class='indent-3'><a href="#react.memo">React.memo</a></li><li class='indent-3'><a href="#clojure%27s_equality_check_in_hooks_deps">Clojure's equality check in hooks deps</a></li><li class='indent-3'><a href="#swap-like_%3Ccode%3Eset-state%3C%2Fcode%3E">swap-like `set-state`</a></li><li class='indent-3'><a href="#minor_improvements">Minor improvements</a></li><li class='indent-3'><a href="#other">Other</a></li><li class='indent-4'><a href="#css-in-cljs">CSS-in-CLJS</a></li><li class='indent-4'><a href="#open_sourcing_clojurescript_studio">Open sourcing ClojureScript Studio</a></li></ul>
+
+<script src="/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+</body>
+</html>
