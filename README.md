@@ -5,7 +5,7 @@ _Idiomatic ClojureScript interface to modern React.js_
 > "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
 
 - API compatibility: React v18.3.1
-- Discuss at #uix on [Clojurians Slack](http://clojurians.net)
+- Discuss at [#uix on Clojurians Slack](https://clojurians.slack.com/archives/CNMR41NKB)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
 - [Talk about UIx at London Clojurians meetup](https://www.youtube.com/watch?v=4vgrLHsD0-I)
 - ["The State of Frontend" by Alexander Davis](https://www.youtube.com/watch?v=fT28NeZtaAg)
