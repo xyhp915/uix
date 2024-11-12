@@ -3,7 +3,7 @@
   (:refer-clojure :exclude [fn])
   (:require [clojure.core :as core]
             [clojure.string :as str]
-            [uix.compiler.aot]
+            [uix.compiler.aot :as aot]
             [uix.source]
             [cljs.core]
             [uix.linter]
@@ -89,7 +89,8 @@
                          fname)
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh memo-var-sym fdecl)]
+            body (uix.dev/with-fast-refresh memo-var-sym fdecl)
+            body (aot/rewrite-forms body)]
         `(do
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
@@ -110,7 +111,8 @@
   (let [[sym fdecl] (if (symbol? (first fdecl))
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
-        [fname args body] (parse-defui-sig `fn sym fdecl)]
+        [fname args body] (parse-defui-sig `fn sym fdecl)
+        body (aot/rewrite-forms body)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})]
