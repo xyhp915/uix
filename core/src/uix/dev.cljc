@@ -2,8 +2,9 @@
   (:require [clojure.string :as str]
             [uix.linter]
             [uix.lib]
-            [hickory.core :as h])
-  (:import (cljs.tagged_literals JSValue)))
+            [hickory.core :as h]
+            #?@(:cljs [[cljs.tagged-literals :refer [JSValue]]]))
+  #?(:clj (:import (cljs.tagged_literals JSValue))))
 
 (def ^:private goog-debug (with-meta 'goog.DEBUG {:tag 'boolean}))
 
@@ -28,7 +29,7 @@
        (symbol (str/replace (str x) #"__\d+#$" ""))
 
        (= (type x) JSValue)
-       (.-val x)
+       (.-val ^JSValue x)
 
        :else x))
    form))

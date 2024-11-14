@@ -15,7 +15,7 @@
 
 (defn- no-args-component [sym var-sym body]
   `(defn ~sym []
-     (let [f# (core/fn [] ~@body)]
+     (let [f# (clojure.core/fn [] ~@body)]
        (if ~goog-debug
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
@@ -24,7 +24,7 @@
   `(defn ~sym [props#]
      (let [clj-props# (glue-args props#)
            ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
+           f# (clojure.core/fn [] ~@body)]
        (if ~goog-debug
          (binding [*current-component* ~var-sym]
            (assert (or (map? clj-props#)
@@ -34,17 +34,17 @@
          (f#)))))
 
 (defn- no-args-fn-component [sym var-sym body]
-  `(core/fn ~sym []
-     (let [f# (core/fn [] ~@body)]
+  `(clojure.core/fn ~sym []
+     (let [f# (clojure.core/fn [] ~@body)]
        (if ~goog-debug
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
 (defn- with-args-fn-component [sym var-sym args body]
-  `(core/fn ~sym [props#]
+  `(clojure.core/fn ~sym [props#]
      (let [clj-props# (glue-args props#)
            ~args (cljs.core/array clj-props#)
-           f# (core/fn [] ~@body)]
+           f# (clojure.core/fn [] ~@body)]
        (if ~goog-debug
          (binding [*current-component* ~var-sym]
            (assert (or (map? clj-props#)
@@ -122,7 +122,7 @@
            (set! (.-uix-component? ~var-sym) true)
            ~(set-display-name var-sym (str var-sym))
            ~var-sym))
-      `(core/fn ~fname [& args#]
+      `(clojure.core/fn ~fname [& args#]
          (let [~args args#]
            ~@fdecl)))))
 
@@ -291,13 +291,13 @@
      (uix.linter/lint-exhaustive-deps! &env &form f deps))
    `(uix.hooks.alpha/use-imperative-handle ~ref ~f ~(->js-deps deps))))
 
-(defui suspense [{:keys [children]}]
+(defn suspense [{:keys [children]}]
   children)
 
-(defui strict-mode [{:keys [children]}]
+(defn strict-mode [{:keys [children]}]
   children)
 
-(defui profiler [{:keys [children]}]
+(defn profiler [{:keys [children]}]
   children)
 
 (defn clone-element [[type oprops :as element] props & children]

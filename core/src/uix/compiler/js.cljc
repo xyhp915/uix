@@ -7,7 +7,7 @@
       (map? x) :map
       (vector? x) :vector
       (keyword? x) :keyword
-      :else (class x))))
+      :else (type x))))
 
 (defn to-js-map [m shallow?]
   (cond

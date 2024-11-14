@@ -2,13 +2,15 @@
   (:require [clojure.walk]
             [cljs.analyzer :as ana]
             [clojure.string :as str]
-            [clojure.pprint :as pp]
             [cljs.analyzer.api :as ana-api]
             [uix.lib]
-            [clojure.java.io :as io]
-            [clojure.edn])
-  (:import (cljs.tagged_literals JSValue)
-           (java.io Writer)))
+            [clojure.edn]
+            #?@(:clj [[clojure.java.io :as io]
+                      [clojure.pprint :as pp]])
+            #?@(:cljs [[cljs.pprint :as pp]
+                       [cljs.tagged-literals :refer [JSValue]]]))
+  #?(:clj (:import (cljs.tagged_literals JSValue)
+                   (java.io Writer))))
 
 ;; === Rules of Hooks ===
 
@@ -18,14 +20,16 @@
 (def ^:dynamic *in-loop?* false)
 
 (defn- read-config [path]
-  (let [file (io/file ".uix/config.edn")
-        config (try
-                 (if (.isFile file)
-                   (clojure.edn/read-string (slurp file))
-                   {})
-                 (catch Exception e
-                   {}))]
-    (get-in config path)))
+  #?(:cljs {}
+     :clj
+      (let [file (io/file ".uix/config.edn")
+            config (try
+                     (if (.isFile file)
+                       (clojure.edn/read-string (slurp file))
+                       {})
+                     (catch Exception e
+                       {}))]
+        (get-in config path))))
 
 (defn hook? [sym]
   (and (symbol? sym)
@@ -55,7 +59,7 @@
     (form->loc (second form))
 
     ::deps-array-literal
-    (form->loc (.-val form))
+    (form->loc (.-val ^JSValue form))
 
     nil))
 
@@ -269,9 +273,10 @@
   (read-re-frame-config))
 
 (defn lint-re-frame! [form env]
-  (let [resolve-fn (if (uix.lib/cljs-env? env)
-                     ana/resolve-var
-                     resolve)
+  (let [resolve-fn #?(:clj (if (uix.lib/cljs-env? env)
+                             ana/resolve-var
+                             resolve)
+                      :cljs ana/resolve-var)
         sources    (->> (uix.lib/find-form rf-subscribe-call? form)
                         (keep #(let [v (resolve-fn env (first %))]
                                  (when (contains? re-frame-config (:name v))
@@ -289,7 +294,7 @@
 (defmulti lint-hook-with-deps (fn [type form env]))
 
 (defn- run-linters! [mf & args]
-  (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn mf)]
+  (doseq [[key f] (methods mf)]
     (apply f key args)))
 
 (defn- report-errors!
@@ -323,7 +328,7 @@
             %)
 
         (= (type %) JSValue)
-        (.-val %)
+        (.-val ^JSValue %)
 
         :else %)
      form)
@@ -344,7 +349,7 @@
 
 (defmethod pp/code-dispatch JSValue [alis]
   (.write ^Writer *out* "#js ")
-  (pp/code-dispatch (.-val alis)))
+  (pp/code-dispatch (.-val ^JSValue alis)))
 
 (defn ppr [s]
   (let [s (pp/with-pprint-dispatch pp/code-dispatch
@@ -420,7 +425,7 @@
   (when deps
     (cond
       ;; when deps are passed as JS Array, should be a vector instead
-      (and (= (type deps) JSValue) (vector? (.-val deps))) [::deps-array-literal {:source form :env (find-env-for-form ::deps-array-literal deps)}]
+      (and (= (type deps) JSValue) (vector? (.-val ^JSValue deps))) [::deps-array-literal {:source form :env (find-env-for-form ::deps-array-literal deps)}]
 
       ;; when deps are neither JS Array nor Clojure's vector, should be a vector instead
       (not (vector? deps)) [::deps-coll-literal {:source form :env (find-env-for-form ::deps-coll-literal deps)}]
@@ -459,11 +464,15 @@
   #{"use-state" "useState"
     "use-reducer" "useReducer"})
 
+(defn- analyze [env form]
+  #?(:clj (ana-api/no-warn (ana-api/analyze env form))
+     :cljs (ana/analyze env form)))
+
 (defn find-unsafe-set-state-calls [env f]
   (let [set-state-calls (->> (find-local-variables env f)
                              (filter #(contains? state-hooks (find-hook-for-symbol env %)))
                              set)
-        ast (ana-api/no-warn (ana-api/analyze env f))]
+        ast (analyze env f)]
     (loop [[{:keys [children] :as node} & nodes] (:methods ast)
            unsafe-calls []]
       (if (= :fn (:op node))

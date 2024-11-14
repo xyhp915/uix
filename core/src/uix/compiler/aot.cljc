@@ -1,9 +1,50 @@
 (ns uix.compiler.aot
   "Compiler code that translates HyperScript into React calls at compile-time."
-  (:require [uix.compiler.js :as js]
+  (:require [uix.compiler.js :as cjs]
             [uix.compiler.attributes :as attrs]
-            [uix.lib])
-  (:import (clojure.lang IMapEntry IMeta IRecord MapEntry)))
+            [uix.lib :refer [doseq-loop]]
+            #?@(:cljs [[clojure.string :as str]
+                       [react :as react]
+                       [uix.compiler.input]
+                       [uix.compiler.alpha :as uixc]]))
+  #?(:clj (:import [clojure.lang IMapEntry IMeta MapEntry])))
+
+#?(:cljs
+   (do
+     (defn hiccup? [el]
+      (when (vector? el)
+        (let [tag (nth el 0 nil)]
+          (or (keyword? tag)
+              (symbol? tag)
+              (fn? tag)
+              (instance? MultiFn tag)))))
+
+     (defn validate-children [children]
+       (doseq-loop [child children]
+         (cond
+           (hiccup? child)
+           (throw (js/Error. (str "Hiccup is not valid as UIx child (found: " child ").\n"
+                                  "If you meant to render UIx element, use `$` macro, i.e. ($ " (str/join " " child) ")\n"
+                                  "If you meant to render Reagent element, wrap it with r/as-element, i.e. (r/as-element " child ")")))
+
+           (sequential? child)
+           (validate-children child)))
+       true)
+
+     (defn >el [tag attrs-children children]
+       (let [args (.concat #js [tag] attrs-children)]
+         (when ^boolean goog.DEBUG
+           (validate-children args))
+         (uixc/create-element args children)))
+
+     (defn create-uix-input [tag attrs-children children]
+       (if (uix.compiler.input/should-use-reagent-input?)
+         (let [props (aget attrs-children 0)
+               children (.concat #js [(aget attrs-children 1)] children)]
+           (uixc/create-element #js [uix.compiler.input/reagent-input #js {:props props :tag tag}] children))
+         (>el tag attrs-children children)))
+
+     (def fragment react/Fragment)))
 
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,
@@ -24,7 +65,7 @@
          ;; camel-casify the map
          :always (attrs/compile-attrs {:custom-element? (last tag-id-class)})
          ;; emit JS object literal
-         :always js/to-js))
+         :always cjs/to-js))
     ;; otherwise emit interpretation call
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array ~@tag-id-class) false)))
 
@@ -35,7 +76,7 @@
 
 (defmethod compile-attrs :fragment [_ attrs _]
   (if (map? attrs)
-    `(cljs.core/array ~(-> attrs attrs/compile-attrs js/to-js))
+    `(cljs.core/array ~(-> attrs attrs/compile-attrs cjs/to-js))
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array) false)))
 
 (defn- input-component? [x]
@@ -48,7 +89,7 @@
 
     (or (symbol? tag)
         (list? tag)
-        (instance? clojure.lang.Cons tag))
+        #?(:clj (instance? clojure.lang.Cons tag)))
     :component))
 
 (defmulti compile-element*
@@ -57,10 +98,11 @@
     (form->element-type tag)))
 
 (defmethod compile-element* :default [[tag] _]
-  (throw (AssertionError. (str "Incorrect element type. UIx elements can be one of the following types:\n"
-                               "React Fragment: :<>\n"
-                               "Primitive element: keyword\n"
-                               "Component element: symbol"))))
+  (throw (#?(:clj AssertionError. :cljs js/Error.)
+           (str "Incorrect element type. UIx elements can be one of the following types:\n"
+                "React Fragment: :<>\n"
+                "Primitive element: keyword\n"
+                "Component element: symbol"))))
 
 (defmethod compile-element* :element [v {:keys [env]}]
   (let [[tag attrs & children] (uix.lib/normalize-element env v)
@@ -115,24 +157,24 @@
 (defn walk
   "Like clojure.walk/postwalk, but preserves metadata"
   [inner outer form]
-  (let [m (meta form)]
-    (cond
-      (list? form)
-      (outer (maybe-with-meta form (apply list (map inner form))))
+  (cond
+    (list? form)
+    (outer (maybe-with-meta form (apply list (map inner form))))
 
-      (instance? IMapEntry form)
-      (outer (MapEntry/create (inner (key form)) (inner (val form))))
+    #?(:clj (instance? IMapEntry form)
+       :cljs (implements? IMapEntry form))
+    (outer (MapEntry. (inner (key form)) (inner (val form)) #?(:cljs nil)))
 
-      (seq? form)
-      (outer (maybe-with-meta form (doall (map inner form))))
+    (seq? form)
+    (outer (maybe-with-meta form (doall (map inner form))))
 
-      (instance? IRecord form)
-      (outer (maybe-with-meta form (reduce (fn [r x] (conj r (inner x))) form form)))
+    (record? form)
+    (outer (maybe-with-meta form (reduce (fn [r x] (conj r (inner x))) form form)))
 
-      (coll? form)
-      (outer (maybe-with-meta form (into (empty form) (map inner form))))
+    (coll? form)
+    (outer (maybe-with-meta form (into (empty form) (map inner form))))
 
-      :else (outer form))))
+    :else (outer form)))
 
 (defn postwalk [f form]
   (walk (partial postwalk f) f form))
