@@ -1,8 +1,8 @@
 .idea
 *.iml
 .nrepl-port
-.clj-kondo
-.lsp
+.clj-kondo/.cache
+.lsp/.cache
 node_modules
 .cpcache
 .shadow-cljs
