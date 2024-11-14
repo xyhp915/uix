@@ -4,16 +4,17 @@ _Idiomatic ClojureScript interface to modern React.js_
 
 > "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
 
+[![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
+[![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
+[![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.dom.svg)](https://clojars.org/com.pitch/uix.dom)
+
 - API compatibility: React v18.3.1
 - Discuss at [#uix on Clojurians Slack](https://clojurians.slack.com/archives/CNMR41NKB)
 - Try it out in the [playground](https://studio.learn-modern-clojurescript.com/p/default-uix)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
 - [Talk about UIx at London Clojurians meetup](https://www.youtube.com/watch?v=4vgrLHsD0-I)
 - ["The State of Frontend" by Alexander Davis](https://www.youtube.com/watch?v=fT28NeZtaAg)
-
-[![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
-[![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
-[![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.dom.svg)](https://clojars.org/com.pitch/uix.dom)
+- [ClojureStream podcast: E94 UIx with Roman Liutikov](https://soundcloud.com/clojurestream/e94-uix-with-roman-liutikov)
 
 ## Installation
 
@@ -22,8 +23,8 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "1.1.1"}
-        com.pitch/uix.dom {:mvn/version "1.1.1"}}}
+{:deps {com.pitch/uix.core {:mvn/version "1.2.0"}
+        com.pitch/uix.dom {:mvn/version "1.2.0"}}}
 ```
 
 ### How to start a new project with UIx
@@ -82,6 +83,22 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
   - [React Three Fiber](/docs/react-three-fiber.md)
 - [Getting help from ChatGPT](/docs/chat-gpt.md)
 
+## Who's using UIx?
+
+- [Pitch](https://pitch.com/)
+- [Pitch iOS app](https://apps.apple.com/us/app/pitch-collaborate-on-decks/id1551335606?platform=iphone)
+- [Cognician](https://info.cognician.com/)
+- [Multiply](https://multiply.co/)
+- [Totcal](https://totcal.com/)
+- [ClojureScript Studio](https://studio.learn-modern-clojurescript.com/)
+- [Ogres, virtual tabletop](https://ogres.app/)
+- [ShipClojure](https://www.shipclojure.com/)
+- [Metosin](https://www.metosin.fi/en)
+
+## Support
+
+You can support this project via [Github Sponsors](https://github.com/sponsors/roman01la) or [Buy Me a Coffee](https://buymeacoffee.com/romanliutikov).
+
 ## Testing
 
 ```
@@ -91,32 +108,8 @@ scripts/test
 _Note: to ensure you're using the right Node.js version, you can use [nvm](https://github.com/nvm-sh/nvm) and run `nvm use`
 once in the directory. Otherwise the Node.js version you use is in the `.nvmrc` file. See nvm repo for more documentation._
 
-## Publishing
-
-1. Update version in core/release.edn, dom/release.edn and in README.md
-2. Update docs if needed
-3. Update CHANGELOG.md
-4. Publish both `core` and `dom` packages to Clojars
-
-```
-cd core && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
-cd dom && CLOJARS_PASSWORD={YOUR_CLOJARS_TOKEN} clj -A:release --skip-tag
-```
-
-## Who's using UIx?
-
-- [Pitch](https://pitch.com/)
-- [Pitch iOS app](https://apps.apple.com/us/app/pitch-collaborate-on-decks/id1551335606?platform=iphone)
-- [Cognician](https://info.cognician.com/)
-- [Multiply](https://multiply.co/)
-- [Totcal](https://totcal.com/)
-- [ClojureScript Studio](https://www.clojurescript.studio/)
-- [Ogres, virtual tabletop](https://ogres.app/)
-- [ShipClojure](https://www.shipclojure.com/)
-- [Metosin](https://www.metosin.fi/en)
-
 ## Thanks to
 
 - [UIx v1](https://github.com/roman01la/uix) for initial set of ideas and learnings
 - [Helix](https://github.com/lilactown/helix) for even more ideas
-- [Pitch](https://github.com/pitch-io) for sponsoring and dogfooding the work
+- [Pitch](https://github.com/pitch-io) for sponsoring initial development and dogfooding the work

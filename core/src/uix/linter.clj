@@ -380,7 +380,7 @@
                    (str/join "\n"))
               "\n"))
        "Update the dependencies vector to be: [" (str/join " " suggested-deps) "]\n"
-       "Read https://beta.reactjs.org/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
+       "Read https://react.dev/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
        (ppr source)))
 
 (defmethod ana/error-message ::deps-array-literal [_ {:keys [source]}]
