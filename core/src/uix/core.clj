@@ -278,6 +278,13 @@
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-callback &env &form f deps))
 
+(defn use-effect-event
+  "EXPERIMENTAL: Creates a stable event handler from a function, allowing it to be used in use-effect
+   without adding the function as a dependency.
+  See: https://react.dev/learn/separating-events-from-effects"
+  [f]
+  f)
+
 (defmacro use-imperative-handle
   "Customizes the instance value that is exposed to parent components when using ref.
 
