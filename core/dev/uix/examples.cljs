@@ -121,17 +121,16 @@
 (defui ^:memo edit-layer [{:keys [mx my on-object-changed on-select idx selected size]}]
   (let [[active? set-active] (uix/use-state false)
         selected? (some? selected)
-        on-move (uix/use-callback
+        on-move (uix/use-effect-event
                   (fn [x y]
-                    (on-object-changed idx (assoc selected :x x :y y)))
-                  [idx selected on-object-changed])
+                    (on-object-changed idx (assoc selected :x x :y y))))
         on-resize (fn [object idx width height]
                     (on-object-changed idx (assoc object :width width :height height)))]
 
     (uix/use-effect
       #(when active?
          (on-move mx my))
-      [selected? active? mx my on-move])
+      [selected? active? mx my])
 
     (uix/use-effect
       #(when selected?

@@ -373,8 +373,8 @@
                              ("use-state" "useState" "use-reducer" "useReducer")
                              (str "`" sym "` is an unnecessary dependency because it's a state updater function with a stable identity")
 
-                             ("use-event" "useEvent")
-                             (str "`" sym "` is an unnecessary dependency because it's a function created using useEvent hook that has a stable identity")
+                             ("use-event" "useEvent" "use-effect-event" "useEffectEvent")
+                             (str "`" sym "` is an unnecessary dependency because it's a function created using useEffectEvent hook that has a stable identity")
 
                              nil)))
                    (str/join "\n"))
@@ -446,7 +446,8 @@
   #{"use-state" "useState"
     "use-reducer" "useReducer"
     "use-ref" "useRef"
-    "use-event" "useEvent"})
+    "use-event" "useEvent"
+    "use-effect-event" "useEffectEvent"})
 
 (defn find-unnecessary-deps [env deps]
   (keep (fn [sym]
