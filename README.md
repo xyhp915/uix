@@ -95,6 +95,16 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 - [ShipClojure](https://www.shipclojure.com/)
 - [Metosin](https://www.metosin.fi/en)
 
+## Contributing
+
+There are several ways how you can contribute to the project:
+
+- Improve documentation: cover missing pieces, add code examples
+- Add, improve docstrings
+- Propose and implement improvements and new features
+- File and fix bugs
+- Increase test coverage
+
 ## Support
 
 You can support this project via [Github Sponsors](https://github.com/sponsors/roman01la) or [Buy Me a Coffee](https://buymeacoffee.com/romanliutikov).
