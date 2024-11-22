@@ -1,5 +1,6 @@
 (ns uix.core-test
-  (:require [clojure.test :refer :all]
+  (:require [cljs.env :as env]
+            [clojure.test :refer :all]
             [uix.core]
             [cljs.analyzer :as ana]))
 
@@ -31,7 +32,8 @@
 (deftest test-$
   (testing "in cljs env"
     (with-redefs [uix.lib/cljs-env? (fn [_] true)
-                  ana/resolve-var (fn [_ _] nil)]
+                  ana/resolve-var (fn [_ _] nil)
+                  env/*compiler* (atom {})]
       (is (= (macroexpand-1 '(uix.core/$ :h1))
              '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
       (is (= (macroexpand-1 '(uix.core/$ identity {} 1 2))

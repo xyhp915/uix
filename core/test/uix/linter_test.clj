@@ -291,7 +291,11 @@
 
     (testing "should lint uix.core/defhook"
       (is (str/includes? out-str (str :uix.linter/missing-deps)))
-      (is (str/includes? out-str "React Hook has missing dependencies: [hook-hook]")))))
+      (is (str/includes? out-str "React Hook has missing dependencies: [hook-hook]")))
+
+    (testing "should fail on missing required props"
+      (is (str/includes? out-str (str :uix.linter/missing-props-keys)))
+      (is (str/includes? out-str "Required keys are missing in props: :on-click, :button/title")))))
 
 ;; === Subscribe call in JVM ===
 

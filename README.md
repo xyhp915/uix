@@ -66,6 +66,7 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 - [State](docs/state.md)
 - [Effects](docs/effects.md)
 - [Props validation](docs/props-validation.md)
+  - [Compile-time props validation](docs/props-validation.md#compile-time-props-validation)
 - [Interop with React](docs/interop-with-react.md)
 - [Interop with Reagent](docs/interop-with-reagent.md)
 - [Code-splitting and React.lazy](docs/code-splitting.md)

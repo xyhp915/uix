@@ -90,3 +90,36 @@ To validate React `children` you can use the following spec.
   (s/or :element :react/element
         :elements :react/elements))
 ```
+
+## Compile-time props validation
+
+You can also opt into props validation at compile time to further improve developer experience and make sure that no code is shipped with missing props.
+
+To enable this feature you have to use clojure.spec (this might change in the future to allow pluggable spec libraries) and switch from `:pre` to `:props` assertion in UIx components.
+
+```clojure
+(s/def :prop/on-click fn?)
+(s/def ::button (s/keys :req-un [:prop/on-click]))
+
+(defui button
+  [{:keys [children on-click] :as props}]
+  {:props [::button]}
+  ($ :button {:on-click on-click}
+    children))
+```
+
+Given such usage of the `button` component UIx will emit compiler warning telling you that required key `:on-click` is missing from props map passed into the element.
+
+```clojure
+($ button {} "press me")
+```
+
+Why is this useful? Similar to other UIx linters, props linter enables validation during local development, in tests and on CI. Which reduces probability of shipping buggy UI.
+
+### Limitations
+
+Of course compile time props checking is limited by dynamic nature of the language. There are some requirements to the code that enables this linter:
+
+- There's no validation for values in props map, only for existence of specified keys (this might change in the future, since it's possible to have partial checking for contents of props map)
+- Only required keys (`:req` and `:req-un`) are checked
+- The check kicks-in only for props written as map literal
