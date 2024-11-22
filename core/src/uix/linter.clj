@@ -376,14 +376,14 @@
                              ("use-state" "useState" "use-reducer" "useReducer")
                              (str "`" sym "` is an unnecessary dependency because it's a state updater function with a stable identity")
 
-                             ("use-event" "useEvent")
-                             (str "`" sym "` is an unnecessary dependency because it's a function created using useEvent hook that has a stable identity")
+                             ("use-event" "useEvent" "use-effect-event" "useEffectEvent")
+                             (str "`" sym "` is an unnecessary dependency because it's a function created using useEffectEvent hook that has a stable identity")
 
                              nil)))
                    (str/join "\n"))
               "\n"))
        "Update the dependencies vector to be: [" (str/join " " suggested-deps) "]\n"
-       "Read https://beta.reactjs.org/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
+       "Read https://react.dev/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
        (ppr source)))
 
 (defmethod ana/error-message ::deps-array-literal [_ {:keys [source]}]
@@ -449,7 +449,8 @@
   #{"use-state" "useState"
     "use-reducer" "useReducer"
     "use-ref" "useRef"
-    "use-event" "useEvent"})
+    "use-event" "useEvent"
+    "use-effect-event" "useEffectEvent"})
 
 (defn find-unnecessary-deps [env deps]
   (keep (fn [sym]

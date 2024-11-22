@@ -5,7 +5,7 @@
             [cljs.analyzer :as ana]
             [clojure.core :as core]
             [clojure.string :as str]
-            [uix.compiler.aot]
+            [uix.compiler.aot :as aot]
             [uix.source]
             [cljs.core]
             [uix.linter]
@@ -105,9 +105,9 @@
             memo-fname (if memo?
                          (with-meta memo-sym (meta fname))
                          fname)
-            var-sym (-> (str ns "/" fname) symbol (with-meta {:tag 'js}))
-            memo-var-sym (-> (str ns "/" memo-fname) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh memo-var-sym fdecl)]
+            var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
+            memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
+            body (aot/rewrite-forms (uix.dev/with-fast-refresh memo-var-sym fdecl))]
         (when props-cond
           (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
         `(do
@@ -136,7 +136,8 @@
   (let [[sym fdecl] (if (symbol? (first fdecl))
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
-        [fname args body props-cond] (parse-defui-sig `fn sym fdecl)]
+        [fname args body props-cond] (parse-defui-sig `fn sym fdecl)
+        body (aot/rewrite-forms body)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})
@@ -309,6 +310,13 @@
   See: https://reactjs.org/docs/hooks-reference.html#usecallback"
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-callback &env &form f deps))
+
+(defn use-effect-event
+  "EXPERIMENTAL: Creates a stable event handler from a function, allowing it to be used in use-effect
+   without adding the function as a dependency.
+  See: https://react.dev/learn/separating-events-from-effects"
+  [f]
+  f)
 
 (defmacro use-imperative-handle
   "Customizes the instance value that is exposed to parent components when using ref.

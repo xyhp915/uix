@@ -175,6 +175,15 @@
   []
   (hooks/use-id))
 
+(defn use-effect-event
+  "EXPERIMENTAL: Creates a stable event handler from a function, allowing it to be used in use-effect
+   without adding the function as a dependency.
+  See: https://react.dev/learn/separating-events-from-effects"
+  [f]
+  (let [ref (use-ref nil)]
+    (reset! ref f)
+    (uix.core/use-callback (fn [& args] (apply @ref args)) [])))
+
 (defn use-sync-external-store
   "For reading and subscribing from external data sources in a way that’s compatible
   with concurrent rendering features like selective hydration and time slicing.

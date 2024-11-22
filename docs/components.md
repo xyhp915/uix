@@ -94,6 +94,19 @@ Similarly in UIx, components take a map of props and an arbitrary number of chil
 ($ button {:on-click js/console.log} "Press me")
 ```
 
+## Performance optimisation
+
+To avoid unnecessary updates, UIx components can be memoised using `uix.core/memo` function or `^:memo` tag.
+
+```clojure
+(defui ^:memo child [props] ...)
+
+(defui parent []
+  ($ child {:x 1}))
+```
+
+As long as `props` doesn't change when `parent` is updated, the `child` component won't rerun. Read [React docs on memoisation](https://react.dev/reference/react/memo) to learn when to use this optimisation.
+
 ## DOM attributes
 
 DOM attributes are written as keywords in kebab-case. Values that are normally strings without whitespace can be written as keywords as well, which may improve autocompletion in your IDE.
