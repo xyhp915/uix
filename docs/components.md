@@ -190,7 +190,7 @@ In Clojure you'd have to `dissoc` keys manually, which is more verbose and can b
              (dissoc props :style)))))
 ```
 
-For this specific reason UIx adds syntatic sugar in `defui` and `$` macros to support the pattern.
+For this specific reason UIx adds syntactic sugar in `defui` and `$` macros to support the pattern.
 
 ```clojure
 (defui button [{:keys [style] props :&}]
@@ -204,4 +204,4 @@ When destructing props in `uix.core/defui` or `uix.core/fn` all keys that are no
 
 ### Props spread syntax
 
-To spread or splice a map into props use `:&` key. This also works only at top level of the map literal and only a single spread is allowed: `{:width 100 :& props1 :& props 2}` is not valid Clojure map because of duplicate keys.
+To spread or splice a map into props, use `:&` key. This works only at top level of the map literal: `{:width 100 :& props1}`. When spreading multiple props, use vector syntax `{:width 100 :& [props1 props2 props3]}`.
