@@ -24,6 +24,12 @@
     #js [component-type js-props (aget props-children 1)]
     #js [component-type js-props]))
 
+(defn- react-context? [x]
+  (identical? (aget x "$$typeof")
+              (js/Symbol.for "react.context")))
+
+
+
 (defn- pojo? [x]
   (and (not (.hasOwnProperty x "$$typeof"))
        (some-> x .-constructor (identical? js/Object))))
@@ -53,6 +59,9 @@
   (let [js-props (-> (aget props-children 0)
                      (attrs/interpret-attrs #js [] true)
                      (aget 0))
+        component-type (if (react-context? component-type)
+                         (.-Provider ^js component-type)
+                         component-type)
         args (normalise-args component-type js-props props-children)]
     (create-element args children)))
 
