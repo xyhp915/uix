@@ -274,6 +274,29 @@
   (reset! state props)
   nil)
 
+(deftest test-render-context
+  (let [result (atom nil)
+        ctx (uix.core/create-context "hello")
+        comp (uix.core/fn []
+               (let [v (uix.core/use-context ctx)]
+                 (reset! result v)))
+        _ (rtl/render
+            ($ ctx {:value "world"}
+               ($ comp)))]
+    (is (= "world" @result))))
+
+(deftest test-context-value-clojure-primitive
+  (let [result (atom nil)
+        ctx (uix.core/create-context :hello)
+        comp (uix.core/fn []
+               (let [v (uix.core/use-context ctx)]
+                 (reset! result v)
+                 nil))
+        _ (rtl/render
+            ($ ctx {:value :world}
+               ($ comp)))]
+    (is (= :world @result))))
+
 (deftest test-forward-ref-interop
   (let [state (atom nil)
         forward-ref-interop-uix-component-ref (uix.core/forward-ref forward-ref-interop-uix-component)

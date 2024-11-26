@@ -66,9 +66,9 @@ Now `Button` can used as a normal React component.
 
 ### On `ref` forwarding
 
-Some third party React components can inject a `ref` into a child element, 
-which requires doing [ref forwarding](https://react.dev/reference/react/forwardRef). It's not needed when passing refs between 
-UIx elements, but is still required for a case when non-UIx component injects a 
+Some third party React components can inject a `ref` into a child element,
+which requires doing [ref forwarding](https://react.dev/reference/react/forwardRef). It's not needed when passing refs between
+UIx elements, but is still required for a case when non-UIx component injects a
 ref into UIx element.
 
 For this specific case there's `uix.core/forward-ref`, which should be used exclusively in such cases. The helper takes care of merging and converting props.

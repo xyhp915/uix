@@ -87,8 +87,8 @@
 
      (defn normalize-element
        "When the second item in the element `v` is either UIx element or `elements-list?`,
-  returns normalized element with empty map at props position
-  and child element shifted into children position"
+       returns normalized element with empty map at props position
+       and child element shifted into children position"
        [env v]
        (if (or (uix-element? env (second v))
                (elements-list? (second v)))
