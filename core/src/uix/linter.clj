@@ -297,7 +297,8 @@
 (defmethod lint-element :element/spread-syntax [_ form env]
   (let [props (nth form 2 nil)]
     (when (and (map? props) (contains? props :&))
-      (when-not (symbol? (:& props))
+      (when-not (or (symbol? (:& props))
+                    (vector? (:& props)))
         (add-error! form ::element-non-ref-spread (form->loc (:& props))))
       (when (empty? (dissoc props :&))
         (add-error! form ::element-unnecessary-spread (form->loc (:& props)))))))

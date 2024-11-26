@@ -4,19 +4,26 @@
             [uix.compiler.attributes :as attrs]
             [uix.lib]))
 
+(defn- props->spread-props [props]
+  (let [spread-props (:& props)]
+    (cond
+      (symbol? spread-props) [spread-props]
+      (vector? spread-props) spread-props
+      :else nil)))
+
 (defmulti compile-spread-props (fn [tag attrs f] tag))
 
 (defmethod compile-spread-props :element [_ attrs f]
-  (let [spread-attrs (:& attrs)]
-    (if (symbol? spread-attrs)
-      `(~'js/Object.assign ~(f (dissoc attrs :&)) (uix.compiler.attributes/convert-props ~spread-attrs (cljs.core/array) false))
-      (f attrs))))
+  (if-let [spread-props (props->spread-props attrs)]
+    `(~'js/Object.assign ~(f (dissoc attrs :&))
+       ~@(for [props spread-props]
+           `(uix.compiler.attributes/convert-props ~props (cljs.core/array) false)))
+    (f attrs)))
 
 (defmethod compile-spread-props :component [_ props f]
-  (let [spread-attrs (:& props)]
-    (if (symbol? spread-attrs)
-      (f `(merge ~(dissoc props :&) ~spread-attrs))
-      (f props))))
+  (if-let [spread-props (props->spread-props props)]
+    (f `(merge ~(dissoc props :&) ~@spread-props))
+    (f props)))
 
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,

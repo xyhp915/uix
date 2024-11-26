@@ -371,7 +371,16 @@
       (is (= spread-props-js-comp (.-type el)))
       (is (= prn (.. el -props -onClick)))
       (is (= 100 (.. el -props -width)))
-      (is (= "blue" (.. el -props -style -color))))))
+      (is (= "blue" (.. el -props -style -color)))))
+  (testing "multiple props"
+    (let [props1 {:width 100 :style {:color :blue}}
+          props2 {:height 200 :style {:color :red}}
+          el (uix.core/$ :div {:on-click prn :& [props1 props2]} "child")]
+      (is (= "div" (.-type el)))
+      (is (= prn (.. el -props -onClick)))
+      (is (= 100 (.. el -props -width)))
+      (is (= 200 (.. el -props -height)))
+      (is (= "red" (.. el -props -style -color))))))
 
 (defn -main []
   (run-tests))
