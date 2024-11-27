@@ -8,30 +8,15 @@ While a UIx component tree can be reloaded in a traditional way, by re-rendering
 
 1. Make sure you have [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi) installed for your browser
 
-2. Install the package `yarn add react-refresh --dev`
+2. Install the package `npm install react-refresh --save-dev`
 
-3. Create a dev-only namespace that will be responsible for managning hot-reloading
-
-```clojure
-(ns my.app.preload
-  (:require [uix.dev]))
-
-;; initializes fast-refresh runtime
-(uix.dev/init-fast-refresh!)
-
-;; called by shadow-cljs after every reload
-(defn ^:dev/after-load refresh []
-  ;; performs components refresh
-  (uix.dev/refresh!))
-```
-
-4. Add the namespace to `:preloads` so that it's only loaded in dev
+3. Add `uix.preload` to `:preloads` so that it's only loaded in dev
 
 ```clojure
 ;; shadow-cljs.edn
 {:builds
  {:build-id
-  {:devtools {:preloads [my.app.preload]}}}}
+  {:devtools {:preloads [uix.preload]}}}}
 ```
 
 5. That's it. Now you can edit a UIx component, hit save, and once reloaded in the browser the local state should be preserved.

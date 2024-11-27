@@ -16,58 +16,7 @@ Some hooks accept an array of dependencies as the second argument. While in pure
 
 ## How are dependencies compared?
 
-When the same dependency has a different value between component updates, the hook will rerun.
-
-```clojure
-;; 1st update
-(uix/use-effect
-  (fn [] (prn x)) ;; prn 1
-  [x]) ;; x = 1
-
-;; 2nd update
-(uix/use-effect
-  (fn [] (prn x))
-  [x]) ;; x = 1, didn't change, do nothing
-
-;; 3rd update
-(uix/use-effect
-  (fn [] (prn x)) ;; prn 2
-  [x]) ;; x = 2, `x` has changed, rerun the hook
-```
-
-This works as expected for primitive values that map to identical constructs in JS like numbers and strings, but what about Clojure's maps and vectors that can be compared by value?
-
-TL;DR: As a rule of thumb, you should prefer to use only primitives as dependencies inside of a hook.
-
-In React, comparison is done by identity, not value, and in JS, while two primitives with the same value have the same identity, two objects with the same value do not. Since a Clojure map is compiled into a JS object, even if two maps has the same value, they will never have the same identity, meaning that React will always see them as different. In other words, comparison in React is done using JS's `===` or `Object.is`, not Clojure's `=`.
-
-Thus it's important to think about what type of values you are passing as dependencies of a hook. This principle applies to JS as well, as objects and arrays are still compared by reference.
-
-```clojure
-;; 1st update
-(let [a {:x 1}]
-  (uix/use-effect
-    (fn [] (prn a)) ;; executed
-    [a])))
-
-;; 2nd update
-(let [a {:x 1}]
-  (uix/use-effect
-    (fn [] (prn a)) ;; executed as well, since `a` is a new map that was created during render
-    [a])))
-
-;; 3rd update
-(let [a {:x 1}]
-  (uix/use-effect
-    (fn [] (prn a)) ;; same, still executed for the same reason
-    [a])))
-```
-
-### What about other ClojureScript primitives?
-
-In addition to JavaScript primitives like `Number` or `String`, ClojureScript has keywords, symbols, and UUIDs that are represented as JS objects when compiled into JS and thus fall into the same trap with equality checks.
-
-To make things more idiomatic and less cumbersome in Clojure, UIx automatically stringifies those three types when passed in the dependency vector.
+When the same dependency has a different value between component updates, the hook will rerun. But unlike in React, where dependencies are compared with `===`, which is referential equality check, in UIx hooks deps are compared with `clojure.core/=`, which means that it's safe to use immutable maps and vectors as deps values.
 
 ## Return value in effect hooks
 
@@ -156,6 +105,7 @@ While custom hooks can be defined as normal functions via `defn`, it's recommend
 ```
 
 Here are some benefits of using `defhook`:
+
 1. Enforced naming convention: hooks names must start with `use-`. The macro performs compile time check.
 2. Enables hooks linting: the macro runs [built-in linter](/docs/code-linting.md) on the body of a custom hook, making sure that hooks are used correctly.
 3. (Future improvement) Optional linter rule to make sure that all hooks in application code are created via `defhook`.

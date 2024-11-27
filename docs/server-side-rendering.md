@@ -69,10 +69,11 @@ For that it's recommended to put shared code in `.cljc` namespaces and use [read
 ;; Hydrates server generated HTML into dynamic React UI
 (dom.client/hydrate-root (js/document.getElementById "root") ($ ui/title-bar))
 ```
-You can find a runnable template repo [here](https://github.com/elken/uix-ssr-demo) which you can adjust yourself as needed. 
+
+You can find a runnable template repo [here](https://github.com/elken/uix-ssr-demo) which you can adjust yourself as needed.
 
 This repo is setup for everything you'll need, and since it's a template repo you can easily use it to bootstrap your own SSR web apps.
 
 ## Hooks
 
-Only a subset of Hooks runs when server rendering. Read React docs to understand how hooks work when server rendering.
+Only a subset of Hooks runs when server rendering. Read [React docs](https://react.dev/) to understand how hooks work when server rendering.

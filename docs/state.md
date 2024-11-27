@@ -11,13 +11,14 @@ UIx is using [React's state hook](https://reactjs.org/docs/hooks-state.html#hook
 
 In some React wrappers state is represented using the `Atom` datatype that has has `reset!` and `swap!` operations. We take a similar naming approach and suffix state updating function with a bang `!` denoting that the operation is mutating a value.
 
-> Similar to `swap!`, `set-value!` from the above example also takes a function that will receive the current value and return the next value of component's state. Unlike `swap!`, this state updating function doesn't take additional arguments that will be passed into a callback.
+> Similar to `clojure.core/swap!`, `set-value!` from the above example also takes a function that will receive the current value and arbitrary number of additional arguments, and return the next value of component's state.
 
 When the initial value has to be computed before it’s used, it is recommended to pass it in a callback to `use-state`. The callback will be executed only once, in component’s initialization stage.
 
 ```clojure
 (defn calculate-initial-value []
-  ;; expensive computation here)
+  ;; expensive computation here
+  )
 
 (uix.core/use-state calculate-initial-value)
 ```

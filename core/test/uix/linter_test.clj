@@ -299,7 +299,11 @@
 
     (testing "should fail on unnecessary spread"
       (is (str/includes? out-str (str :uix.linter/element-unnecessary-spread)))
-      (is (str/includes? out-str "Spreading props into empty map literal doesn't make sense, instead pass props symbol itself.")))))
+      (is (str/includes? out-str "Spreading props into empty map literal doesn't make sense, instead pass props symbol itself.")))
+
+    (testing "should fail on missing required props"
+      (is (str/includes? out-str (str :uix.linter/missing-props-keys)))
+      (is (str/includes? out-str "Required keys are missing in props: :on-click, :button/title")))))
 
 ;; === Subscribe call in JVM ===
 

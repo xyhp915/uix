@@ -274,6 +274,29 @@
   (reset! state props)
   nil)
 
+(deftest test-render-context
+  (let [result (atom nil)
+        ctx (uix.core/create-context "hello")
+        comp (uix.core/fn []
+               (let [v (uix.core/use-context ctx)]
+                 (reset! result v)))
+        _ (rtl/render
+            ($ ctx {:value "world"}
+               ($ comp)))]
+    (is (= "world" @result))))
+
+(deftest test-context-value-clojure-primitive
+  (let [result (atom nil)
+        ctx (uix.core/create-context :hello)
+        comp (uix.core/fn []
+               (let [v (uix.core/use-context ctx)]
+                 (reset! result v)
+                 nil))
+        _ (rtl/render
+            ($ ctx {:value :world}
+               ($ comp)))]
+    (is (= :world @result))))
+
 (deftest test-forward-ref-interop
   (let [state (atom nil)
         forward-ref-interop-uix-component-ref (uix.core/forward-ref forward-ref-interop-uix-component)
@@ -381,6 +404,17 @@
       (is (= 100 (.. el -props -width)))
       (is (= 200 (.. el -props -height)))
       (is (= "red" (.. el -props -style -color))))))
+
+(deftest test-component-fn-name
+  (testing "defui name"
+    (defui component-fn-name [])
+    (is (= "uix.core-test/component-fn-name"
+           (.-name component-fn-name))))
+  (testing "fn name"
+    (let [f1 (uix.core/fn component-fn-name [])
+          f2 (uix.core/fn [])]
+      (is (= "component-fn-name" (.-name f1)))
+      (is (str/starts-with? (.-name f2) "uix-fn")))))
 
 (defn -main []
   (run-tests))

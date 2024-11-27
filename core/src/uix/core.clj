@@ -1,9 +1,11 @@
 (ns uix.core
   "Public API"
   (:refer-clojure :exclude [fn])
-  (:require [clojure.core :as core]
+  (:require [cljs.env :as env]
+            [cljs.analyzer :as ana]
+            [clojure.core :as core]
             [clojure.string :as str]
-            [uix.compiler.aot]
+            [uix.compiler.aot :as aot]
             [uix.source]
             [cljs.core]
             [uix.linter]
@@ -20,18 +22,27 @@
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
-(defn- with-args-component [sym var-sym args body]
-  (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+(defn- with-props-cond [props-cond props-sym]
+  (when props-cond
+    `{:pre ~(mapv (core/fn [spec]
+                    `(preo.core/arg! ~spec ~props-sym))
+                  props-cond)}))
+
+(defn- with-args-component [sym var-sym args body props-cond]
+  (let [props-sym (gensym "props")
+        [args dissoc-ks rest-sym] (uix.lib/rest-props args)]
     `(defn ~sym [props#]
-       (let [clj-props# (glue-args props#)
-             ~args (cljs.core/array clj-props#)
-             ~(or rest-sym `_#) (dissoc clj-props# ~@dissoc-ks)
-             f# (core/fn [] ~@body)]
+       (let [~props-sym (glue-args props#)
+             ~args (cljs.core/array ~props-sym)
+             ~(or rest-sym `_#) (dissoc ~props-sym ~@dissoc-ks)
+             f# (core/fn []
+                  ~(with-props-cond props-cond props-sym)
+                  ~@body)]
          (if ~goog-debug
            (binding [*current-component* ~var-sym]
-             (assert (or (map? clj-props#)
-                         (nil? clj-props#))
-                     (str "UIx component expects a map of props, but instead got " clj-props#))
+             (assert (or (map? ~props-sym)
+                         (nil? ~props-sym))
+                     (str "UIx component expects a map of props, but instead got " ~props-sym))
              (f#))
            (f#))))))
 
@@ -42,18 +53,21 @@
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
-(defn- with-args-fn-component [sym var-sym args body]
-  (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+(defn- with-args-fn-component [sym var-sym args body props-cond]
+  (let [props-sym (gensym "props")
+        [args dissoc-ks rest-sym] (uix.lib/rest-props args)]
     `(core/fn ~sym [props#]
-       (let [clj-props# (glue-args props#)
-             ~args (cljs.core/array clj-props#)
-             ~(or rest-sym `_#) (dissoc clj-props# ~@dissoc-ks)
-             f# (core/fn [] ~@body)]
+       (let [~props-sym (glue-args props#)
+             ~args (cljs.core/array ~props-sym)
+             ~(or rest-sym `_#) (dissoc ~props-sym ~@dissoc-ks)
+             f# (core/fn []
+                  ~(with-props-cond props-cond props-sym)
+                  ~@body)]
          (if ~goog-debug
            (binding [*current-component* ~var-sym]
-             (assert (or (map? clj-props#)
-                         (nil? clj-props#))
-                     (str "UIx component expects a map of props, but instead got " clj-props#))
+             (assert (or (map? ~props-sym)
+                         (nil? ~props-sym))
+                     (str "UIx component expects a map of props, but instead got " ~props-sym))
              (f#))
            (f#))))))
 
@@ -64,12 +78,20 @@
      (str form " doesn't support multi-arity.\n"
           "If you meant to make props an optional argument, you can safely skip it and have a single-arity component.\n
                  It's safe to destructure the props value even if it's `nil`."))
-    (let [[args & fdecl] (first fdecl)]
+    (let [[args & fdecl] (first fdecl)
+          [fdecl props-cond] (if (map? (first fdecl))
+                               [(rest fdecl) (:props (first fdecl))]
+                               [fdecl nil])]
       (uix.lib/assert!
        (>= 1 (count args))
        (str form " is a single argument component taking a map of props, found: " args "\n"
             "If you meant to retrieve `children`, they are under `:children` field in props map."))
-      [fname args fdecl])))
+      [fname args fdecl props-cond])))
+
+(defn- set-display-name [f name]
+  `(do
+     (set! (.-displayName ~f) ~name)
+     (js/Object.defineProperty ~f "name" (cljs.core/js-obj "value" ~name))))
 
 (defmacro
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
@@ -78,7 +100,8 @@
   "Creates UIx component. Similar to defn, but doesn't support multi arity.
   A component should have a single argument of props."
   [sym & fdecl]
-  (let [[fname args fdecl] (parse-defui-sig `defui sym fdecl)]
+  (let [ns (-> &env :ns :name)
+        [fname args fdecl props-cond] (parse-defui-sig `defui sym fdecl)]
     (uix.linter/lint! sym fdecl &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [memo? (-> sym meta :memo)
@@ -88,20 +111,28 @@
                          fname)
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
-            body (uix.dev/with-fast-refresh memo-var-sym fdecl)]
+            body (aot/rewrite-forms (uix.dev/with-fast-refresh memo-var-sym fdecl))]
+        (when props-cond
+          (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
         `(do
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
-              (with-args-component memo-fname memo-var-sym args body))
+              (with-args-component memo-fname memo-var-sym args body props-cond))
            (set! (.-uix-component? ~memo-var-sym) true)
-           (set! (.-displayName ~memo-var-sym) ~(str var-sym))
+           ~(set-display-name memo-var-sym (str var-sym))
            ~(uix.dev/fast-refresh-signature memo-var-sym body)
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
-      (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+      (let [props-sym (gensym "props")
+            [args dissoc-ks rest-sym] (uix.lib/rest-props args)]
         `(defn ~fname [& args#]
+           ~(when props-cond
+              `{:pre ~(mapv (core/fn [spec]
+                              `(preo.core/arg! ~spec ~props-sym))
+                            props-cond)})
            (let [~args args#
-                 ~(or rest-sym `_#) (dissoc (first args#) ~@dissoc-ks)]
+                 ~props-sym (first args#)
+                 ~(or rest-sym `_#) (dissoc ~props-sym ~@dissoc-ks)]
              ~@fdecl))))))
 
 (defmacro fn
@@ -111,20 +142,30 @@
   (let [[sym fdecl] (if (symbol? (first fdecl))
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
-        [fname args body] (parse-defui-sig `fn sym fdecl)]
+        [fname args body props-cond] (parse-defui-sig `fn sym fdecl)
+        body (aot/rewrite-forms body)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
-      (let [var-sym (with-meta sym {:tag 'js})]
+      (let [var-sym (with-meta sym {:tag 'js})
+            ns (-> &env :ns :name)]
+        (when props-cond
+          (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
         `(let [~var-sym ~(if (empty? args)
                            (no-args-fn-component fname var-sym body)
-                           (with-args-fn-component fname var-sym args body))]
+                           (with-args-fn-component fname var-sym args body props-cond))]
            (set! (.-uix-component? ~var-sym) true)
-           (set! (.-displayName ~var-sym) ~(str var-sym))
+           ~(set-display-name var-sym (str var-sym))
            ~var-sym))
-      (let [[args dissoc-ks rest-sym] (uix.lib/rest-props args)]
+      (let [props-sym (gensym "props")
+            [args dissoc-ks rest-sym] (uix.lib/rest-props args)]
         `(core/fn ~fname [& args#]
+           ~(when props-cond
+              `{:pre ~(mapv (core/fn [spec]
+                              `(preo.core/arg! ~spec ~props-sym))
+                            props-cond)})
            (let [~args args#
-                 ~(or rest-sym `_#) (dissoc (first args#) ~@dissoc-ks)]
+                 ~props-sym (first args#)
+                 ~(or rest-sym `_#) (dissoc ~props-sym ~@dissoc-ks)]
              ~@fdecl))))))
 
 (defmacro source
@@ -278,6 +319,13 @@
   See: https://reactjs.org/docs/hooks-reference.html#usecallback"
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-callback &env &form f deps))
+
+(defn use-effect-event
+  "EXPERIMENTAL: Creates a stable event handler from a function, allowing it to be used in use-effect
+   without adding the function as a dependency.
+  See: https://react.dev/learn/separating-events-from-effects"
+  [f]
+  f)
 
 (defmacro use-imperative-handle
   "Customizes the instance value that is exposed to parent components when using ref.

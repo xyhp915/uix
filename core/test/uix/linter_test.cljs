@@ -1,5 +1,6 @@
 (ns uix.linter-test
-  (:require [uix.core :as uix :refer [defui $ defhook]]))
+  (:require [cljs.spec.alpha :as s]
+            [uix.core :as uix :refer [defui $ defhook]]))
 
 (defui test-missing-deps [{:keys [x]}]
   (uix.core/use-effect (fn [] x) []))
@@ -109,6 +110,21 @@
      (prn hook-hook))
    []))
 
+
 ($ :div {:width 100 :& {:on-click prn}})
 
 ($ :div {:& {:on-click prn}})
+
+
+(s/def ::button
+  (s/keys :req-un [:button/on-click]
+          :req [:button/title]
+          :opt [:aria/label]))
+
+(defui button [{:keys [on-click button/title aria/label]}]
+  {:props [::button]}
+  ($ button {:on-click on-click
+             :title title
+             :aria-label label}))
+
+($ button)
