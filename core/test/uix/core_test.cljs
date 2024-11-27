@@ -1,5 +1,6 @@
 (ns uix.core-test
-  (:require [clojure.test :refer [deftest is async testing run-tests]]
+  (:require [cljs.spec.alpha :as s]
+            [clojure.test :refer [deftest is async testing run-tests]]
             [uix.core :refer [defui $]]
             [uix.lib]
             [react :as r]
@@ -415,6 +416,36 @@
           f2 (uix.core/fn [])]
       (is (= "component-fn-name" (.-name f1)))
       (is (str/starts-with? (.-name f2) "uix-fn")))))
+
+(deftest test-props-check
+  (s/def ::x string?)
+  (s/def ::props (s/keys :req-un [::x]))
+  (testing "props check in defui"
+    (uix.core/defui props-check-comp
+      [props]
+      {:props [::props]}
+      props)
+    (try
+      (props-check-comp #js {:argv {:x 1}})
+      (catch js/Error e
+        (is (str/starts-with? (ex-message e) "Invalid argument"))))
+    (try
+      (props-check-comp #js {:argv {:x "1"}})
+      (catch js/Error e
+        (is false))))
+  (testing "props check in fn"
+    (let [f (uix.core/fn
+              [props]
+              {:props [::props]}
+              props)]
+      (try
+        (f #js {:argv {:x 1}})
+        (catch js/Error e
+          (is (str/starts-with? (ex-message e) "Invalid argument"))))
+      (try
+        (f #js {:argv {:x "1"}})
+        (catch js/Error e
+          (is false))))))
 
 (defn -main []
   (run-tests))

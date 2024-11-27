@@ -1,8 +1,10 @@
 (ns uix.core-test
   (:require [cljs.env :as env]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [uix.core :as uix]
-            [cljs.analyzer :as ana]))
+            [cljs.analyzer :as ana]
+            [preo.core]))
 
 (deftest test-parse-sig
   (is (thrown-with-msg? AssertionError #"uix.core\/defui doesn't support multi-arity"
@@ -104,3 +106,31 @@
            (uix/$ :div {:on-click prn :& props} "child")))
     (is (= [identity {:on-click prn :width 100} "child"]
            (uix/$ identity {:on-click prn :& props} "child")))))
+
+(deftest test-props-check
+  (testing "props check in defui"
+    (uix.core/defui props-check-comp
+      [props]
+      {:props [map?]}
+      props)
+    (try
+      (props-check-comp [])
+      (catch AssertionError e
+        (is (str/starts-with? (ex-message e) "Invalid argument"))))
+    (try
+      (props-check-comp {})
+      (catch AssertionError e
+        (is false))))
+  (testing "props check in fn"
+    (let [f (uix.core/fn
+              [props]
+              {:props [map?]}
+              props)]
+      (try
+        (f [])
+        (catch AssertionError e
+          (is (str/starts-with? (ex-message e) "Invalid argument"))))
+      (try
+        (f {})
+        (catch AssertionError e
+          (is false))))))
