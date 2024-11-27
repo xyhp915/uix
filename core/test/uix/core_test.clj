@@ -1,8 +1,10 @@
 (ns uix.core-test
   (:require [cljs.env :as env]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [uix.core]
-            [cljs.analyzer :as ana]))
+            [cljs.analyzer :as ana]
+            [preo.core]))
 
 (deftest test-parse-sig
   (is (thrown-with-msg? AssertionError #"uix.core\/defui doesn't support multi-arity"
@@ -66,3 +68,31 @@
                                     "child2")]
     (is (= el1 [test-clone-element-comp {:title 0 :key 1 :ref 2 :data-id 3 :children ["child2"]}]))
     (is (= el2 [:div {:title 0 :key 1 :ref 2 :data-id 3 :children ["child2"]}]))))
+
+(deftest test-props-check
+  (testing "props check in defui"
+    (uix.core/defui props-check-comp
+      [props]
+      {:props [map?]}
+      props)
+    (try
+      (props-check-comp [])
+      (catch AssertionError e
+        (is (str/starts-with? (ex-message e) "Invalid argument"))))
+    (try
+      (props-check-comp {})
+      (catch AssertionError e
+        (is false))))
+  (testing "props check in fn"
+    (let [f (uix.core/fn
+              [props]
+              {:props [map?]}
+              props)]
+      (try
+        (f [])
+        (catch AssertionError e
+          (is (str/starts-with? (ex-message e) "Invalid argument"))))
+      (try
+        (f {})
+        (catch AssertionError e
+          (is false))))))

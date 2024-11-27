@@ -28,6 +28,10 @@
                     `(preo.core/arg! ~spec ~props-sym))
                   props-cond)}))
 
+(defn- register-spec! [props-cond ns sym]
+  (when props-cond
+    (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond)))
+
 (defn- with-args-component [sym var-sym args body props-cond]
   (let [props-sym (gensym "props")]
     `(defn ~sym [props#]
@@ -108,8 +112,7 @@
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
             body (aot/rewrite-forms (uix.dev/with-fast-refresh memo-var-sym fdecl))]
-        (when props-cond
-          (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
+        (register-spec! props-cond ns sym)
         `(do
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
@@ -119,14 +122,10 @@
            ~(uix.dev/fast-refresh-signature memo-var-sym body)
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
-      (let [props-sym (gensym "props")]
-        `(defn ~fname [& args#]
-           ~(when props-cond
-              `{:pre ~(mapv (core/fn [spec]
-                              `(preo.core/arg! ~spec ~props-sym))
-                            props-cond)})
-           (let [~args args#
-                 ~props-sym (first args#)]
+      (let [args-sym (gensym "args")]
+        `(defn ~fname [& ~args-sym]
+           ~(with-props-cond props-cond `(first ~args-sym))
+           (let [~args ~args-sym]
              ~@fdecl))))))
 
 (defmacro fn
@@ -142,21 +141,17 @@
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})
             ns (-> &env :ns :name)]
-        (when props-cond
-          (swap! env/*compiler* assoc-in [::ana/namespaces ns :uix/specs sym] props-cond))
+        (register-spec! props-cond ns sym)
         `(let [~var-sym ~(if (empty? args)
                            (no-args-fn-component fname var-sym body)
                            (with-args-fn-component fname var-sym args body props-cond))]
            (set! (.-uix-component? ~var-sym) true)
            ~(set-display-name var-sym (str var-sym))
            ~var-sym))
-      (let [props-sym (gensym "props")]
-        `(core/fn ~fname [& args#]
-           ~(when props-cond
-              `{:pre ~(mapv (core/fn [spec]
-                              `(preo.core/arg! ~spec ~props-sym))
-                            props-cond)})
-           (let [~args args#]
+      (let [args-sym (gensym "args")]
+        `(core/fn ~fname [& ~args-sym]
+           ~(with-props-cond props-cond `(first ~args-sym))
+           (let [~args ~args-sym]
              ~@fdecl))))))
 
 (defmacro source
