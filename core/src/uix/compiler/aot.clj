@@ -5,6 +5,27 @@
             [uix.lib])
   (:import (clojure.lang IMapEntry IMeta IRecord MapEntry)))
 
+(defn- props->spread-props [props]
+  (let [spread-props (:& props)]
+    (cond
+      (symbol? spread-props) [spread-props]
+      (vector? spread-props) spread-props
+      :else nil)))
+
+(defmulti compile-spread-props (fn [tag attrs f] tag))
+
+(defmethod compile-spread-props :element [_ attrs f]
+  (if-let [spread-props (props->spread-props attrs)]
+    `(~'js/Object.assign ~(f (dissoc attrs :&))
+       ~@(for [props spread-props]
+           `(uix.compiler.attributes/convert-props ~props (cljs.core/array) false)))
+    (f attrs)))
+
+(defmethod compile-spread-props :component [_ props f]
+  (if-let [spread-props (props->spread-props props)]
+    (f `(merge ~(dissoc props :&) ~@spread-props))
+    (f props)))
+
 (defmulti compile-attrs
   "Compiles a map of attributes into JS object,
   or emits interpretation call for runtime, when a value
@@ -14,23 +35,24 @@
 (defmethod compile-attrs :element [_ attrs {:keys [tag-id-class]}]
   (if (or (map? attrs) (nil? attrs))
     `(cljs.core/array
-      ~(cond-> attrs
-         ;; merge parsed id and class with attrs map
-         :always (attrs/set-id-class tag-id-class)
-         ;; interpret :style if it's not map literal
-         (and (some? (:style attrs))
-              (not (map? (:style attrs))))
-         (assoc :style `(uix.compiler.attributes/convert-props ~(:style attrs) (cljs.core/array) true))
-         ;; camel-casify the map
-         :always (attrs/compile-attrs {:custom-element? (last tag-id-class)})
-         ;; emit JS object literal
-         :always js/to-js))
+      ~(compile-spread-props :element attrs
+         #(cond-> %
+            ;; merge parsed id and class with attrs map
+            :always (attrs/set-id-class tag-id-class)
+            ;; interpret :style if it's not map literal
+            (and (some? (:style %))
+                 (not (map? (:style %))))
+            (assoc :style `(uix.compiler.attributes/convert-props ~(:style %) (cljs.core/array) true))
+            ;; camel-casify the map
+            :always (attrs/compile-attrs {:custom-element? (last tag-id-class)})
+            ;; emit JS object literal
+            :always js/to-js)))
     ;; otherwise emit interpretation call
     `(uix.compiler.attributes/interpret-attrs ~attrs (cljs.core/array ~@tag-id-class) false)))
 
 (defmethod compile-attrs :component [_ props _]
   (if (or (map? props) (nil? props))
-    `(cljs.core/array ~props)
+    (compile-spread-props :component props (fn [props] `(cljs.core/array ~props)))
     `(uix.compiler.attributes/interpret-props ~props)))
 
 (defmethod compile-attrs :fragment [_ attrs _]
@@ -84,10 +106,19 @@
         ret `(>el fragment ~attrs (cljs.core/array ~@children))]
     ret))
 
+(defn- with-spread-props [v]
+  (let [props (nth v 1 nil)]
+    (if (and (map? props) (contains? props :&))
+      (let [spread-props (:& props)]
+        (assoc v 1 `(merge ~(dissoc props :&) ~@(if (vector? spread-props)
+                                                  spread-props
+                                                  [spread-props]))))
+      v)))
+
 (defn compile-element [v {:keys [env] :as opts}]
   (if (uix.lib/cljs-env? env)
     (compile-element* v opts)
-    v))
+    (with-spread-props v)))
 
 ;; ========== forms rewriter ==========
 

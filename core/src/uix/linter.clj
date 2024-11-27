@@ -287,9 +287,26 @@
        (:name v) ", use `use-subscribe` hook instead.\n"
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
+(defmethod ana/error-message ::element-non-ref-spread [_ {:keys [source] :as v}]
+  "Spread syntax can be used only with references to props values. Spreading map literal doesn't make sense, inline it into props map instead.")
+
+(defmethod ana/error-message ::element-unnecessary-spread [_ {:keys [source] :as v}]
+  "Spreading a single props map into empty map literal doesn't make sense, instead pass props symbol itself.")
+
 (defmulti lint-component (fn [type form env]))
 (defmulti lint-element (fn [type form env]))
 (defmulti lint-hook-with-deps (fn [type form env]))
+
+(defmethod lint-element :element/spread-syntax [_ form env]
+  (let [props (nth form 2 nil)]
+    (when (and (map? props) (contains? props :&))
+      (when-not (or (symbol? (:& props))
+                    (vector? (:& props)))
+        (add-error! form ::element-non-ref-spread (form->loc (:& props))))
+      (when (and (empty? (dissoc props :&))
+                 (or (not (vector? (:& props)))
+                     (== 1 (count (:& props)))))
+        (add-error! form ::element-unnecessary-spread (form->loc (:& props)))))))
 
 (defn- run-linters! [mf & args]
   (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn mf)]
