@@ -178,3 +178,46 @@ Sometimes you want to create a class-based React component, for example an error
 ($ error-boundary {:on-error js/console.error}
   ($ some-ui-that-can-error))
 ```
+
+## Props transferring via spread syntax
+
+One thing that is sometimes useful in React/JavaScript, but doesn't exist in Clojure, is object spread syntax for Clojure maps (see [object spread in JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)).
+It's often used for props transferring to underlying components and merging user-defined props with props provided by third-party React components.
+
+```javascript
+function Button({ style, ...props }) {
+  return (
+    <div style={style}>
+      <MaterialButton {...props} />
+    </div>
+  );
+}
+```
+
+In Clojure you'd have to `merge` props manually, which is not only verbose, but also won't work with third-party React components that supply props as JS object, because in UIx props is Clojure map.
+
+```clojure
+(ns app.core
+  (:require [uix.core :as uix :refer [defui $]]
+            ["react-hook-form" :as rhf]))
+
+(defui form [{:keys [input-style]}]
+  (let [f (rhf/useForm)]
+    ($ :form {:on-submit (.-handleSubmit f)}
+      ($ :input (merge {:style input-style}
+                       ;; can't merge JS object returned from .register call
+                       ;; with Clojure map above
+                       (.register f "first-name"))))))
+```
+
+For this specific reason UIx adds syntactic sugar in `$` macro to support props merging regardless of their type.
+To spread (or splice) a map or object into props, use `:&` key. This works only at top level of the map literal: `{:width 100 :& props1}`. When spreading multiple props, use vector syntax `{:width 100 :& [props1 props2 props3]}`.
+
+```clojure
+(defui form [{:keys [input-style]}]
+  (let [f (rhf/useForm)]
+    ($ :form {:on-submit (.-handleSubmit f)}
+      ($ :input {:style input-style :& (.register f "first-name")}))))
+```
+
+> Note that props spreading works the same way how `merge` works in Clojure or `Object.assign` in JS, it's not a "deep merge".
