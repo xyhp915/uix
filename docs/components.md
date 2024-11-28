@@ -181,40 +181,64 @@ Sometimes you want to create a class-based React component, for example an error
 
 ## Props transferring via rest and spread syntax
 
-One thing that is sometimes useful in React/JavaScript, but doesn't exist in Clojure is object spread and rest syntax for Clojure maps (see [object spread in JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)). It's often used for props transferring, to extract a subset of props and pass the rest to underlying components.
+One thing that is sometimes useful in React/JavaScript, but doesn't exist in Clojure is object spread and rest syntax for Clojure maps (see [object spread in JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)). It's often used for props transferring to underlying components and merging user-defined props with props provided by third-party React components.
 
 ```javascript
-function Button({ style, ...props }) {
+import * as rhf from "react-hook-form";
+
+function Form({ inputStyle, ...props }) {
+  const { register, handleSubmit } = rhf.useForm();
+
   return (
-    <div style={style}>
-      <MaterialButton {...props} />
-    </div>
+    <UIForm onSubmit={handleSubmit} {...props}>
+      <input style={inputStyle} {...register("firstName")} />
+    </UIForm>
   );
 }
 ```
 
-In Clojure you'd have to `dissoc` keys manually, which is more verbose and can be frustrating for folks coming from JavaScript.
+In Clojure you'd have to `dissoc` keys manually, which is more verbose and annoying since this pattern is widespread.
+And then you have to `merge` props manually, which is not gonna work for third-party React components that supply props as JS object, because in UIx props is Clojure map.
 
 ```clojure
-(defui button [{:keys [style] :as props}]
-  ($ :div {:style style}
-    ($ MaterialButton
-      (merge {:theme "light"}
-             (dissoc props :style)))))
+(ns app.core
+  (:require [uix.core :as uix :refer [defui $]]
+            ["react-hook-form" :as rhf]))
+
+(defui form [{:keys [input-style] :as props}]
+  (let [f (rhf/useForm)]
+    ($ ui-form (merge {:on-submit (.-handleSubmit f)}
+                      ;; removing unrelated props
+                      (dissoc props :input-style))
+      ($ :input (merge {:style input-style}
+                       ;; can't merge JS object returned from .register call
+                       ;; with Clojure map above
+                       (.register f "first-name"))))))
 ```
 
-For this specific reason UIx adds syntactic sugar in `defui` and `$` macros to support the pattern.
+With associative rest and spread syntax, things become cleaner:
 
 ```clojure
-(defui button [{:keys [style] props :&}]
-  ($ :div {:style style}
-    ($ MaterialButton {:theme "light" :& props})))
+(ns app.core
+  (:require [uix.core :as uix :refer [defui $]]
+            ["react-hook-form" :as rhf]))
+
+(defui form [{:keys [input-style] :& props}] ;; props rest syntax
+  (let [f (rhf/useForm)]
+    ($ ui-form {:on-submit (.-handleSubmit f)
+                ;; props spread
+                :& props}
+      ($ :input (merge {:style input-style
+                        ;; props spread with JS object
+                        :& (.register f "first-name")})))))
 ```
 
 ### Props rest syntax
 
-When destructing props in `uix.core/defui` or `uix.core/fn` all keys that are not mentioned in destructing form will be stored in a map assigned to `:&` keyword. The syntax is composable with all other means of destructuring maps in Clojure, except that `:&` exists only at top level, it won't work for nested maps.
+When destructing props in `uix.core/defui` or `uix.core/fn`, all keys that are not mentioned in destructing form will be stored in a map assigned to `:&` keyword. The syntax is composable with all other means of destructuring maps in Clojure, except that `:&` exists only at top level, it won't work for nested maps.
 
 ### Props spread syntax
 
 To spread or splice a map into props, use `:&` key. This works only at top level of the map literal: `{:width 100 :& props1}`. When spreading multiple props, use vector syntax `{:width 100 :& [props1 props2 props3]}`.
+
+> Note that props spreading works the same way how `merge` works in Clojure or `Object.assign` in JS, it's not a "deep merge".

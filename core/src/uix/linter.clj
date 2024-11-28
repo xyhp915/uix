@@ -291,7 +291,7 @@
   "Spread syntax can be used only with references to props values. Spreading map literal doesn't make sense, inline it into props map instead.")
 
 (defmethod ana/error-message ::element-unnecessary-spread [_ {:keys [source] :as v}]
-  "Spreading props into empty map literal doesn't make sense, instead pass props symbol itself.")
+  "Spreading a single props map into empty map literal doesn't make sense, instead pass props symbol itself.")
 
 (defmulti lint-component (fn [type form env]))
 (defmulti lint-element (fn [type form env]))
@@ -303,7 +303,9 @@
       (when-not (or (symbol? (:& props))
                     (vector? (:& props)))
         (add-error! form ::element-non-ref-spread (form->loc (:& props))))
-      (when (empty? (dissoc props :&))
+      (when (and (empty? (dissoc props :&))
+                 (or (not (vector? (:& props)))
+                     (== 1 (count (:& props)))))
         (add-error! form ::element-unnecessary-spread (form->loc (:& props)))))))
 
 (defn- run-linters! [mf & args]

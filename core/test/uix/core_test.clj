@@ -134,3 +134,13 @@
         (f {})
         (catch AssertionError e
           (is false))))))
+
+(deftest test-spread-props
+  (let [props {:width 100}]
+    (is (= [:div {:on-click prn :width 100} "child"]
+           (uix/$ :div {:on-click prn :& props} "child")))
+    (is (= [identity {:on-click prn :width 100} "child"]
+           (uix/$ identity {:on-click prn :& props} "child")))
+    (is (= [identity {:on-click identity :width 100 :x 1} "child"]
+           (uix/$ identity {:on-click prn :& [props {:on-click identity} {:x 1}]}
+                  "child")))))

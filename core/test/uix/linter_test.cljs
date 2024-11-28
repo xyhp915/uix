@@ -115,6 +115,8 @@
 
 ($ :div {:& {:on-click prn}})
 
+($ :div {:& [{:on-click prn}]})
+
 
 (s/def ::button
   (s/keys :req-un [:button/on-click]

@@ -35,8 +35,7 @@
 (defmethod compile-attrs :element [_ attrs {:keys [tag-id-class]}]
   (if (or (map? attrs) (nil? attrs))
     `(cljs.core/array
-      ~(compile-spread-props :element
-         attrs
+      ~(compile-spread-props :element attrs
          #(cond-> %
             ;; merge parsed id and class with attrs map
             :always (attrs/set-id-class tag-id-class)
@@ -107,10 +106,13 @@
         ret `(>el fragment ~attrs (cljs.core/array ~@children))]
     ret))
 
-(defn with-spread-props [v]
+(defn- with-spread-props [v]
   (let [props (nth v 1 nil)]
     (if (and (map? props) (contains? props :&))
-      (assoc v 1 `(merge ~(dissoc props :&) ~(:& props)))
+      (let [spread-props (:& props)]
+        (assoc v 1 `(merge ~(dissoc props :&) ~@(if (vector? spread-props)
+                                                  spread-props
+                                                  [spread-props]))))
       v)))
 
 (defn compile-element [v {:keys [env] :as opts}]
