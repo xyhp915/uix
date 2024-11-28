@@ -109,7 +109,8 @@
 
                  (= :strs k) (into ret (map str) v)
                  (= :syms k) (into ret v)
-                 (and (keyword? v) (not= v :&)) (conj ret v)
+                 (= :& k) ret
+                 (keyword? v) (conj ret v)
                  (string? v) (conj ret v)
                  (symbol? v) (conj ret v)
                  :else ret))
@@ -117,11 +118,7 @@
 
     (defn rest-props [[sig :as args]]
       (if (map? sig)
-        (let [r (filter (comp #{:&} val) sig)]
-          (if (empty? r)
-            [args]
-            (do
-              (assert (= 1 (count r)) "Multiple :& rest operators are not supported")
-              (let [rest (ffirst r)]
-                [(assoc args 0 (dissoc sig rest)) (used-keys sig) rest]))))
+        (if-not (contains? sig :&)
+          [args]
+          [(update args 0 dissoc :&) (used-keys sig) (:& sig)])
         [args]))))
