@@ -2,17 +2,17 @@
 
 ## November, 2024
 
-Hey yo! November was quite productive, I'm happy to share with you what's new in UIx.
+Hey yo! November was quite productive, let's have a look.
 
 ### `use-effect-event` hook
 
-_v1.3.0_
+_planned for v1.3.0_
 
 This is a missing piece from React, actually they do have it under unstable flag, but it makes life so much easier in certain cases that I've decided to add it to UIx now. The hook was previously named `useEvent`, now it's `useEffectEvent` which sounds more appropriate given the context where it should be used. We adopted userland implementation of the hook at Pitch and it worked great. I highly recommend to [read the docs on `useEffectEvent`](https://react.dev/learn/separating-events-from-effects) to understand what it is doing and when you should use it.
 
 ### Renderable React Context
 
-_v1.3.0_
+_planned for v1.3.0_
 
 To render React Context in UIx you have to use JS interop to render the `Provider` component:
 
@@ -34,7 +34,7 @@ This is not great, I thought it would be nice to treat the context itself as a r
 
 ### Fixed props conversion in React Context
 
-_v1.3.0_
+_planned for v1.3.0_
 
 Normally, UIx shallowly converts Clojure's map of props into JS object when `$` is used to create React element from a third-party React component written in JavaScript.
 
@@ -140,6 +140,8 @@ Check out the PR ([#144](https://github.com/pitch-io/uix/pull/144)) and make sur
 These two are likely additions to future version of UIx.
 
 #### rest and spread syntax for props map [#169](https://github.com/pitch-io/uix/pull/169)
+
+_spread syntax is planned for v1.3.0_
 
 One thing that is sometimes useful in React/JavaScript, but doesn't exist in Clojure is object _spread_ and _rest_ syntax for Clojure maps (see [object spread in JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)). It's often used for props transferring, to extract a subset of props and pass the rest to underlying components.
 
