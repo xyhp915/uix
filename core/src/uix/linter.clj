@@ -246,13 +246,13 @@
   ;; https://github.com/facebook/react/blob/d63cd972454125d4572bb8ffbfeccbdf0c5eb27b/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L457
   (str "React Hook " source " is called conditionally.\n"
        "React Hooks must be called in the exact same order in every component render.\n"
-       "Read https://reactjs.org/docs/hooks-rules.html for more context"))
+       "Read https://react.dev/reference/rules/rules-of-hooks for more context"))
 
 (defmethod ana/error-message ::hook-in-loop [_ {:keys [name column line source]}]
   ;; https://github.com/facebook/react/blob/d63cd972454125d4572bb8ffbfeccbdf0c5eb27b/packages/eslint-plugin-react-hooks/src/RulesOfHooks.js#L438
   (str "React Hook " source " may be executed more than once. Possibly because it is called in a loop.\n"
        "React Hooks must be called in the exact same order in every component render.\n"
-       "Read https://reactjs.org/docs/hooks-rules.html for more context"))
+       "Read https://react.dev/reference/rules/rules-of-hooks for more context"))
 
 ;; re-frame linter
 

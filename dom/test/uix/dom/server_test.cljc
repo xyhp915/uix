@@ -100,9 +100,9 @@
 
 (defui comp-root-array []
   (list
-   ($ :.a "A")
-   ($ :.b "B")
-   ($ :.c "C")))
+   ($ :.a {:key :a} "A")
+   ($ :.b {:key :b} "B")
+   ($ :.c {:key :c} "C")))
 
 (defui comp-header []
   ($ :ul.nav__content
