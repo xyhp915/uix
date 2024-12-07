@@ -1,7 +1,7 @@
 (ns uix.test-utils
   (:require ["react-dom/server" :as rserver]
             ["react-dom/client" :as rdc]
-            ["react-dom/test-utils" :as rdt]
+            [react]
             [goog.object :as gobj]
             [clojure.test :refer [is]]
             [jsdom :refer [JSDOM]]))
@@ -44,9 +44,9 @@
    (let [node (js/document.createElement "div")
          _ (js/document.body.append node)
          root (rdc/createRoot node)]
-     (rdt/act #(.render root el))
+     (react/act #(.render root el))
      (f node)
-     (rdt/act #(.unmount root))
+     (react/act #(.unmount root))
      (after-unmount)
      (.remove node)
      (set! (.-IS_REACT_ACT_ENVIRONMENT js/globalThis) false))))

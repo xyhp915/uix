@@ -1,8 +1,8 @@
 # Hooks linter
 
-UIx has a built-in linter that will help you to use React Hooks correctly. 
-The linter is built into `defui`, `defhook` and the default `uix.core/*` hooks, 
-and 
+UIx has a built-in linter that will help you to use React Hooks correctly.
+The linter is built into `defui`, `defhook` and the default `uix.core/*` hooks,
+and
 implements a set of rules from React's official [ESLint plugin](https://reactjs.org/docs/hooks-rules.html).
 
 While in the original ESLint plugin there are rules that can be considered as suggestions and thus reported as warnings, most of the rules implemented in UIx should always be followed as breaking them will lead to bugs in your UI. For this reason in UIx a broken rule will fail to build so that it's impossible to build a project with problematic behaviour in UI components.
@@ -217,7 +217,9 @@ It is possible to add re-frame specific rules to the linter config file (located
 ```
 
 # Custom linters
+
 UIx exposes a public API to register custom linters, so that you can have your own linting rules specific to your project. There are three types of linters in UIx:
+
 - Component linters `uix.linter/lint-component` — those execute on entire `defui` form
 - Element linters `uix.linter/lint-element` — execute per `$` form
 - Hook linters `uix.linter/lint-hook-with-deps` — execute for every Hook form that takes deps (`use-effect`, `use-callback`, etc.)
@@ -227,7 +229,9 @@ See [core/dev/uix/linters.clj](/core/dev/uix/linters.clj) for a set of complete 
 # clj-kondo
 
 UIx has importable configuration for clj-kondo. You can important the configuration with:
+
 ```bash
 clj-kondo --lint "$(clojure -Spath)" --copy-configs --skip-lint
 ```
-There is only one custom hook, which validates the arguments passed to `uix.core/$`. 
+
+There is only one custom hook, which validates the arguments passed to `uix.core/$`.

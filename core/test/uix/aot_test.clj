@@ -58,3 +58,14 @@
                           (aot/compile-element* nil nil)))
     (is (thrown-with-msg? AssertionError #"Incorrect element type. UIx elements can be one of the following types"
                           (aot/compile-element* [{:hello "world"}] nil)))))
+
+(deftest test-rewrite-forms
+  (is (= (aot/rewrite-forms
+           '(when true
+              ($ :div
+                 (for [x [1 2 3]]
+                   ($ :span x)))))
+         '(when true
+            ($ :div (clojure.core/map
+                      (clojure.core/fn [x] ($ :span x))
+                      [1 2 3]))))))

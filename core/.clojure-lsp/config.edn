@@ -1,0 +1,3 @@
+{;; The lib config is already included in :config-paths, no need to copy the
+ ;; local config under .clj-kondo folder.
+ :copy-kondo-configs? false}

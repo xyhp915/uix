@@ -1,7 +1,10 @@
 (ns uix.core-test
-  (:require [clojure.test :refer :all]
-            [uix.core]
-            [cljs.analyzer :as ana]))
+  (:require [cljs.env :as env]
+            [clojure.string :as str]
+            [clojure.test :refer :all]
+            [uix.core :as uix]
+            [cljs.analyzer :as ana]
+            [preo.core]))
 
 (deftest test-parse-sig
   (is (thrown-with-msg? AssertionError #"uix.core\/defui doesn't support multi-arity"
@@ -31,7 +34,8 @@
 (deftest test-$
   (testing "in cljs env"
     (with-redefs [uix.lib/cljs-env? (fn [_] true)
-                  ana/resolve-var (fn [_ _] nil)]
+                  ana/resolve-var (fn [_ _] nil)
+                  env/*compiler* (atom {})]
       (is (= (macroexpand-1 '(uix.core/$ :h1))
              '(uix.compiler.aot/>el "h1" (cljs.core/array nil) (cljs.core/array))))
       (is (= (macroexpand-1 '(uix.core/$ identity {} 1 2))
@@ -64,3 +68,41 @@
                                     "child2")]
     (is (= el1 [test-clone-element-comp {:title 0 :key 1 :ref 2 :data-id 3 :children ["child2"]}]))
     (is (= el2 [:div {:title 0 :key 1 :ref 2 :data-id 3 :children ["child2"]}]))))
+
+(deftest test-props-check
+  (testing "props check in defui"
+    (uix.core/defui props-check-comp
+      [props]
+      {:props [map?]}
+      props)
+    (try
+      (props-check-comp [])
+      (catch AssertionError e
+        (is (str/starts-with? (ex-message e) "Invalid argument"))))
+    (try
+      (props-check-comp {})
+      (catch AssertionError e
+        (is false))))
+  (testing "props check in fn"
+    (let [f (uix.core/fn
+              [props]
+              {:props [map?]}
+              props)]
+      (try
+        (f [])
+        (catch AssertionError e
+          (is (str/starts-with? (ex-message e) "Invalid argument"))))
+      (try
+        (f {})
+        (catch AssertionError e
+          (is false))))))
+
+(deftest test-spread-props
+  (let [props {:width 100}]
+    (is (= [:div {:on-click prn :width 100} "child"]
+           (uix/$ :div {:on-click prn :& props} "child")))
+    (is (= [identity {:on-click prn :width 100} "child"]
+           (uix/$ identity {:on-click prn :& props} "child")))
+    (is (= [identity {:on-click identity :width 100 :x 1} "child"]
+           (uix/$ identity {:on-click prn :& [props {:on-click identity} {:x 1}]}
+                  "child")))))
