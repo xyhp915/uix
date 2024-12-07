@@ -2,9 +2,9 @@
   "devDependencies": {
     "jsdom": "^22.1.0",
     "process": "^0.11.10",
-    "react": "^19.0.0-rc-5c56b873-20241107",
-    "react-dom": "^19.0.0-rc-5c56b873-20241107",
-    "react-refresh": "^0.14.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-refresh": "^0.14.2",
     "source-map-support": "^0.5.21"
   }
 }
