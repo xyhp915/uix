@@ -45,7 +45,7 @@
     (is (= "<h1>1</h1>" (t/as-string ($ test-memoize-meta-comp {:x 1}))))))
 
 (deftest test-html
-  (is (t/react-element-of-type? ($ :h1 1) "react.element")))
+  (is (t/react-element-of-type? ($ :h1 1) "react.transitional.element")))
 
 (deftest test-defui
   (defui h1 [{:keys [children]}]
