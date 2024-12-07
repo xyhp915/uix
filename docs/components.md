@@ -94,6 +94,19 @@ Similarly in UIx, components take a map of props and an arbitrary number of chil
 ($ button {:on-click js/console.log} "Press me")
 ```
 
+## Performance optimisation
+
+To avoid unnecessary updates, UIx components can be memoised using `uix.core/memo` function or `^:memo` tag.
+
+```clojure
+(defui ^:memo child [props] ...)
+
+(defui parent []
+  ($ child {:x 1}))
+```
+
+As long as `props` doesn't change when `parent` is updated, the `child` component won't rerun. Read [React docs on memoisation](https://react.dev/reference/react/memo) to learn when to use this optimisation.
+
 ## DOM attributes
 
 DOM attributes are written as keywords in kebab-case. Values that are normally strings without whitespace can be written as keywords as well, which may improve autocompletion in your IDE.
@@ -165,3 +178,46 @@ Sometimes you want to create a class-based React component, for example an error
 ($ error-boundary {:on-error js/console.error}
   ($ some-ui-that-can-error))
 ```
+
+## Props transferring via spread syntax
+
+One thing that is sometimes useful in React/JavaScript, but doesn't exist in Clojure, is object spread syntax for Clojure maps (see [object spread in JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)).
+It's often used for props transferring to underlying components and merging user-defined props with props provided by third-party React components.
+
+```javascript
+function Button({ style, ...props }) {
+  return (
+    <div style={style}>
+      <MaterialButton {...props} />
+    </div>
+  );
+}
+```
+
+In Clojure you'd have to `merge` props manually, which is not only verbose, but also won't work with third-party React components that supply props as JS object, because in UIx props is Clojure map.
+
+```clojure
+(ns app.core
+  (:require [uix.core :as uix :refer [defui $]]
+            ["react-hook-form" :as rhf]))
+
+(defui form [{:keys [input-style]}]
+  (let [f (rhf/useForm)]
+    ($ :form {:on-submit (.-handleSubmit f)}
+      ($ :input (merge {:style input-style}
+                       ;; can't merge JS object returned from .register call
+                       ;; with Clojure map above
+                       (.register f "first-name"))))))
+```
+
+For this specific reason UIx adds syntactic sugar in `$` macro to support props merging regardless of their type.
+To spread (or splice) a map or object into props, use `:&` key. This works only at top level of the map literal: `{:width 100 :& props1}`. When spreading multiple props, use vector syntax `{:width 100 :& [props1 props2 props3]}`.
+
+```clojure
+(defui form [{:keys [input-style]}]
+  (let [f (rhf/useForm)]
+    ($ :form {:on-submit (.-handleSubmit f)}
+      ($ :input {:style input-style :& (.register f "first-name")}))))
+```
+
+> Note that props spreading works the same way how `merge` works in Clojure or `Object.assign` in JS, it's not a "deep merge".

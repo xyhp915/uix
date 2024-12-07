@@ -1,5 +1,6 @@
 (ns uix.core-test
-  (:require [clojure.test :refer [deftest is async testing run-tests]]
+  (:require [cljs.spec.alpha :as s]
+            [clojure.test :refer [deftest is async testing run-tests]]
             [uix.core :refer [defui $]]
             [uix.lib]
             [react :as r]
@@ -274,6 +275,29 @@
   (reset! state props)
   nil)
 
+(deftest test-render-context
+  (let [result (atom nil)
+        ctx (uix.core/create-context "hello")
+        comp (uix.core/fn []
+               (let [v (uix.core/use-context ctx)]
+                 (reset! result v)))
+        _ (rtl/render
+            ($ ctx {:value "world"}
+               ($ comp)))]
+    (is (= "world" @result))))
+
+(deftest test-context-value-clojure-primitive
+  (let [result (atom nil)
+        ctx (uix.core/create-context :hello)
+        comp (uix.core/fn []
+               (let [v (uix.core/use-context ctx)]
+                 (reset! result v)
+                 nil))
+        _ (rtl/render
+            ($ ctx {:value :world}
+               ($ comp)))]
+    (is (= :world @result))))
+
 (deftest test-forward-ref-interop
   (let [state (atom nil)
         forward-ref-interop-uix-component-ref (uix.core/forward-ref forward-ref-interop-uix-component)
@@ -326,6 +350,95 @@
           f2 (uix.core/fn [])]
       (is (= "component-fn-name" (.-name f1)))
       (is (str/starts-with? (.-name f2) "uix-fn")))))
+
+(deftest test-props-check
+  (s/def ::x string?)
+  (s/def ::props (s/keys :req-un [::x]))
+  (testing "props check in defui"
+    (uix.core/defui props-check-comp
+      [props]
+      {:props [::props]}
+      props)
+    (try
+      (props-check-comp #js {:argv {:x 1}})
+      (catch js/Error e
+        (is (str/starts-with? (ex-message e) "Invalid argument"))))
+    (try
+      (props-check-comp #js {:argv {:x "1"}})
+      (catch js/Error e
+        (is false))))
+  (testing "props check in fn"
+    (let [f (uix.core/fn
+              [props]
+              {:props [::props]}
+              props)]
+      (try
+        (f #js {:argv {:x 1}})
+        (catch js/Error e
+          (is (str/starts-with? (ex-message e) "Invalid argument"))))
+      (try
+        (f #js {:argv {:x "1"}})
+        (catch js/Error e
+          (is false))))))
+
+(deftest test-spread-props
+  (testing "primitive element"
+    (testing "static"
+      (let [props {:width 100 :style {:color :blue}}
+            el (uix.core/$ :div {:on-click prn :& props} "child")]
+        (is (= "div" (.-type el)))
+        (is (= prn (.. el -props -onClick)))
+        (is (= 100 (.. el -props -width)))
+        (is (= "blue" (.. el -props -style -color)))))
+    (testing "dynamic"
+      (let [tag :div
+            props {:width 100 :style {:color :blue}}
+            el (uix.core/$ tag {:on-click prn :& props} "child")]
+        (is (= "div" (.-type el)))
+        (is (= prn (.. el -props -onClick)))
+        (is (= 100 (.. el -props -width)))
+        (is (= "blue" (.. el -props -style -color))))))
+  (testing "component element"
+    (testing "static"
+      (defui spread-props-comp [])
+      (let [props {:width 100 :style {:color :blue}}
+            el (uix.core/$ spread-props-comp {:on-click prn :& props} "child")
+            props (.. el -props -argv)]
+        (is (= spread-props-comp (.-type el)))
+        (is (= prn (:on-click props)))
+        (is (= 100 (:width props)))
+        (is (= :blue (-> props :style :color)))))
+    (testing "dynamic"
+      (let [static-comp spread-props-comp
+            props {:width 100 :style {:color :blue}}
+            el (uix.core/$ static-comp {:on-click prn :& props} "child")
+            props (.. el -props -argv)]
+        (is (= static-comp (.-type el)))
+        (is (= prn (:on-click props)))
+        (is (= 100 (:width props)))
+        (is (= :blue (-> props :style :color))))))
+  (testing "js interop component element"
+    (defn spread-props-js-comp [])
+    (let [props {:width 100 :style {:color :blue}}
+          el (uix.core/$ spread-props-js-comp {:on-click prn :& props} "child")]
+      (is (= spread-props-js-comp (.-type el)))
+      (is (= prn (.. el -props -onClick)))
+      (is (= 100 (.. el -props -width)))
+      (is (= "blue" (.. el -props -style -color)))))
+  (testing "multiple props"
+    (let [props1 {:width 100 :style {:color :blue}}
+          props2 {:height 200 :style {:color :red}}
+          el (uix.core/$ :div {:on-click prn
+                               :on-mouse-down prn
+                               :& [props1 props2 {:title "hello"} #js {:onClick identity}]}
+                         "child")]
+      (is (= "div" (.-type el)))
+      (is (= prn (.. el -props -onMouseDown)))
+      (is (= 100 (.. el -props -width)))
+      (is (= 200 (.. el -props -height)))
+      (is (= "hello" (.. el -props -title)))
+      (is (= identity (.. el -props -onClick)))
+      (is (= "red" (.. el -props -style -color))))))
 
 (defn -main []
   (run-tests))

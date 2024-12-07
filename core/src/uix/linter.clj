@@ -1,12 +1,15 @@
 (ns uix.linter
-  (:require [clojure.walk]
+  (:require [cljs.env :as env]
+            [clojure.walk]
             [cljs.analyzer :as ana]
             [clojure.string :as str]
             [clojure.pprint :as pp]
             [cljs.analyzer.api :as ana-api]
             [uix.lib]
             [clojure.java.io :as io]
-            [clojure.edn])
+            [clojure.edn]
+            [cljs.spec.alpha]
+            [clojure.spec.alpha])
   (:import (cljs.tagged_literals JSValue)
            (java.io Writer)))
 
@@ -284,9 +287,26 @@
        (:name v) ", use `use-subscribe` hook instead.\n"
        "Read https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame for more context"))
 
+(defmethod ana/error-message ::element-non-ref-spread [_ {:keys [source] :as v}]
+  "Spread syntax can be used only with references to props values. Spreading map literal doesn't make sense, inline it into props map instead.")
+
+(defmethod ana/error-message ::element-unnecessary-spread [_ {:keys [source] :as v}]
+  "Spreading a single props map into empty map literal doesn't make sense, instead pass props symbol itself.")
+
 (defmulti lint-component (fn [type form env]))
 (defmulti lint-element (fn [type form env]))
 (defmulti lint-hook-with-deps (fn [type form env]))
+
+(defmethod lint-element :element/spread-syntax [_ form env]
+  (let [props (nth form 2 nil)]
+    (when (and (map? props) (contains? props :&))
+      (when-not (or (symbol? (:& props))
+                    (vector? (:& props)))
+        (add-error! form ::element-non-ref-spread (form->loc (:& props))))
+      (when (and (empty? (dissoc props :&))
+                 (or (not (vector? (:& props)))
+                     (== 1 (count (:& props)))))
+        (add-error! form ::element-unnecessary-spread (form->loc (:& props)))))))
 
 (defn- run-linters! [mf & args]
   (doseq [[key f] (.getMethodTable ^clojure.lang.MultiFn mf)]
@@ -373,14 +393,14 @@
                              ("use-state" "useState" "use-reducer" "useReducer")
                              (str "`" sym "` is an unnecessary dependency because it's a state updater function with a stable identity")
 
-                             ("use-event" "useEvent")
-                             (str "`" sym "` is an unnecessary dependency because it's a function created using useEvent hook that has a stable identity")
+                             ("use-event" "useEvent" "use-effect-event" "useEffectEvent")
+                             (str "`" sym "` is an unnecessary dependency because it's a function created using useEffectEvent hook that has a stable identity")
 
                              nil)))
                    (str/join "\n"))
               "\n"))
        "Update the dependencies vector to be: [" (str/join " " suggested-deps) "]\n"
-       "Read https://beta.reactjs.org/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
+       "Read https://react.dev/learn/synchronizing-with-effects#step-2-specify-the-effect-dependencies for more context\n"
        (ppr source)))
 
 (defmethod ana/error-message ::deps-array-literal [_ {:keys [source]}]
@@ -446,7 +466,8 @@
   #{"use-state" "useState"
     "use-reducer" "useReducer"
     "use-ref" "useRef"
-    "use-event" "useEvent"})
+    "use-event" "useEvent"
+    "use-effect-event" "useEffectEvent"})
 
 (defn find-unnecessary-deps [env deps]
   (keep (fn [sym]
@@ -523,7 +544,56 @@
     (run-linters! lint-hook-with-deps form env)
     (report-errors! env)))
 
+(defn- keys-spec? [spec]
+  (contains? #{'cljs.spec.alpha/keys
+               'clojure.spec.alpha/keys}
+             (first spec)))
+
+(defn- comp-spec->keys [comp-spec]
+  (let [specs (->> comp-spec
+                   (map (comp
+                          #(if (clojure.spec.alpha/spec? %)
+                             (clojure.spec.alpha/form %)
+                             %)
+                          (merge @@#'cljs.spec.alpha/registry-ref
+                                 @@#'clojure.spec.alpha/registry-ref))))]
+    (doseq [spec (remove keys-spec? specs)]
+      (assert (keys-spec? spec) (str "Only s/keys specs can be used to validate component props")))
+    (->> specs
+         (filter keys-spec?)
+         (mapcat (comp #(apply concat %)
+                       (fn [[req-un req]]
+                         [(map (comp keyword name) req-un)
+                          req])
+                       (juxt :req-un :req)
+                       #(apply array-map %)
+                       rest)))))
+
+(defn- list-missing-props-keys [tag attrs children env]
+  (let [ns (-> env :ns :name)
+        props-cond (get-in @env/*compiler* [::ana/namespaces ns :uix/specs tag])]
+    (when props-cond
+      (let [missing-keys (->> (comp-spec->keys props-cond)
+                              (remove #(if (= :children %)
+                                         (or (contains? attrs %)
+                                             (seq children))
+                                         (contains? attrs %))))]
+        (when (seq missing-keys)
+          (ana/warning ::missing-props-keys (merge env (uix.linter/form->loc (or attrs tag))) {:missing-keys (vec missing-keys)}))))))
+
+
+(defmethod ana/error-message ::missing-props-keys [_ {:keys [missing-keys]}]
+  (str "Required keys are missing in props: " (str/join ", " missing-keys)))
+
+(defmethod lint-element ::missing-props-keys [type form env]
+  (let [v (rest form)
+        [tag attrs & children :as v] (uix.lib/normalize-element env v)]
+    (when (and (uix.lib/cljs-env? env)
+               (symbol? tag)
+               (or (map? attrs) (== 1 (count v))))
+      (list-missing-props-keys tag attrs children env))))
+
 (defn lint-element* [form env]
   (binding [*component-context* (atom {:errors []})]
-    (uix.linter/run-linters! uix.linter/lint-element form env)
+    (run-linters! lint-element form env)
     (report-errors! env)))

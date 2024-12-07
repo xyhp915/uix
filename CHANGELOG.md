@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 1.2.0
+
+### New
+
+- Preload namespace with react-refresh `uix.preload` #178
+- Forms rewriter, rewrites simple `for` into `map` #181
+
+### Improvements
+
+- Readbale component stack traces #171
+
 ## 1.2.0-rc3
 
 ### New
