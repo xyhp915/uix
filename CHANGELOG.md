@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.3.0
+
+### New
+
+- React 19 API compatibility #144
+- add `use-effect-event` hook #186
+- renderable context value, forward compat v19 #190
+- props spread syntax #193
+
+### Fixes
+
+- Fix clj-kondo custom $ hook #185
+
 ## 1.2.0
 
 ### New

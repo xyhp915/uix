@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.pitch</groupId>
   <artifactId>uix.core</artifactId>
-  <version>1.2.0</version>
+  <version>1.3.0</version>
   <name>core</name>
   <licenses>
     <license>
@@ -15,7 +15,7 @@
   <scm>
     <connection>scm:git:git@github.com:pitch-io/uix.git</connection>
     <developerConnection>scm:git:git@github.com:pitch-io/uix.git</developerConnection>
-    <tag>996733f9bc86f9a7fb8712d54519729f22636578</tag>
+    <tag>07895f49f257718e1969064616127f8257b9aa2f</tag>
     <url>https://github.com/pitch-io/uix/tree/master/core</url>
   </scm>
   <dependencies>
@@ -28,6 +28,11 @@
       <groupId>org.clj-commons</groupId>
       <artifactId>hickory</artifactId>
       <version>0.7.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.adamrenklint</groupId>
+      <artifactId>preo</artifactId>
+      <version>0.1.0</version>
     </dependency>
   </dependencies>
   <build>
