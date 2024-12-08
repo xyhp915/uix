@@ -9,6 +9,12 @@
               :output-to "out/benchmark.js"
               :main uix.benchmark/-main}
 
+  :benchmark-browser {:target :browser
+                      :output-dir "out"
+                      :asset-path "/out"
+                      :compiler-options {:pseudo-names true}
+                      :modules {:main {:entries [uix.benchmark]}}}
+
   :linter-test {:target :browser
                 :output-dir "out"
                 :modules {:main {:entries [uix.linter-test]}}}
