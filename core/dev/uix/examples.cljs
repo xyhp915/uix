@@ -1,41 +1,56 @@
 (ns uix.examples
-  (:require [uix.core :as uix :refer [$ defui]]
+  (:require [cljs.spec.alpha :as s]
+            [uix.core :as uix :refer [$ defui]]
             [uix.dom]
-            [uix.dev]))
+            [uix.css :refer [css]]
+            [uix.css.adapter.uix]
+            [shadow.cljs.devtools.client.hud :as shadow.hud]))
 
-;; dev setup
-(uix.dev/init-fast-refresh!)
+(def global-styles
+  (css {:global {:html {:box-sizing :border-box}
+                 "html *" {:box-sizing :inherit}
+                 :body {:margin 0
+                        :font "400 16px Inter, sans-serif"
+                        :letter-spacing 0
+                        :-webkit-font-smoothing :antialiased
+                        :-moz-osx-font-smoothing :grayscale
+                        :line-height 1.4
+                        :text-rendering :optimizeLegibility}}}))
 
-(defn ^:dev/after-load refresh []
-  (uix.dev/refresh!))
-
-;; app code
 (def tools [:rect :circle :text])
 
+(s/def :tool-button/selected? boolean?)
+(s/def :button/label string?)
+(s/def :button/on-press fn?)
+
+(s/def ::tool-button
+  (s/keys :req-un [:tool-button/selected? :button/label :button/on-press]))
+
 (defui tool-button [{:keys [selected? label on-press]}]
+  {:props [::tool-button]}
   ($ :div {:on-click on-press
-           :style {:padding "4px 8px"
-                   :cursor :pointer
-                   :border-radius 3
-                   :color (when selected? "#fff")
-                   :background-color (when selected? "#ff89da")}}
+           :style (css {:padding "4px 8px"
+                        :cursor :pointer
+                        :border-radius 3
+                        :color (when selected? "#fff")
+                        :background-color (when selected? "#ff89da")})}
     label))
 
 (defui toolbar [{:keys [state set-state on-add-shape]}]
   (let [{:keys [grid?]} state]
-    ($ :div {:style {:padding "8px 16px"
-                     :height 46
-                     :display :flex
-                     :align-items :center
-                     :background-color "#fff"
-                     :position :relative
-                     :box-shadow "0 1px 1px rgba(0, 0, 10, 0.2)"}}
+    ($ :div {:style (css {:padding "8px 16px"
+                          :height 46
+                          :display :flex
+                          :align-items :center
+                          :background-color "#fff"
+                          :position :relative
+                          :box-shadow "0 1px 1px rgba(0, 0, 10, 0.2)"})}
        ($ :img {:src "https://raw.githubusercontent.com/pitch-io/uix/master/logo.png"
-                :style {:height "100%"
-                        :margin "0 16px 0 0"}})
+                :style (css {:height "100%"
+                             :margin "0 16px 0 0"})})
        (for [t tools]
-         ($ tool-button {:key t :label (name t) :on-press #(on-add-shape t)}))
-       ($ :div {:style {:width 1 :height "60%" :background-color "#c1cdd0" :margin "0 8px"}})
+         ($ tool-button {:key t :label (name t) :on-press #(on-add-shape t) :selected? false}))
+       ($ :div {:style (css {:width 1 :height "60%" :background-color "#c1cdd0" :margin "0 8px"})})
        ($ tool-button {:label "grid"
                        :selected? grid?
                        :on-press #(set-state (update state :grid? not))}))))
@@ -147,7 +162,15 @@
               :stroke-color "#0000ff"
               :fill-color :transparent))))))
 
+(s/def :canvas/width number?)
+(s/def :canvas/height number?)
+(s/def :fn/on-object-changed fn?)
+
+(s/def :background-layer/props
+  (s/keys :req-un [:canvas/width :canvas/height :fn/on-mouse-down]))
+
 (defui ^:memo background-layer [{:keys [width height on-mouse-down]}]
+  {:props [:background-layer/props]}
   ($ rect
     {:on-mouse-down #(on-mouse-down)
      :x 0
@@ -157,7 +180,24 @@
      :fill-color :transparent
      :stroke-color :none}))
 
+(s/def :state/grid? boolean?)
+(s/def :state/selected (s/nilable number?))
+(s/def :state/objects (s/coll-of map?))
+
+(s/def :state/canvas
+  (s/keys :req-un [:state/selected :state/objects]))
+
+(s/def ::state
+  (s/keys :req-un [:state/grid? :state/canvas]))
+
+(s/def :fn/on-object-changed fn?)
+(s/def :fn/on-object-select fn?)
+
+(s/def :canvas/props
+  (s/keys :req-un [::state :fn/on-object-changed :fn/on-object-select]))
+
 (defui ^:memo canvas [{:keys [state on-object-changed on-object-select]}]
+  {:props [:canvas/props]}
   (let [{:keys [grid? canvas]} state
         [[width height] set-size] (uix/use-state [0 0])
         [[ox oy] set-offset] (uix/use-state [0 0])
@@ -174,14 +214,14 @@
     ($ :div {:ref ref
              :on-mouse-move (fn [^js e]
                               (set-mouse [(.-clientX e) (.-clientY e)]))
-             :style {:flex 1
-                     :position :relative
-                     :background-color "#ebeff0"}}
-      ($ :svg {:style {:width width
-                       :height height
-                       :position :absolute
-                       :left 0
-                       :top 0}
+             :style (css {:flex 1
+                          :position :relative
+                          :background-color "#ebeff0"})}
+      ($ :svg {:style (css {:width width
+                            :height height
+                            :position :absolute
+                            :left 0
+                            :top 0})
                :view-box (str "0 0 " width " " height)}
         (when grid?
           ($ :<>
@@ -241,19 +281,48 @@
                               (set-state
                                 #(assoc-in % [:canvas :objects idx] object)))
                             [])]
-    ($ :div {:style {:font-family "Inter"
-                     :font-size 14
-                     :display :flex
-                     :flex-direction :column
-                     :width "100vw"
-                     :height "100vh"}}
+    ($ :div {:style (css {:font-family "Inter"
+                          :font-size 14
+                          :display :flex
+                          :flex-direction :column
+                          :width "100vw"
+                          :height "100vh"})}
        ($ toolbar {:state state :set-state set-state :on-add-shape on-add-shape})
        ($ canvas {:state state
                   :on-object-select on-object-select
                   :on-object-changed on-object-changed}))))
 
+(def shadow-error-boundary
+  (uix.core/create-error-boundary
+    {:derive-error-state (fn [error]
+                           {:error error})}
+    (fn [[state _set-state!] {:keys [children]}]
+      (if-let [error (:error state)]
+        (do (shadow.hud/dom-insert
+              [:div
+               {:id shadow.hud/hud-id
+                :style {:position "fixed"
+                        :left "0px"
+                        :top "0px"
+                        :bottom "0px"
+                        :right "0px"
+                        :color "#000"
+                        :background-color "#fff"
+                        :border "5px solid red"
+                        :z-index "10000"
+                        :padding "20px"
+                        :overflow "auto"
+                        :font-family "monospace"
+                        :font-size "12px"}}
+               [:div {:style "color: red; margin-bottom: 10px; font-size: 2em;"}
+                (.. error -constructor -name)]
+               [:pre (pr-str error)]])
+            nil)
+        children))))
+
+
 ;; init app
 (defonce -init
          (let [root (uix.dom/create-root (js/document.getElementById "root"))]
-           (uix.dom/render-root ($ app) root)
+           (uix.dom/render-root ($ shadow-error-boundary ($ app)) root)
            nil))

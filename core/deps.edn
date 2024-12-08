@@ -23,4 +23,5 @@
                       :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
                                    org.clojure/clojurescript {:mvn/version "1.11.60"}
                                    thheller/shadow-cljs {:mvn/version "2.23.1"}
-                                   uix.dom/uix.dom {:local/root "../dom"}}}}}
+                                   uix.dom/uix.dom {:local/root "../dom"}
+                                   com.github.roman01la/uix.css {:mvn/version "0.2.1"}}}}}
