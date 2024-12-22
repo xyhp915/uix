@@ -6,12 +6,12 @@
             [scheduler]
             [uix.core :as uix]))
 
+(def ^:private rat-key "__rat")
+
 (defn- cleanup-ref [ref]
-  (when-let [^ratom/Reaction temp-ref (aget ref "__rat")]
-    (remove-watch ref temp-ref)
-    (when-let [watching (.-watching temp-ref)]
-      (set! (.-watching temp-ref)
-            (.filter watching #(not (identical? ref %)))))))
+  (when-let [^ratom/Reaction temp-ref (aget ref rat-key)]
+    (ratom/dispose! temp-ref)
+    (aset ref rat-key nil)))
 
 (defn- use-batched-subscribe
   "Takes an atom-like ref type and returns a function
@@ -42,8 +42,7 @@
     =)) ;; value equality check
 
 (defn- run-reaction [^js ref]
-  (let [key "__rat"
-        ^js rat (aget ref key)
+  (let [^js rat (aget ref rat-key)
         on-change (fn [_]
                     ;; When the ref is updated, schedule all listeners in a batch
                     (when-let [listeners (.-react-listeners ref)]
@@ -52,13 +51,13 @@
                                                               (listener)))))]
     (if (nil? rat)
       (ratom/run-in-reaction
-        #(-deref ref) ref key on-change {:no-cache true})
+        #(-deref ref) ref rat-key on-change {:no-cache true})
       (._run rat false))))
 
 ;; Public API
 
 (defn use-reaction
-  "Takes Reagent's Reaction,
+  "Takes Reagent's Reaction, Track or Cursor type,
   subscribes UI component to changes in the reaction
   and returns current state value of the reaction"
   [reaction]
