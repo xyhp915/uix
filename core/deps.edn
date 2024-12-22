@@ -12,7 +12,8 @@
                                org.clojure/clojurescript {:mvn/version "1.11.60"}
                                thheller/shadow-cljs {:mvn/version "2.23.1"}
                                uix.dom/uix.dom {:local/root "../dom"}
-                               clj-diffmatchpatch/clj-diffmatchpatch {:mvn/version "0.0.9.3"}}}
+                               clj-diffmatchpatch/clj-diffmatchpatch {:mvn/version "0.0.9.3"}
+                               re-frame/re-frame {:mvn/version "1.4.3"}}}
 
            :release {:extra-paths ["dev"]
                      :extra-deps {appliedscience/deps-library {:mvn/version "0.3.4"}
