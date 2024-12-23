@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.3.1
+
+### New
+
+- Extend `use-reaction` to Reagent's `Track` and `Cursor` types #199
+
 ## 1.3.0
 
 ### New
