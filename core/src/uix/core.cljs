@@ -344,3 +344,7 @@
 ;; SSR helpers
 (def client? (exists? js/document)) ;; cljs can run in a browser or Node.js
 (def server? (not client?))
+
+(defn ^{:jsdoc ["@nosideeffects"]} set-display-name [f name]
+  (set! (.-displayName f) name)
+  (js/Object.defineProperty f "name" #js {:value name}))
