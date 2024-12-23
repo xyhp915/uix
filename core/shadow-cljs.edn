@@ -18,6 +18,9 @@
   :linter-test {:target :browser
                 :output-dir "out"
                 :modules {:main {:entries [uix.linter-test]}}}
+  :dce-test {:target :browser
+             :output-dir "out"
+             :modules {:main {:entries [uix.dce-test]}}}
 
   :examples {:target :browser
              :output-dir "out"
