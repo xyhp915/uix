@@ -440,5 +440,18 @@
       (is (= identity (.. el -props -onClick)))
       (is (= "red" (.. el -props -style -color))))))
 
+(deftest test-204
+  (testing "should use Reagent's input when Reagent's context is reactive"
+    (set! reagent.impl.util/*non-reactive* false)
+    (is (identical? (.-type ($ :input)) uix.compiler.input/reagent-input)))
+  (testing "should use Reagent's input when enabled explicitly"
+    (set! uix.compiler.input/*use-reagent-input-enabled?* true)
+    (is (identical? (.-type ($ :input)) uix.compiler.input/reagent-input))
+    (set! uix.compiler.input/*use-reagent-input-enabled?* nil))
+  (testing "should not use Reagent's input when enabled explicitly"
+    (set! uix.compiler.input/*use-reagent-input-enabled?* false)
+    (is (identical? (.-type ($ :input)) "input"))
+    (set! uix.compiler.input/*use-reagent-input-enabled?* nil)))
+
 (defn -main []
   (run-tests))
