@@ -12,9 +12,13 @@
   [input-type]
   (contains? these-inputs-have-selection-api input-type))
 
+(def ^:dynamic *use-reagent-input-enabled?* nil)
+
 (defn should-use-reagent-input? []
-  (and (exists? js/reagent.impl.util.*non-reactive*)
-       (not js/reagent.impl.util.*non-reactive*)))
+  (if (boolean? *use-reagent-input-enabled?*)
+    *use-reagent-input-enabled?*
+    (and (exists? js/reagent.impl.util.*non-reactive*)
+         (not js/reagent.impl.util.*non-reactive*))))
 
 (defn do-after-render [f]
   (js/reagent.impl.batching.do-after-render f))
