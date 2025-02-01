@@ -1,5 +1,23 @@
 # UIx Devlog
 
+## December, 2024
+
+### React 19
+
+Since 1.3.0 UIx is compatible with React 19, the change mainly wraps and exposes new public APIs in `react` and `react-dom` packages.
+
+### Reagent interop
+
+Updated `uix.re-frame/use-reaction` hook to supprt Reagent's `Cursor` and `Track` types, [669d58](https://github.com/pitch-io/uix/commit/669d588fc9b14b07ae3720130c794bf8b91d3a27).
+
+### Unused components removal
+
+Now Google Closure will remove unused UIx components, [8462d7](https://github.com/pitch-io/uix/commit/8462d79e45ea550af79dad2385e15de2f540af2b).
+
+This one is interesting. It turned out that a single side effecting operation prevented unused components to be removed, namely this line `(js/Object.defineProperty component "name" #js {:value name})`. The code adds readbale name to component's function, which is then used in stack traces and React DevTools.
+
+Instead of removing this line I've dug into Google Closure and found that there's JSDoc annotation that tells the compiler to treat a piece of code as if it doesn't perform side effects: `@nosideeffects`. A string of JSDoc can be added to a function in ClojureScript using `:jsdoc` meta: `^{:jsdoc ["@nosideeffects"]}`.
+
 ## November, 2024
 
 Hey yo! November was quite productive, let's have a look.
