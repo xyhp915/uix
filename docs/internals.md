@@ -6,11 +6,11 @@ This document describes internals of UIx to give you a better overview how the l
 
 On the surface UIx is a wrapper for React.js, it consists of two packages: `uix.core` and `uix.dom`, the former wraps `react` and the latter wraps `react-dom`.
 
-![](uix_internals_1.png)
+![](uix_internals_1.jpg)
 
 ## uix/dom package
 
-`uix.dom` namespace is a thin wrapper around `react-dom` API, as simple as that. `uix.dom.server` is a custom made serializer that allows to render UIx components on JVM (of course third-party JS components won't run on JVM, so the JVM renderer is mostly useful for purely UIx made UIs or HTML templating, think static website generators).
+`uix.dom` namespace is a thin wrapper around `react-dom` API. `uix.dom.server` CLJS ns wraps `react-dom/server`, but CLJ ns is a custom made serializer that allows to render UIx components on JVM (of course third-party JS components won't run on JVM, so the JVM renderer is mostly useful for purely UIx made UIs or HTML templating, think static website generators). Also `uix.dom` includes a linter that validates DOM nodes.
 
 ## uix/core package
 
@@ -44,6 +44,10 @@ This part, while there's not much code to it, is probably where the most of comp
 
 The compiler is not strict and makes a set of tradeoffs to provide flexibility for developers. Thus it's allowed to have dynamic (resolved at runtime) props, although in that case props map will be interpreted at runtime.
 
+#### Reagent's input
+
+`uix.compiler.input` namespace provides Reagent's input DOM node wrapper to make inputs compatible with re-frame, since re-frame's update queue is always async, but in pure React, or rather browsers in general, user input should be always handled synchronously to avoid visual glitches such as lost characters or caret position.
+
 ### Hooks
 
 UIx wraps all React's default hooks and adds an extra layer to hide differences between JS and Clojure world, to make sure that writing is a bit less annoying:
@@ -59,3 +63,7 @@ UIx wraps all React's default hooks and adds an extra layer to hide differences 
 The linter leverages ClojureScript's analyazer to retrieve information about code structure at compile-time. This data provides info about local and global vars, usages of vars, and of course the data structure representing the code being analyzed.
 
 When analyzing the linter collects and reports errors into ClojureScript's analyzer, that then takes care of printing those errors in terminal, failing a build and propagating them into shadow-cljs's on screen error display.
+
+### Re-frame
+
+`uix.re-frame` namespace provides integration of re-frame subscriptions into UIx components, via `use-subscribe` and `use-reaction` hooks.
