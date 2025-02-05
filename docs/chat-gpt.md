@@ -11,7 +11,7 @@ JS names should be translated into idiomatic Clojure names, for example is-visib
 Translate the following code to Clojure
 ```
 
-The prompt works quite well, here an example:
+The prompt works quite well, here's an example:
 
 ```js
 // input
