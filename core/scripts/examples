@@ -6,7 +6,7 @@ set -o pipefail
 echo "Installing NPM deps..."
 npm ci
 
-echo "<link rel=\"stylesheet\" href=\"https://unpkg.com/tailwindcss@3.2.4/src/css/preflight.css\"><link rel=\"stylesheet\" href=\"https://rsms.me/inter/inter.css?v=3.19\"><div id=root></div><script src="out/main.js"></script>" > index.html
+echo "<link rel=\"stylesheet\" href=\"https://unpkg.com/tailwindcss@3.2.4/src/css/preflight.css\"><link rel=\"stylesheet\" href=\"https://rsms.me/inter/inter.css?v=3.19\"><link rel=\"stylesheet\" href=\"out/main.css\"><div id=root></div><script src="out/main.js"></script>" > index.html
 
 echo "Starting examples build server..."
 clojure -A:examples -M -m shadow.cljs.devtools.cli watch examples

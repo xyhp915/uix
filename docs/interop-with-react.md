@@ -58,13 +58,15 @@ To achieve this we have to write interop layer using `uix.core/as-react` helper 
       ($ button {:on-click onClick :children children}))))
 ```
 
-Now `Button` can used as a normal React component.
+Now `Button` can be used as a normal React component.
 
 ```js
 <Button onClick={console.log}>press me</Button>
 ```
 
 ### On `ref` forwarding
+
+[_Not relevant for React v19 or later_](https://react.dev/reference/react/forwardRef)
 
 Some third party React components can inject a `ref` into a child element,
 which requires doing [ref forwarding](https://react.dev/reference/react/forwardRef). It's not needed when passing refs between
