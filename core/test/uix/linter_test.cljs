@@ -92,17 +92,13 @@
      [x])))
 
 (defui test-100 [props]
-  ($ :<>
-     ($ :span
-        {}
-        (for [i (range 10)]
-          (->> {:not-key (str "bar-" i)}
-               ($ :span))))
-     ($ :span
-        {}
-        (for [i (range 10)]
-          (->> {:key (str "foo-" i)}
-               ($ :span))))))
+  ($ :span
+     {}
+     (for [i (range 10)]
+       (->> {:not-key (str "bar-" i)}
+            ($ :span)))))
+
+
 
 (defhook use-hook [hook-hook]
   (uix/use-effect
@@ -130,3 +126,17 @@
              :aria-label label}))
 
 ($ button)
+
+
+(defui test-interop-ref-read-write []
+  (let [ref (uix/use-ref nil)]
+    (set! (.-current ref) 1)
+    (prn (.-current ref))))
+
+
+(defui test-100-2 []
+  ($ :span
+     {}
+     (for [i (range 10)]
+       (->> {:key (str "foo-" i)}
+            ($ :span)))))

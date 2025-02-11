@@ -12,7 +12,7 @@
 (defn lint-syms [syms expr-fn]
   (binding [uix.linter/*component-context* (atom {:errors []})]
     (let [exprs (map expr-fn syms)
-          _ (uix.linter/lint-body! exprs)
+          _ (uix.linter/lint-body! exprs {})
           errors (:errors @uix.linter/*component-context*)]
       [exprs (map :source-context errors)])))
 
@@ -303,7 +303,13 @@
 
     (testing "should fail on missing required props"
       (is (str/includes? out-str (str :uix.linter/missing-props-keys)))
-      (is (str/includes? out-str "Required keys are missing in props: :on-click, :button/title")))))
+      (is (str/includes? out-str "Required keys are missing in props: :on-click, :button/title")))
+
+    (testing "should fail on ref interop read/write"
+      (is (str/includes? out-str (str :uix.linter/interop-ref-read)))
+      (is (str/includes? out-str (str :uix.linter/interop-ref-write)))
+      (is (str/includes? out-str "use-ref hook in UIx returns Atom-like ref, use @ instead of .-current to access its value."))
+      (is (str/includes? out-str "use-ref hook in UIx returns Atom-like ref, use reset! instead of set! to update its value.")))))
 
 ;; === Subscribe call in JVM ===
 

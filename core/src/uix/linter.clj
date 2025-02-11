@@ -30,12 +30,35 @@
                    {}))]
     (get-in config path)))
 
-(defn hook? [sym]
-  (and (symbol? sym)
-       (some? (re-find #"^use-|use[A-Z]" (name sym)))))
+(defn hook?
+  ([sym]
+   (hook? sym nil))
+  ([sym hook-name]
+   (and (symbol? sym)
+        (if hook-name
+          (some? (= hook-name (name sym)))
+          (some? (re-find #"^use-|use[A-Z]" (name sym)))))))
 
-(defn hook-call? [form]
-  (and (list? form) (hook? (first form))))
+(defn hook-call?
+  ([form]
+   (hook-call? form nil))
+  ([form hook-name]
+   (and (list? form) (hook? (first form) hook-name))))
+
+(defn interop-prop? [ast prop-name]
+  (and (= :host-field (:op ast))
+       (= prop-name (:field ast))))
+
+(defn interop-ref-read? [ast]
+  (when (interop-prop? ast 'current)
+    (let [form (-> ast :target :init :form)]
+      (uix.linter/hook-call? form "use-ref"))))
+
+(defn interop-ref-write? [ast]
+  (when (and (= :set! (:op ast))
+             (interop-prop? (:target ast) 'current))
+    (let [form (-> ast :target :target :init :form)]
+      (uix.linter/hook-call? form "use-ref"))))
 
 (def effect-hooks
   #{"use-effect" "useEffect"
@@ -50,8 +73,9 @@
 (defn find-env-for-form [type form]
   (case type
     (::hook-in-branch ::hook-in-loop
-                      ::deps-coll-literal ::literal-value-in-deps
-                      ::unsafe-set-state ::missing-key)
+     ::deps-coll-literal ::literal-value-in-deps
+     ::unsafe-set-state ::missing-key
+     ::interop-ref-read ::interop-ref-write)
     (form->loc form)
 
     ::inline-function
@@ -233,8 +257,33 @@
      expr)
     nil))
 
-(defn lint-body! [exprs]
+(defn- list-ast! [exprs env]
+  (binding [ana/*cljs-warnings* (into (zipmap (keys ana/*cljs-warnings*) (repeat false))
+                                      {::interop-ref-read true
+                                       ::interop-ref-write true})]
+    (loop [[node & nodes] (uix.linter/ast->seq (ana/analyze env (last exprs)))]
+      (cond
+        (interop-ref-read? node)
+        (do (add-error! (:form node) ::interop-ref-read)
+            (recur nodes))
+
+        (interop-ref-write? node)
+        (do
+          (add-error! (:form node) ::interop-ref-write)
+          (recur (rest nodes)))
+
+        (seq nodes) (recur nodes)))))
+
+(defn lint-body! [exprs env]
+  (when (uix.lib/cljs-env? env)
+    (list-ast! exprs env))
   (run! lint-body!* exprs))
+
+(defmethod ana/error-message ::interop-ref-read [_ _]
+  "use-ref hook in UIx returns Atom-like ref, use @ instead of .-current to access its value.")
+
+(defmethod ana/error-message ::interop-ref-write [_ _]
+  "use-ref hook in UIx returns Atom-like ref, use reset! instead of set! to update its value.")
 
 (defmethod ana/error-message ::missing-key [_ _]
   (str "UIx element is missing :key attribute, which is required\n"
@@ -325,7 +374,7 @@
 
 (defn lint! [sym body form env]
   (binding [*component-context* (atom {:errors []})]
-    (lint-body! body)
+    (lint-body! body env)
     (lint-re-frame! body env)
     (run-linters! lint-component form env)
     (report-errors! env {:name (str (-> env :ns :name) "/" sym)})))
