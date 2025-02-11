@@ -2,7 +2,11 @@
 
 _Idiomatic ClojureScript interface to modern React.js_
 
-> "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
+> “UIx eliminates the learning curve for React developers new to ClojureScript, allowing them to write familiar patterns seamlessly.” – Misha Karpenko, Pitch
+
+> “UIx allows us to leverage the modern React ecosystem to efficiently build ClojureScript apps.” – Juho Teperi, Metosin
+
+> “UIx offers a seamless React integration, making code more efficient with powerful component composition, hooks, and customizable linting for enforcing best practices.” – Chris Etheridge, Cognician
 
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
