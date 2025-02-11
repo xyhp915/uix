@@ -11,6 +11,8 @@ JS names should be translated into idiomatic Clojure names, for example is-visib
 Translate the following code to Clojure
 ```
 
+Alternatively, if you are using paid account with large enough context window, grab entire docs packed into a single markdown file here: [repomix-output.llm.md](./repomix-output.llm.md) and feed it into an LLM together with your question.
+
 The prompt works quite well, here's an example:
 
 ```js
