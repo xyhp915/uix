@@ -14,12 +14,12 @@
   (uix.core/defui test-use-ref-comp [_]
     (let [ref1 (uix.core/use-ref)
           ref2 (uix.core/use-ref 0)]
-      (is (nil? (.-current ref1)))
       (is (nil? @ref1))
-      (set! (.-current ref1) :x)
-      (is (= :x (.-current ref1)))
+      (is (nil? @ref1))
+      (reset! ref1 :x)
+      (is (= :x @ref1))
 
-      (is (= 0 (.-current ref2)))
+      (is (= 0 @ref2))
       (is (= 0 @ref2))
       (reset! ref2 1)
       (is (= 1 @ref2))
