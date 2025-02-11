@@ -91,6 +91,8 @@ Note that unlike `r/atom` in Reagent, a ref in UIx and React is not a state prim
     ($ :div {:ref ref})))
 ```
 
+> UIx has a built-in linter that will warn you when using JS interop syntax to read and update UIx refs, e.g. `(.-current ref)`. There's no reason to use interop syntax when a more idiomatic Atom-like interface is available.
+
 ## Creating custom hooks
 
 While custom hooks can be defined as normal functions via `defn`, it's recommended to use `uix.core/defhook` macro when creating custom hooks.
