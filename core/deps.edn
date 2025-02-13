@@ -10,7 +10,7 @@
            :test {:extra-paths ["test" "dev"]
                   :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
                                org.clojure/clojurescript {:mvn/version "1.11.60"}
-                               thheller/shadow-cljs {:mvn/version "2.23.1"}
+                               thheller/shadow-cljs {:mvn/version "2.28.20"}
                                uix.dom/uix.dom {:local/root "../dom"}
                                clj-diffmatchpatch/clj-diffmatchpatch {:mvn/version "0.0.9.3"}
                                re-frame/re-frame {:mvn/version "1.4.3"}}}
@@ -23,6 +23,6 @@
            :examples {:extra-paths ["dev"]
                       :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
                                    org.clojure/clojurescript {:mvn/version "1.11.60"}
-                                   thheller/shadow-cljs {:mvn/version "2.23.1"}
+                                   thheller/shadow-cljs {:mvn/version "2.28.20"}
                                    uix.dom/uix.dom {:local/root "../dom"}
                                    com.github.roman01la/uix.css {:mvn/version "0.2.1"}}}}}
