@@ -1,9 +1,12 @@
 (ns uix.compiler.aot
   "Compiler code that translates HyperScript into React calls at compile-time."
-  (:require [uix.compiler.js :as js]
+  (:require [clojure.string :as str]
+            [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]
-            [uix.lib])
-  (:import (clojure.lang IMapEntry IMeta IRecord MapEntry)))
+            [uix.lib]
+            [uix.linter])
+  (:import (clojure.lang IMapEntry IMeta IRecord MapEntry)
+           (cljs.tagged_literals JSValue)))
 
 (defn- props->spread-props [props]
   (let [spread-props (:& props)]
@@ -146,27 +149,106 @@
 (defn walk
   "Like clojure.walk/postwalk, but preserves metadata"
   [inner outer form]
-  (let [m (meta form)]
-    (cond
-      (list? form)
-      (outer (maybe-with-meta form (apply list (map inner form))))
+  (cond
+    (list? form)
+    (outer (maybe-with-meta form (apply list (map inner form))))
 
-      (instance? IMapEntry form)
-      (outer (MapEntry/create (inner (key form)) (inner (val form))))
+    (instance? IMapEntry form)
+    (outer (MapEntry/create (inner (key form)) (inner (val form))))
 
-      (seq? form)
-      (outer (maybe-with-meta form (doall (map inner form))))
+    (seq? form)
+    (outer (maybe-with-meta form (doall (map inner form))))
 
-      (instance? IRecord form)
-      (outer (maybe-with-meta form (reduce (fn [r x] (conj r (inner x))) form form)))
+    (instance? IRecord form)
+    (outer (maybe-with-meta form (reduce (fn [r x] (conj r (inner x))) form form)))
 
-      (coll? form)
-      (outer (maybe-with-meta form (into (empty form) (map inner form))))
+    (coll? form)
+    (outer (maybe-with-meta form (into (empty form) (map inner form))))
 
-      :else (outer form))))
+    (= (type form) JSValue)
+    (outer (JSValue. (inner (.-val form))))
+
+    :else (outer form)))
 
 (defn postwalk [f form]
   (walk (partial postwalk f) f form))
 
-(defn rewrite-forms [body]
-  (postwalk compile-form body))
+(defn static-attrs? [attrs]
+  (if (:ref attrs)
+    false
+    (let [static-attrs? (atom true)]
+      (postwalk
+        (fn [form]
+          (when (or (symbol? form)
+                    (list? form)
+                    (instance? clojure.lang.Cons form))
+            (reset! static-attrs? false))
+          form)
+        attrs)
+      @static-attrs?)))
+(declare static-element?)
+
+
+(defn static-child-element? [form]
+  (or (string? form)
+      (number? form)
+      (static-element? form)))
+
+(defn static-element? [form]
+  (if (uix.linter/uix-element? form)
+    (let [[_ tag attrs & children] form]
+      (and (keyword? tag)
+           (not= :<> tag)
+           (if (map? attrs)
+             (static-attrs? attrs)
+             (static-child-element? attrs))
+           (every? static-child-element? children)))
+    (and (symbol? form)
+         (str/starts-with? (name form) "uix-aot-hoisted"))))
+
+(defn rewrite-forms [body & {:keys [hoist? fname]}]
+  (let [hoisted (atom {})
+        body (postwalk
+               (fn [form]
+                 (let [form (compile-form form)]
+                   (if-not hoist?
+                     form
+                     (if (static-element? form)
+                       (let [sym (symbol (str "uix-aot-hoisted" (hash form) fname))]
+                         (swap! hoisted assoc form sym)
+                         sym)
+                       form))))
+               body)]
+    [@hoisted body]))
+
+(defn- js-obj* [kvs]
+  (let [kvs-str (->> (repeat "~{}:~{}")
+                  (take (count kvs))
+                  (interpose ",")
+                  (apply str))]
+    (vary-meta
+      (list* 'js* (str "({" kvs-str "})") (apply concat kvs))
+      assoc :tag 'object)))
+
+(defn inline-element [v opts]
+  (let [[_ tag props & children] v
+        [props children key ref] (if (map? props)
+                                   [(dissoc props :key :ref) (vec children) (:key props) (:ref props)]
+                                   [nil (into [props] children) nil nil])
+        props (if (seq children)
+                (assoc props :children children)
+                props)
+        el (compile-element* [tag props] opts)]
+    (if (= `>el (first el))
+      (let [[_ tag [_ props]] el
+            props (or props (js-obj* {}))]
+        (js-obj*
+          (cond-> {"$$typeof" `(if react-19+? (.for ~'js/Symbol "react.transitional.element")
+                                              (.for ~'js/Symbol "react.element"))
+                   "type" tag
+                   "props" props
+                   "key" key
+                   "_owner" nil
+                   "_store" (js-obj* {"validated" true})}
+                  ref (assoc "ref" ref))))
+      el)))

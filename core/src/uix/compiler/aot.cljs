@@ -7,6 +7,13 @@
             [uix.compiler.attributes]
             [uix.lib :refer [doseq-loop]]))
 
+(def react-19+?
+  (-> react/version
+      (.split ".")
+      first
+      js/parseInt
+      (>= 19)))
+
 (defn hiccup? [el]
   (when (vector? el)
     (let [tag (nth el 0 nil)]
