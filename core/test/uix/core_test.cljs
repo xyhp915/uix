@@ -453,5 +453,31 @@
     (is (identical? (.-type ($ :input)) "input"))
     (set! uix.compiler.input/*use-reagent-input-enabled?* nil)))
 
+
+(deftest test-hoist-inline
+  (defui ^:test/inline test-hoist-inline-1 []
+    (let [title "hello"
+          tag :div
+          props {:title "hello"}]
+      (js->clj
+        #js [($ :div {:title "hello"} ($ :h1 "yo"))
+             ($ :div {:title title} ($ :h1 "yo"))
+             ($ tag {:title "hello"} ($ :h1 "yo"))
+             ($ :div props ($ :h1 "yo"))])))
+  (is (apply = (map #(-> % (assoc "_store" {"validated" 1})
+                           (update "props" dissoc "children"))
+                    (test-hoist-inline-1))))
+  (is (apply = (->> (test-hoist-inline-1)
+                    (mapcat #(let [children (get-in % ["props" "children"])]
+                               (if (or (vector? children) (js/Array.isArray children))
+                                 children
+                                 [children])))
+                    (map #(assoc % "_store" {"validated" 1})))))
+
+  (is (->> (js/Object.keys js/uix.core-test)
+           (filter #(str/starts-with? % "uix_aot_hoisted"))
+           count
+           (= 2))))
+
 (defn -main []
   (run-tests))

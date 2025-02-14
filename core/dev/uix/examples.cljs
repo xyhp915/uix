@@ -3,8 +3,7 @@
             [uix.core :as uix :refer [$ defui]]
             [uix.dom]
             [uix.css :refer [css]]
-            [uix.css.adapter.uix]
-            [shadow.cljs.devtools.client.hud :as shadow.hud]))
+            [uix.css.adapter.uix]))
 
 (def global-styles
   (css {:global {:html {:box-sizing :border-box}
@@ -46,8 +45,8 @@
                           :position :relative
                           :box-shadow "0 1px 1px rgba(0, 0, 10, 0.2)"})}
        ($ :img {:src "https://raw.githubusercontent.com/pitch-io/uix/master/logo.png"
-                :style (css {:height "100%"
-                             :margin "0 16px 0 0"})})
+                :style {:height "100%"
+                        :margin "0 16px 0 0"}})
        (for [t tools]
          ($ tool-button {:key t :label (name t) :on-press #(on-add-shape t) :selected? false}))
        ($ :div {:style (css {:width 1 :height "60%" :background-color "#c1cdd0" :margin "0 8px"})})
@@ -292,37 +291,37 @@
                   :on-object-select on-object-select
                   :on-object-changed on-object-changed}))))
 
-(def shadow-error-boundary
-  (uix.core/create-error-boundary
-    {:derive-error-state (fn [error]
-                           {:error error})}
-    (fn [[state _set-state!] {:keys [children]}]
-      (if-let [error (:error state)]
-        (do (shadow.hud/dom-insert
-              [:div
-               {:id shadow.hud/hud-id
-                :style {:position "fixed"
-                        :left "0px"
-                        :top "0px"
-                        :bottom "0px"
-                        :right "0px"
-                        :color "#000"
-                        :background-color "#fff"
-                        :border "5px solid red"
-                        :z-index "10000"
-                        :padding "20px"
-                        :overflow "auto"
-                        :font-family "monospace"
-                        :font-size "12px"}}
-               [:div {:style "color: red; margin-bottom: 10px; font-size: 2em;"}
-                (.. error -constructor -name)]
-               [:pre (pr-str error)]])
-            nil)
-        children))))
+#_(def shadow-error-boundary
+    (uix.core/create-error-boundary
+      {:derive-error-state (fn [error]
+                             {:error error})}
+      (fn [[state _set-state!] {:keys [children]}]
+        (if-let [error (:error state)]
+          (do (shadow.hud/dom-insert
+                [:div
+                 {:id shadow.hud/hud-id
+                  :style {:position "fixed"
+                          :left "0px"
+                          :top "0px"
+                          :bottom "0px"
+                          :right "0px"
+                          :color "#000"
+                          :background-color "#fff"
+                          :border "5px solid red"
+                          :z-index "10000"
+                          :padding "20px"
+                          :overflow "auto"
+                          :font-family "monospace"
+                          :font-size "12px"}}
+                 [:div {:style "color: red; margin-bottom: 10px; font-size: 2em;"}
+                  (.. error -constructor -name)]
+                 [:pre (pr-str error)]])
+              nil)
+          children))))
 
 
 ;; init app
 (defonce -init
          (let [root (uix.dom/create-root (js/document.getElementById "root"))]
-           (uix.dom/render-root ($ shadow-error-boundary ($ app)) root)
+           (uix.dom/render-root ($ app) root)
            nil))

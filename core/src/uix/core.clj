@@ -106,9 +106,11 @@
                          fname)
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
-            body (aot/rewrite-forms (uix.dev/with-fast-refresh memo-var-sym fdecl))]
+            [hoisted body] (-> (uix.dev/with-fast-refresh memo-var-sym fdecl)
+                               (aot/rewrite-forms :hoist? true :fname fname :force? (:test/inline (meta sym))))]
         (register-spec! props-cond ns sym)
         `(do
+           ~@(aot/inline-elements hoisted &env (:test/inline (meta sym)))
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
               (with-args-component memo-fname memo-var-sym args body props-cond))
@@ -131,7 +133,7 @@
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
         [fname args body props-cond] (parse-defui-sig `fn sym fdecl)
-        body (aot/rewrite-forms body)]
+        [_ body] (aot/rewrite-forms body :hoist? false)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})
