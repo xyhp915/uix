@@ -1,6 +1,7 @@
 (ns uix.compiler.aot
   "Compiler code that translates HyperScript into React calls at compile-time."
-  (:require [clojure.string :as str]
+  (:require [cljs.env :as env]
+            [clojure.string :as str]
             [uix.compiler.js :as js]
             [uix.compiler.attributes :as attrs]
             [uix.lib]
@@ -206,8 +207,16 @@
     (and (symbol? form)
          (str/starts-with? (name form) "uix-aot-hoisted"))))
 
-(defn rewrite-forms [body & {:keys [hoist? fname]}]
+(defn release-build? []
+  (-> @env/*compiler*
+      :shadow.build.cljs-bridge/state
+      :mode
+      (= :release)))
+
+(defn rewrite-forms [body & {:keys [hoist? fname force?]}]
   (let [hoisted (atom {})
+        hoist? (or (and force? hoist?)
+                   (and hoist? (release-build?)))
         body (postwalk
                (fn [form]
                  (let [form (compile-form form)]
@@ -252,3 +261,8 @@
                    "_store" (js-obj* {"validated" true})}
                   ref (assoc "ref" ref))))
       el)))
+
+(defn inline-elements [hoisted env force?]
+  (when (or force? (release-build?))
+    (for [[form sym] hoisted]
+      `(def ~sym ~(inline-element form {:env env})))))

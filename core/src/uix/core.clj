@@ -107,11 +107,10 @@
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
             [hoisted body] (-> (uix.dev/with-fast-refresh memo-var-sym fdecl)
-                               (aot/rewrite-forms :hoist? true :fname fname))]
+                               (aot/rewrite-forms :hoist? true :fname fname :force? (:test/inline (meta sym))))]
         (register-spec! props-cond ns sym)
         `(do
-           ~@(for [[form sym] hoisted]
-               `(def ~sym ~(aot/inline-element form {:env &env})))
+           ~@(aot/inline-elements hoisted &env (:test/inline (meta sym)))
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
               (with-args-component memo-fname memo-var-sym args body props-cond))

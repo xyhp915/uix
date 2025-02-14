@@ -455,13 +455,15 @@
 
 
 (deftest test-hoist-inline
-  (defui test-hoist-inline-1 []
+  (defui ^:test/inline test-hoist-inline-1 []
     (let [title "hello"
-          tag :div]
+          tag :div
+          props {:title "hello"}]
       (js->clj
         #js [($ :div {:title "hello"} ($ :h1 "yo"))
              ($ :div {:title title} ($ :h1 "yo"))
-             ($ tag {:title "hello"} ($ :h1 "yo"))])))
+             ($ tag {:title "hello"} ($ :h1 "yo"))
+             ($ :div props ($ :h1 "yo"))])))
   (is (apply = (map #(-> % (assoc "_store" {"validated" 1})
                            (update "props" dissoc "children"))
                     (test-hoist-inline-1))))
@@ -475,7 +477,7 @@
   (is (->> (js/Object.keys js/uix.core-test)
            (filter #(str/starts-with? % "uix_aot_hoisted"))
            count
-           (= 5))))
+           (= 2))))
 
 (defn -main []
   (run-tests))
