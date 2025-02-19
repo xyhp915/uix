@@ -89,6 +89,39 @@ npm install react@19.0.0 react-dom@19.0.0 --save-dev
   - [React Three Fiber](/docs/react-three-fiber.md)
 - [Getting help from ChatGPT](/docs/chat-gpt.md)
 
+## Recommended libraries
+
+- Routing
+  - [reitit](https://github.com/metosin/reitit), [example](https://uix-cljs.dev/recipes/routing)
+  - [TanStack Router](https://tanstack.com/router/latest)
+- Global state management
+  - [re-frame](https://day8.github.io/re-frame/), [example](https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame)
+  - [refx](https://github.com/ferdinand-beyer/refx), [example](https://github.com/ferdinand-beyer/refx/tree/main/examples/uix)
+  - [re-signaali](https://github.com/metosin/re-signaali), [examples](https://github.com/metosin/re-signaali/tree/main/examples)
+- Data validation
+  - clojure.spec (supported by [compile-time props validation](https://github.com/pitch-io/uix/blob/master/docs/props-validation.md#compile-time-props-validation))
+  - [malli](https://github.com/metosin/malli)
+- Data fetching (_unless using routing library with built-in data fetching_)
+  - [TanStack Query v4](https://tanstack.com/query/v4/), (v5 doesn't work with Closure Compiler)
+  - [SWR](https://swr.vercel.app/)
+- Async code
+  - [shadow.cljs.modern/js-await](https://clojureverse.org/t/promise-handling-in-cljs-using-js-await/8998)
+  - [promesa](https://github.com/funcool/promesa)
+- UI component libraries
+  - [shadcn/ui](https://ui.shadcn.com/)
+  - [daisyUI](https://daisyui.com/)
+  - [Material UI](https://mui.com/)
+- Styling
+  - [Tailwind CSS](https://tailwindcss.com/)
+- Icons
+  - [Heroicons](https://heroicons.com/)
+  - [Font Awesome](https://fontawesome.com/)
+- Forms
+  - [React Hook Form](https://react-hook-form.com/)
+  - [Formik](https://formik.org/)
+- Internationalization
+  - [react-i18next](https://react.i18next.com/)
+
 ## Who's using UIx?
 
 - [Pitch](https://pitch.com/)
