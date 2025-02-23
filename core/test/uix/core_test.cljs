@@ -479,5 +479,17 @@
            count
            (= 2))))
 
+(deftest test-css-variables
+  (testing "should preserve CSS var name"
+    (let [el ($ :div {:style {:--main-color "red"
+                              "--text-color" "blue"}})
+          styles {:--main-color "red"
+                  "--text-color" "blue"}
+          el1 ($ :div {:style styles})]
+      (is (= "red" (aget (.. el -props -style) "--main-color")))
+      (is (= "blue" (aget (.. el -props -style) "--text-color")))
+      (is (= "red" (aget (.. el1 -props -style) "--main-color")))
+      (is (= "blue" (aget (.. el1 -props -style) "--text-color"))))))
+
 (defn -main []
   (run-tests))

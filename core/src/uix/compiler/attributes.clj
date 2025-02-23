@@ -47,13 +47,15 @@
 
 (defn camel-case-dom
   "Turns kebab-case keyword into camel-case keyword,
-  kebab-cased DOM attributes aria-* and data-* are not converted"
+  kebab-cased DOM attributes aria-* and data-*, and CSS variable names are not converted"
   [k]
   (if (keyword? k)
-    (let [[first-word & words] (str/split (name k) #"-")]
+    (let [kstr (name k)
+          [first-word & words] (str/split kstr #"-")]
       (if (or (empty? words)
               (= "aria" first-word)
-              (= "data" first-word))
+              (= "data" first-word)
+              (str/starts-with? kstr "--"))
         k
         (-> (map str/capitalize words)
             (conj first-word)

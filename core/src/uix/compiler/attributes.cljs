@@ -24,7 +24,8 @@
 
 (defn ^string dash-to-camel [^string name-str]
   (if (or (str/starts-with? name-str "aria-")
-          (str/starts-with? name-str "data-"))
+          (str/starts-with? name-str "data-")
+          (str/starts-with? name-str "--"))
     name-str
     (.replace name-str cc-regexp cc-fn)))
 
