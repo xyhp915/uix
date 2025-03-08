@@ -11,3 +11,4 @@ out
 index.html
 node_modules
 server_render_test
+.styles

@@ -130,7 +130,7 @@ In Reagent it's common to have shared state in the form of a global var that hol
 
 ```clojure
 ;; Reagent
-(def state (r/atom 0)) ;; declare shared state
+(defonce state (r/atom 0)) ;; declare shared state
 
 (defn child-component []
   [:button
@@ -153,7 +153,7 @@ In Reagent it's common to have shared state in the form of a global var that hol
   ;; declare local state to be shared in UI subtree
   (let [[n set-n!] (uix/use-state 0)]
     ;; share the state with the subtree via context
-    ($ (.-Provider state-context) {:value [n set-n!]}
+    ($ state-context {:value [n set-n!]}
       ($ child-component))))
 ```
 

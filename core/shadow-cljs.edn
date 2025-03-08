@@ -9,13 +9,22 @@
               :output-to "out/benchmark.js"
               :main uix.benchmark/-main}
 
+  :benchmark-browser {:target :browser
+                      :output-dir "out"
+                      :asset-path "/out"
+                      :compiler-options {:pseudo-names true}
+                      :modules {:main {:entries [uix.benchmark]}}}
+
   :linter-test {:target :browser
                 :output-dir "out"
                 :modules {:main {:entries [uix.linter-test]}}}
+  :dce-test {:target :browser
+             :output-dir "out"
+             :modules {:main {:entries [uix.dce-test]}}}
 
   :examples {:target :browser
              :output-dir "out"
              :asset-path "/out"
-             :modules {:main {:entries [uix.examples]}}
-             :release {:compiler-options {:infer-externs true
-                                          :closure-defines {goog.DEBUG false}}}}}}
+             :modules {:main {:entries [uix.examples]
+                              :init-fn uix.examples/init}}
+             :devtools {:preloads [uix.preload]}}}}

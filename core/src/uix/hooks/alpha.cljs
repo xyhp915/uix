@@ -1,5 +1,6 @@
 (ns uix.hooks.alpha
   "Wrappers for React Hooks"
+  (:refer-clojure :exclude [use])
   (:require [react :as r]))
 
 (defn- choose-value [nv cv]
@@ -113,8 +114,11 @@
   ([v fmt]
    (r/useDebugValue v fmt)))
 
-(defn use-deferred-value [v]
-  (r/useDeferredValue v))
+(defn use-deferred-value
+  ([v]
+   (r/useDeferredValue v))
+  ([v initial]
+   (r/useDeferredValue v initial)))
 
 (defn use-transition []
   (r/useTransition))
@@ -127,3 +131,15 @@
    (r/useSyncExternalStore subscribe get-snapshot))
   ([subscribe get-snapshot get-server-snapshot]
    (r/useSyncExternalStore subscribe get-snapshot get-server-snapshot)))
+
+(defn use-optimistic [state update-fn]
+  (r/useOptimistic state update-fn))
+
+(defn use-action-state
+  ([f state]
+   (react/useActionState f state))
+  ([f state permalink]
+   (react/useActionState f state permalink)))
+
+(defn use [resource]
+  (react/use resource))

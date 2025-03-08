@@ -14,12 +14,12 @@
   (uix.core/defui test-use-ref-comp [_]
     (let [ref1 (uix.core/use-ref)
           ref2 (uix.core/use-ref 0)]
-      (is (nil? (.-current ref1)))
       (is (nil? @ref1))
-      (set! (.-current ref1) :x)
-      (is (= :x (.-current ref1)))
+      (is (nil? @ref1))
+      (reset! ref1 :x)
+      (is (= :x @ref1))
 
-      (is (= 0 (.-current ref2)))
+      (is (= 0 @ref2))
       (is (= 0 @ref2))
       (reset! ref2 1)
       (is (= 1 @ref2))
@@ -46,7 +46,7 @@
     (is (= "<h1>1</h1>" (t/as-string ($ test-memoize-meta-comp {:x 1}))))))
 
 (deftest test-html
-  (is (t/react-element-of-type? ($ :h1 1) "react.element")))
+  (is (t/react-element-of-type? ($ :h1 1) "react.transitional.element")))
 
 (deftest test-defui
   (defui h1 [{:keys [children]}]
@@ -451,6 +451,57 @@
       (is (= "hello" (.. el -props -title)))
       (is (= identity (.. el -props -onClick)))
       (is (= "red" (.. el -props -style -color))))))
+
+(deftest test-204
+  (testing "should use Reagent's input when Reagent's context is reactive"
+    (set! reagent.impl.util/*non-reactive* false)
+    (is (identical? (.-type ($ :input)) uix.compiler.input/reagent-input)))
+  (testing "should use Reagent's input when enabled explicitly"
+    (set! uix.compiler.input/*use-reagent-input-enabled?* true)
+    (is (identical? (.-type ($ :input)) uix.compiler.input/reagent-input))
+    (set! uix.compiler.input/*use-reagent-input-enabled?* nil))
+  (testing "should not use Reagent's input when enabled explicitly"
+    (set! uix.compiler.input/*use-reagent-input-enabled?* false)
+    (is (identical? (.-type ($ :input)) "input"))
+    (set! uix.compiler.input/*use-reagent-input-enabled?* nil)))
+
+
+(deftest test-hoist-inline
+  (defui ^:test/inline test-hoist-inline-1 []
+    (let [title "hello"
+          tag :div
+          props {:title "hello"}]
+      (js->clj
+        #js [($ :div {:title "hello"} ($ :h1 "yo"))
+             ($ :div {:title title} ($ :h1 "yo"))
+             ($ tag {:title "hello"} ($ :h1 "yo"))
+             ($ :div props ($ :h1 "yo"))])))
+  (is (apply = (map #(-> % (assoc "_store" {"validated" 1})
+                           (update "props" dissoc "children"))
+                    (test-hoist-inline-1))))
+  (is (apply = (->> (test-hoist-inline-1)
+                    (mapcat #(let [children (get-in % ["props" "children"])]
+                               (if (or (vector? children) (js/Array.isArray children))
+                                 children
+                                 [children])))
+                    (map #(assoc % "_store" {"validated" 1})))))
+
+  (is (->> (js/Object.keys js/uix.core-test)
+           (filter #(str/starts-with? % "uix_aot_hoisted"))
+           count
+           (= 2))))
+
+(deftest test-css-variables
+  (testing "should preserve CSS var name"
+    (let [el ($ :div {:style {:--main-color "red"
+                              "--text-color" "blue"}})
+          styles {:--main-color "red"
+                  "--text-color" "blue"}
+          el1 ($ :div {:style styles})]
+      (is (= "red" (aget (.. el -props -style) "--main-color")))
+      (is (= "blue" (aget (.. el -props -style) "--text-color")))
+      (is (= "red" (aget (.. el1 -props -style) "--main-color")))
+      (is (= "blue" (aget (.. el1 -props -style) "--text-color"))))))
 
 (defn -main []
   (run-tests))

@@ -2,13 +2,17 @@
 
 _Idiomatic ClojureScript interface to modern React.js_
 
-> "Oh god, I just started learning reagent. Don’t tell me I’ll have to switch" /r/clojure
+> “UIx eliminates the learning curve for React developers new to ClojureScript, allowing them to write familiar patterns seamlessly.” – Misha Karpenko, Pitch
+
+> “UIx allows us to leverage the modern React ecosystem to efficiently build ClojureScript apps.” – Juho Teperi, Metosin
+
+> “UIx offers a seamless React integration, making code more efficient with powerful component composition, hooks, and customizable linting for enforcing best practices.” – Chris Etheridge, Cognician
 
 [![CircleCI](https://circleci.com/gh/pitch-io/uix.svg?style=svg)](https://circleci.com/gh/pitch-io/uix)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.core.svg)](https://clojars.org/com.pitch/uix.core)
 [![Clojars Project](https://img.shields.io/clojars/v/com.pitch/uix.dom.svg)](https://clojars.org/com.pitch/uix.dom)
 
-- API compatibility: React v18.3.1
+- API compatibility: React v19.0.0
 - Discuss at [#uix on Clojurians Slack](https://clojurians.slack.com/archives/CNMR41NKB)
 - Try it out in the [playground](https://studio.learn-modern-clojurescript.com/p/default-uix)
 - [A slide deck explaining UIx and migration path from Reagent](https://pitch.com/public/821ed924-6fe6-4ce7-9d75-a63f1ee3c61f)
@@ -19,12 +23,12 @@ _Idiomatic ClojureScript interface to modern React.js_
 ## Installation
 
 ```
-npm install react@18.3.1 react-dom@18.3.1 --save-dev
+npm install react@19.0.0 react-dom@19.0.0 --save-dev
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "1.2.0"}
-        com.pitch/uix.dom {:mvn/version "1.2.0"}}}
+{:deps {com.pitch/uix.core {:mvn/version "1.3.1"}
+        com.pitch/uix.dom {:mvn/version "1.3.1"}}}
 ```
 
 ### How to start a new project with UIx
@@ -32,6 +36,7 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 - Run `npx create-uix-app@latest my-app` to scaffold a new project
 - Clone starter template manually from [pitch-io/uix-starter](https://github.com/pitch-io/uix-starter)
 - Use fullstack starter project from Metosin [metosin/example-project](https://github.com/metosin/example-project)
+- Template project of a web app hosted on Cloudflare with REST API served from SQLite [roman01la/uix-cloudflare-template](https://github.com/roman01la/uix-cloudflare-template)
 
 ## Usage
 
@@ -76,6 +81,10 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
 - [React DevTools](docs/react-devtools.md)
 - [Code linting](docs/code-linting.md)
 - [Differences from Reagent](docs/differences-from-reagent.md)
+- [Testing](docs/testing.md)
+  - [End to end testing](docs/testing.md#end-to-end-testing)
+  - [Component testing](docs/testing.md#component-testing)
+  - [Hooks testing](docs/testing.md#hooks-testing)
 - [Utilities](docs/utilities.md)
 - [Examples](/core/dev/uix/examples.cljs)
 - [Internals](docs/internals.md)
@@ -83,6 +92,39 @@ npm install react@18.3.1 react-dom@18.3.1 --save-dev
   - [React Native](/docs/react-native.md)
   - [React Three Fiber](/docs/react-three-fiber.md)
 - [Getting help from ChatGPT](/docs/chat-gpt.md)
+
+## Recommended libraries
+
+- Routing
+  - [reitit](https://github.com/metosin/reitit), [example](https://uix-cljs.dev/recipes/routing)
+  - [TanStack Router](https://tanstack.com/router/latest)
+- Global state management
+  - [re-frame](https://day8.github.io/re-frame/), [example](https://github.com/pitch-io/uix/blob/master/docs/interop-with-reagent.md#syncing-with-ratoms-and-re-frame)
+  - [refx](https://github.com/ferdinand-beyer/refx), [example](https://github.com/ferdinand-beyer/refx/tree/main/examples/uix)
+  - [re-signaali](https://github.com/metosin/re-signaali), [examples](https://github.com/metosin/re-signaali/tree/main/examples)
+- Data validation
+  - clojure.spec (supported by [compile-time props validation](https://github.com/pitch-io/uix/blob/master/docs/props-validation.md#compile-time-props-validation))
+  - [malli](https://github.com/metosin/malli)
+- Data fetching (_unless using routing library with built-in data fetching_)
+  - [TanStack Query v4](https://tanstack.com/query/v4/), (v5 doesn't work with Closure Compiler)
+  - [SWR](https://swr.vercel.app/)
+- Async code
+  - [shadow.cljs.modern/js-await](https://clojureverse.org/t/promise-handling-in-cljs-using-js-await/8998)
+  - [promesa](https://github.com/funcool/promesa)
+- UI component libraries
+  - [shadcn/ui](https://ui.shadcn.com/)
+  - [daisyUI](https://daisyui.com/)
+  - [Material UI](https://mui.com/)
+- Styling
+  - [Tailwind CSS](https://tailwindcss.com/)
+- Icons
+  - [Heroicons](https://heroicons.com/)
+  - [Font Awesome](https://fontawesome.com/)
+- Forms
+  - [React Hook Form](https://react-hook-form.com/)
+  - [Formik](https://formik.org/)
+- Internationalization
+  - [react-i18next](https://react.i18next.com/)
 
 ## Who's using UIx?
 

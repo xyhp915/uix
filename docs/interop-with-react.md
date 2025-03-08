@@ -43,7 +43,7 @@ When a non-UIx component is passed into `$`, the props map is converted into JS 
 
 Now the other way around, we want to use a UIx component in a React component.
 
-To achieve this we have to write interop layer using `uix.core/as-react` helper that takes a function which will take React props as a bean and call the UIx component.
+To achieve this we have to write interop layer using `uix.core/as-react` helper that takes a function which will take React props as a shallow [bean](https://github.com/mfikes/cljs-bean) and call the UIx component.
 
 > Note that `as-react` doesn’t transform camel case keys into kebab case.
 
@@ -58,13 +58,68 @@ To achieve this we have to write interop layer using `uix.core/as-react` helper 
       ($ button {:on-click onClick :children children}))))
 ```
 
-Now `Button` can used as a normal React component.
+Now `Button` can be used as a normal React component.
 
 ```js
 <Button onClick={console.log}>press me</Button>
 ```
 
+### Using UIx components in render props of React components
+
+It's not uncommon in React libraries to use [“render props” pattern](https://react.dev/reference/react/cloneElement#passing-data-with-a-render-prop) to let users of the library customize UI of the library component.
+
+Consider this example with [React Simple Maps](https://www.react-simple-maps.io/) library. The library provides `Geographies` component that takes a function as a child element and then it's up to you to decide how to render geo data. Here's how it looks like in JS:
+
+```js
+<Geographies
+  geography="/features.json"
+  fill="#D6D6DA"
+  stroke="#FFFFFF"
+  strokeWidth={0.45}
+>
+  {({ geographies }) =>
+    geographies.map((geo) => <Geography key={geo.rsmKey} geography={geo} />)
+  }
+</Geographies>
+```
+
+Note that the function takes JS object of props. We can't simply destructure the object using Clojure's `:keys` destructuring, it's meant to be used with Clojure's data structures. Because of this mismatch you have to introduce a gluing layer between JS and CLJS worlds, i.e. read data from JS object and pass it into UIx component.
+
+To make things less cumbersome, use `cljs-bean` library to lazily convert JS data to Clojure data, either shallowly via `bean` function or recursively via `->clj` function.
+
+```clojure
+($ Geographies
+   {:geography "/assets/features.json"
+    :fill "#D6D6DA"
+    :stroke "#FFFFFF"}
+   (fn [js-props]
+     (let [{:keys [geographies]} (cljs-bean.core/->clj js-props)]
+       (for [geo geographies]
+         ($ Geography
+            {:key (:rsm-key geo)
+             :geography geo})))))
+```
+
+After cleaning things a bit, the final code looks much better:
+
+```clojure
+(defui geographies [{:keys [geographies]}]
+  (for [geo geographies]
+    ($ Geography
+      {:key (:rsm-key geo)
+       :geography geo})))
+
+($ Geographies
+   {:geography "/assets/features.json"
+    :fill "#D6D6DA"
+    :stroke "#FFFFFF"}
+   (fn [js-props]
+     ($ geographies (cljs-bean.core/->clj js-props))))
+```
+
 ### On `ref` forwarding
+
+[_Not relevant for React v19 or later_](https://react.dev/reference/react/forwardRef)
 
 Some third party React components can inject a `ref` into a child element,
 which requires doing [ref forwarding](https://react.dev/reference/react/forwardRef). It's not needed when passing refs between

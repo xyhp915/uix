@@ -1,6 +1,6 @@
 (ns uix.core
   "Public API"
-  (:refer-clojure :exclude [fn])
+  (:refer-clojure :exclude [fn use])
   (:require [cljs.env :as env]
             [cljs.analyzer :as ana]
             [clojure.core :as core]
@@ -92,11 +92,6 @@
             "If you meant to retrieve `children`, they are under `:children` field in props map."))
       [fname args fdecl props-cond])))
 
-(defn- set-display-name [f name]
-  `(do
-     (set! (.-displayName ~f) ~name)
-     (js/Object.defineProperty ~f "name" (cljs.core/js-obj "value" ~name))))
-
 (defmacro
   ^{:arglists '([name doc-string? attr-map? [params*] prepost-map? body]
                 [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])}
@@ -115,14 +110,16 @@
                          fname)
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
-            body (aot/rewrite-forms (uix.dev/with-fast-refresh memo-var-sym fdecl))]
+            [hoisted body] (-> (uix.dev/with-fast-refresh memo-var-sym fdecl)
+                               (aot/rewrite-forms :hoist? true :fname fname :force? (:test/inline (meta sym))))]
         (register-spec! props-cond ns sym)
         `(do
+           ~@(aot/inline-elements hoisted &env (:test/inline (meta sym)))
            ~(if (empty? args)
               (no-args-component memo-fname memo-var-sym body)
               (with-args-component memo-fname memo-var-sym args body props-cond))
            (set! (.-uix-component? ~memo-var-sym) true)
-           ~(set-display-name memo-var-sym (str var-sym))
+           (set-display-name ~memo-var-sym ~(str var-sym))
            ~(uix.dev/fast-refresh-signature memo-var-sym body)
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
@@ -142,7 +139,7 @@
                       [(first fdecl) (rest fdecl)]
                       [(gensym "uix-fn") fdecl])
         [fname args body props-cond] (parse-defui-sig `fn sym fdecl)
-        body (aot/rewrite-forms body)]
+        [_ body] (aot/rewrite-forms body :hoist? false)]
     (uix.linter/lint! sym body &form &env)
     (if (uix.lib/cljs-env? &env)
       (let [var-sym (with-meta sym {:tag 'js})
@@ -152,7 +149,7 @@
                            (no-args-fn-component fname var-sym body)
                            (with-args-fn-component fname var-sym args body props-cond))]
            (set! (.-uix-component? ~var-sym) true)
-           ~(set-display-name var-sym (str var-sym))
+           (set-display-name ~var-sym ~(str var-sym))
            ~var-sym))
       (let [args-sym (gensym "args")
             [args dissoc-ks rest-sym] (uix.lib/rest-props args)]
@@ -244,8 +241,11 @@
   ([v fmt]
    (hooks/use-debug v fmt)))
 
-(defn use-deferred-value [v]
-  (hooks/use-deferred-value v))
+(defn use-deferred-value
+  ([v]
+   (hooks/use-deferred-value v))
+  ([v initial]
+   (hooks/use-deferred-value v initial)))
 
 (defn use-transition []
   (hooks/use-transition))
@@ -258,6 +258,18 @@
    (hooks/use-sync-external-store subscribe get-snapshot))
   ([subscribe get-snapshot get-server-snapshot]
    (hooks/use-sync-external-store subscribe get-snapshot get-server-snapshot)))
+
+(defn use-optimistic [state update-fn]
+  (hooks/use-optimistic state update-fn))
+
+(defn use-action-state
+  ([f state]
+   (hooks/use-action-state f state))
+  ([f state permalink]
+   (hooks/use-action-state f state permalink)))
+
+(defn use [resource]
+  (hooks/use resource))
 
 (defn ->js-deps [coll]
   `(cljs.core/array (uix.hooks.alpha/use-clj-deps ~coll)))
@@ -274,7 +286,7 @@
 (defmacro use-effect
   "Takes a function to be executed in an effect and optional vector of dependencies.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useeffect"
+  See: https://react.dev/reference/react/useEffect"
   ([f]
    (make-hook-with-deps 'uix.hooks.alpha/use-effect &env &form f nil))
   ([f deps]
@@ -283,7 +295,7 @@
 (defmacro use-layout-effect
   "Takes a function to be executed in a layout effect and optional vector of dependencies.
 
-  See: https://reactjs.org/docs/hooks-reference.html#uselayouteffect"
+  See: https://react.dev/reference/react/useLayoutEffect"
   ([f]
    (make-hook-with-deps 'uix.hooks.alpha/use-layout-effect &env &form f nil))
   ([f deps]
@@ -294,7 +306,7 @@
   and optional vector of dependencies. Use this to inject styles into the DOM
   before reading layout in `useLayoutEffect`.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useinsertioneffect"
+  See: https://react.dev/reference/react/useInsertionEffect"
   ([f]
    (make-hook-with-deps 'uix.hooks.alpha/use-insertion-effect &env &form f nil))
   ([f deps]
@@ -303,14 +315,14 @@
 (defmacro use-memo
   "Takes function f and required vector of dependencies, and returns memoized result of f.
 
-   See: https://reactjs.org/docs/hooks-reference.html#usememo"
+   See: https://react.dev/reference/react/useMemo"
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-memo &env &form f deps))
 
 (defmacro use-callback
   "Takes function f and required vector of dependencies, and returns memoized f.
 
-  See: https://reactjs.org/docs/hooks-reference.html#usecallback"
+  See: https://react.dev/reference/react/useCallback"
   [f deps]
   (make-hook-with-deps 'uix.hooks.alpha/use-callback &env &form f deps))
 
@@ -324,7 +336,7 @@
 (defmacro use-imperative-handle
   "Customizes the instance value that is exposed to parent components when using ref.
 
-  See: https://reactjs.org/docs/hooks-reference.html#useimperativehandle"
+  See: https://react.dev/reference/react/useImperativeHandle"
   ([ref f]
    (when (uix.lib/cljs-env? &env)
      (uix.linter/lint-exhaustive-deps! &env &form f nil))

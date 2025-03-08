@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.pitch</groupId>
   <artifactId>uix.dom</artifactId>
-  <version>1.2.0</version>
+  <version>1.3.1</version>
   <name>dom</name>
   <licenses>
     <license>
@@ -15,7 +15,7 @@
   <scm>
     <connection>scm:git:git@github.com:pitch-io/uix.git</connection>
     <developerConnection>scm:git:git@github.com:pitch-io/uix.git</developerConnection>
-    <tag>cb67c291a425113ff2368a03b94441f2f0c67aa2</tag>
+    <tag>2e6101adac74c4470d603a725788962ca7ba14da</tag>
     <url>https://github.com/pitch-io/uix/tree/master/dom</url>
   </scm>
   <build>
