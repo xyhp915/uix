@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.4.1
+
+### Fixes
+
+- Fixed linter check for UIx refs accessed via JS interop
+- Fixed elements hoisting crashing production build
+
 ## 1.4.0
 
 ### New
