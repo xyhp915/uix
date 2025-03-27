@@ -214,7 +214,7 @@
       (= :release)))
 
 (defn rewrite-forms [body & {:keys [hoist? fname force?]}]
-  (let [hoisted (atom {})
+  (let [hoisted (atom [])
         hoist? (or (and force? hoist?)
                    (and hoist? (release-build?)))
         body (postwalk
@@ -224,11 +224,12 @@
                      form
                      (if (static-element? form)
                        (let [sym (symbol (str "uix-aot-hoisted" (hash form) fname))]
-                         (swap! hoisted assoc form sym)
+                         (swap! hoisted conj [form sym])
                          sym)
                        form))))
                body)]
-    [@hoisted body]))
+    [(distinct @hoisted)
+     body]))
 
 (defn- js-obj* [kvs]
   (let [kvs-str (->> (repeat "~{}:~{}")

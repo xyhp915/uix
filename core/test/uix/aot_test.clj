@@ -65,7 +65,7 @@
               ($ :div
                  (for [x [1 2 3]]
                    ($ :span x)))))
-         [{}
+         [[]
           '(when true
              ($ :div (clojure.core/map
                        (clojure.core/fn [x] ($ :span x))
