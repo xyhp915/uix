@@ -36,7 +36,7 @@
   ([sym hook-name]
    (and (symbol? sym)
         (if hook-name
-          (some? (= hook-name (name sym)))
+          (= hook-name (name sym))
           (some? (re-find #"^use-|use[A-Z]" (name sym)))))))
 
 (defn hook-call?
