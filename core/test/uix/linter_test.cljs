@@ -128,10 +128,14 @@
 ($ button)
 
 
+(defn create-fake-ref [])
+
 (defui test-interop-ref-read-write []
-  (let [ref (uix/use-ref nil)]
+  (let [ref (uix/use-ref nil)
+        js-ref (create-fake-ref)]
     (set! (.-current ref) 1)
-    (prn (.-current ref))))
+    (prn (.-current ref))
+    (prn (.-current js-ref))))
 
 
 (defui test-100-2 []
