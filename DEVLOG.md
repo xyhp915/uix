@@ -1,5 +1,50 @@
 # UIx Devlog
 
+## Q1, 2025
+
+### Syntax: Rest params in props destructuring
+
+_v1.4.0_
+
+Clojure includes rest params syntax for sequential data structures e.g. `[x y & xs]`, but doesn't have that for associative types, which is something [JavaScript has](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring) and is sometimes useful in React UIs.
+
+UIx 1.4.0 now includes this syntax extension for `defui` and `fn` macros.
+
+```clojure
+(defui button [{:keys [on-click] :& props}]
+  ($ :button {:on-click on-click}
+    ($ :span props)))
+```
+
+### Performance: inlining UIx elements
+
+_v1.4.0_
+
+A rather minor performance optimization. In advanced builds most of UIx elements are inlined into React's virtual node representation to shave off a couple of CPU cycles during rendering. Basically the optimization tries to skip what Reacr is normally doing at runtime.
+
+```clojure
+;; source code
+($ :button {:on-click js/console.log} "Press me")
+
+;; compiled output
+#js {:$$typeof Symbol.for("react.transitional.element")
+     :type "button"
+     :props #js {:onClick console.log
+                 :children "Press me"}}
+```
+
+### Performance: hoist compile-time constant UIx elements
+
+_v1.4.0_
+
+Simple elements like `($ :button {:on-click js/console.log} "Press me")` will be hoisted to global scope making them effectively cached forever. This results in fever CPU cycles spent on building React's virtual DOM tree.
+
+## Performance: removes unused components in production builds
+
+One line of code prevented unused components from being removed from production bundle.
+
+Some side effectfull browser API calls prevent Google Closure from removing unused code, like this one `(js/Object.defineProperty f "name" #js {:value name})`. If you are 100% sure the sideeffect is safe to ignore, add `^{:jsdoc ["@nosideeffects"]}` meta to a function that calls into this API, this instructs Closure compiler to treat a function as if it was pure.
+
 ## December, 2024
 
 ### React 19

@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.4.0
+
+### New
+
+- Props rest syntax #169
+- Performance: inline and hoist compile-time constant UIx elements #213
+- Reagent interop: explicit control over injection of Reagent's input wrapper #205
+
+### Fixes
+
+- Performance: Unused components are removed in production/advanced builds #202
+- Fixed CSS variables in inline styles #218
+
 ## 1.3.1
 
 ### New

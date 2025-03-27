@@ -27,8 +27,8 @@ npm install react@19.0.0 react-dom@19.0.0 --save-dev
 ```
 
 ```clj
-{:deps {com.pitch/uix.core {:mvn/version "1.3.1"}
-        com.pitch/uix.dom {:mvn/version "1.3.1"}}}
+{:deps {com.pitch/uix.core {:mvn/version "1.4.0"}
+        com.pitch/uix.dom {:mvn/version "1.4.0"}}}
 ```
 
 ### How to start a new project with UIx
