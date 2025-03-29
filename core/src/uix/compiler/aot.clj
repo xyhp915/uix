@@ -100,9 +100,15 @@
 
 (defmethod compile-element* :component [v {:keys [env]}]
   (let [[tag props & children] (uix.lib/normalize-element env v)
+        js-props? (true? (:&js props))
+        props (if (map? props) (-> props (dissoc :&js)) props)
         tag (vary-meta tag assoc :tag 'js)
-        props-children (compile-attrs :component props nil)]
-    `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children))))
+        props-children (if js-props?
+                         (compile-attrs :fragment props nil)
+                         (compile-attrs :component props nil))]
+    (if js-props?
+      `(>el ~tag ~props-children (cljs.core/array ~@children))
+      `(uix.compiler.alpha/component-element ~tag ~props-children (cljs.core/array ~@children)))))
 
 (defmethod compile-element* :fragment [v _]
   (let [[_ attrs & children] v
