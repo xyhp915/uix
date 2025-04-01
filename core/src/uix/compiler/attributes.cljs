@@ -1,5 +1,6 @@
 (ns uix.compiler.attributes
   (:require [clojure.string :as str]
+            [cljs-bean.core :as bean]
             [goog.object :as gobj]))
 
 (declare convert-prop-value)
@@ -30,9 +31,10 @@
     (.replace name-str cc-regexp cc-fn)))
 
 (defn keyword->string [x]
-  (if (keyword? x)
-    (-name ^not-native x)
-    x))
+  (cond
+    (keyword? x) (-name ^not-native x)
+    (coll? x) (bean/->js x)
+    :else x))
 
 (defn cached-prop-name [k]
   (if (keyword? k)
