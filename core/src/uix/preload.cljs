@@ -6,6 +6,6 @@
 
 (uix.dev/init-fast-refresh!)
 
-(defn ^:dev/after-load refresh []
+(defn ^:dev/after-load refresh! []
   (uix.dev/refresh!))
 
