@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## 1.4.5
+
+### New
+
+- React 19.2.0 compatibility:
+  - Added `uix.core/activity` component, see [Activity](https://react.dev/reference/react/Activity) docs
+  - Updated `uix.core/use-effect-event` to use native [`useEffectEvent`](https://react.dev/blog/2025/10/01/react-19-2#use-effect-event) hook (when available)
+- Added `use-atom` hook, see [docs](https://github.com/pitch-io/uix/blob/master/docs/hooks.md#use-atom)
+
+## 1.4.4
+
+### New
+
+- Enable props validation only in dev, via preload
+- Add more clj-kondo linting rules for `defui` and hooks
+- Remove `set-optimizations-enabled!`, doesn't work as intended
+
+### Fixes
+
+- JVM SSR: Correctly serialize self-closing HTML tags #231
+
 ## 1.4.3
 
 ### Fixes

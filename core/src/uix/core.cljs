@@ -7,8 +7,9 @@
             [uix.hooks.alpha :as hooks]
             [uix.compiler.aot]
             [uix.lib :refer [doseq-loop map->js]]
-            [cljs-bean.core :as bean]
-            [preo.core]))
+            [cljs-bean.core :as bean]))
+
+(def props-assert-fn (atom (fn [& args] true)))
 
 (def ^:dynamic *current-component*)
 
@@ -178,14 +179,16 @@
   []
   (hooks/use-id))
 
-(defn use-effect-event
+(def use-effect-event
   "EXPERIMENTAL: Creates a stable event handler from a function, allowing it to be used in use-effect
    without adding the function as a dependency.
   See: https://react.dev/learn/separating-events-from-effects"
-  [f]
-  (let [ref (use-ref nil)]
-    (reset! ref f)
-    (uix.core/use-callback (fn [& args] (apply @ref args)) [])))
+  (if (exists? react/useEffectEvent)
+    react/useEffectEvent
+    (fn [f]
+      (let [ref (use-ref nil)]
+        (reset! ref f)
+        (uix.core/use-callback (fn [& args] (apply @ref args)) [])))))
 
 (defn use-sync-external-store
   "For reading and subscribing from external data sources in a way that’s compatible
@@ -239,6 +242,14 @@
   See: https://react.dev/reference/react/use"
   [resource]
   (hooks/use resource))
+
+(defn use-atom
+  "Takes an atom, subscribes UI component to changes in the atom
+  and returns its current value"
+  [ref]
+  (let [subscribe (hooks/use-batched-subscribe ref)
+        get-snapshot (hooks/use-callback #(-deref ref) #js [ref])]
+    (use-sync-external-store subscribe get-snapshot)))
 
 (defn as-react
   "Interop with React components. Takes a function that returns UIx component
@@ -338,6 +349,7 @@
                   (seq children) (assoc :children children)))))))
 
 (def suspense react/Suspense)
+(def activity react/Activity)
 (def strict-mode react/StrictMode)
 (def profiler react/Profiler)
 
