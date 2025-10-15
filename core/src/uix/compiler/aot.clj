@@ -222,7 +222,7 @@
 (defn rewrite-forms [body & {:keys [hoist? fname force?]}]
   (let [hoisted (atom [])
         hoist? (or (and force? hoist?)
-                   (and hoist? (release-build?)))
+                   (and hoist? false (release-build?)))
         body (postwalk
                (fn [form]
                  (let [form (compile-form form)]

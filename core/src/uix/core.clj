@@ -22,6 +22,12 @@
          (binding [*current-component* ~var-sym] (f#))
          (f#)))))
 
+(defn release-build? []
+  (-> @env/*compiler*
+      :shadow.build.cljs-bridge/state
+      :mode
+      (= :release)))
+
 (def props-assert-fn (atom (core/fn [& args] true)))
 
 (defn- with-props-cond [props-cond props-sym]
@@ -112,7 +118,8 @@
                          fname)
             var-sym (-> (str (-> &env :ns :name) "/" fname) symbol (with-meta {:tag 'js}))
             memo-var-sym (-> (str (-> &env :ns :name) "/" memo-fname) symbol (with-meta {:tag 'js}))
-            [hoisted body] (-> (uix.dev/with-fast-refresh memo-var-sym fdecl)
+            [hoisted body] (-> (if (release-build?) fdecl
+                                 (uix.dev/with-fast-refresh memo-var-sym fdecl))
                                (aot/rewrite-forms :hoist? true :fname fname :force? (:test/inline (meta sym))))]
         (register-spec! props-cond ns sym)
         `(do
@@ -122,7 +129,8 @@
               (with-args-component memo-fname memo-var-sym args body props-cond))
            (set! (.-uix-component? ~memo-var-sym) true)
            (set-display-name ~memo-var-sym ~(str var-sym))
-           ~(uix.dev/fast-refresh-signature memo-var-sym body)
+           ~(when (not (release-build?))
+              (uix.dev/fast-refresh-signature memo-var-sym body))
            ~(when memo?
               `(def ~fname (uix.core/memo ~memo-sym)))))
       (let [args-sym (gensym "args")
